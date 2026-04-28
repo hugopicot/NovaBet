@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__7b8fbbe4-4e48-4682-998a-d6761f0ffbd5__whoami",
+      "mcp__7b8fbbe4-4e48-4682-998a-d6761f0ffbd5__create_new_file"
+    ]
+  }
+}
