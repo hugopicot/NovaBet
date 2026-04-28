@@ -1,4 +1,4 @@
-# Polymarket JavaFX App
+# NovaBet
 
 ## Prérequis
 - Java 21
