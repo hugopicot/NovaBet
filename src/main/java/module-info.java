@@ -5,5 +5,9 @@ module com.polymarket {
     requires mysql.connector.j;
 
     opens com.polymarket to javafx.fxml;
+    opens com.polymarket.ui to javafx.fxml;
+    opens com.polymarket.ui.auth to javafx.fxml;
     exports com.polymarket;
+    exports com.polymarket.ui;
+    exports com.polymarket.ui.auth;
 }
