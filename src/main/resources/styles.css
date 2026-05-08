@@ -1,0 +1,112 @@
+.root {
+    -fx-background-color: #0d1117;
+    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.main-container {
+    -fx-background-color: #0d1117;
+}
+
+.sidebar {
+    -fx-background-color: #0a0f1a;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 0 1 0 0;
+}
+
+.logo-icon {
+    -fx-background-color: linear-gradient(to bottom right, #00b4d8, #7b2ff7);
+    -fx-background-radius: 8;
+}
+
+.logo-text {
+    -fx-text-fill: #ffffff;
+}
+
+.sidebar-headline {
+    -fx-text-fill: #ffffff;
+    -fx-line-spacing: 4;
+    -fx-font-family: "Instrument Serif", "Playfair Display", serif;
+    -fx-font-size: 38;
+    -fx-font-weight: bold;
+}
+
+.sidebar-subtitle {
+    -fx-text-fill: #8b949e;
+    -fx-line-spacing: 2;
+    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+    -fx-font-size: 14;
+}
+
+.stats-box {
+    -fx-alignment: center-left;
+}
+
+.stats-text {
+    -fx-text-fill: #484f58;
+    -fx-font-size: 12;
+}
+
+.center-pane {
+    -fx-background-color: #0d1117;
+    -fx-alignment: center;
+}
+
+.form-title {
+    -fx-text-fill: #ffffff;
+}
+
+.input-label {
+    -fx-text-fill: #8b949e;
+}
+
+.input-field {
+    -fx-background-color: #161b22;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #c9d1d9;
+    -fx-prompt-text-fill: #484f58;
+    -fx-font-size: 14;
+    -fx-padding: 0 14;
+}
+
+.input-field:focused {
+    -fx-border-color: #00b4d8;
+    -fx-background-color: #1a1f2e;
+}
+
+.btn-primary {
+    -fx-background-color: #00b4d8;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #0096b4;
+}
+
+.btn-primary:pressed {
+    -fx-background-color: #007a94;
+}
+
+.switch-text {
+    -fx-text-fill: #8b949e;
+    -fx-font-size: 13;
+}
+
+.link-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #00b4d8;
+    -fx-font-size: 13;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+
+.link-button:hover {
+    -fx-text-fill: #0096b4;
+    -fx-underline: true;
+}
