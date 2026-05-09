@@ -19,6 +19,7 @@ public class LoginView {
 
     private BorderPane root;
     private Runnable onRegister;
+    private Runnable onLogin;
 
     public LoginView() {
         root = new BorderPane();
@@ -91,6 +92,9 @@ public class LoginView {
         loginButton.setPrefWidth(380);
         loginButton.setPrefHeight(48);
         loginButton.setFont(Font.font("Inter", FontWeight.SEMI_BOLD, 15));
+        loginButton.setOnAction(e -> {
+            if (onLogin != null) onLogin.run();
+        });
 
         HBox switchBox = new HBox(8);
         switchBox.setAlignment(Pos.CENTER);
@@ -137,5 +141,9 @@ public class LoginView {
 
     public void setOnRegister(Runnable onRegister) {
         this.onRegister = onRegister;
+    }
+
+    public void setOnLogin(Runnable onLogin) {
+        this.onLogin = onLogin;
     }
 }
