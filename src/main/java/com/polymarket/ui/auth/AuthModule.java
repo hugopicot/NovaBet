@@ -1,6 +1,7 @@
 package com.polymarket.ui.auth;
 
 import com.polymarket.ui.LoginView;
+import com.polymarket.ui.MarketsListView;
 import com.polymarket.ui.RegisterView;
 import javafx.scene.Scene;
 import javafx.scene.text.Font;
@@ -21,15 +22,20 @@ public class AuthModule {
 
         LoginView loginView = new LoginView();
         RegisterView registerView = new RegisterView();
+        MarketsListView marketsView = new MarketsListView();
 
         Scene loginScene = new Scene(loginView.getView(), 1100, 700);
         Scene registerScene = new Scene(registerView.getView(), 1100, 700);
+        Scene marketsScene = new Scene(marketsView.getView(), 1280, 800);
 
         loginScene.getStylesheets().add(cssPath);
         registerScene.getStylesheets().add(cssPath);
+        marketsScene.getStylesheets().add(cssPath);
 
         loginView.setOnRegister(() -> primaryStage.setScene(registerScene));
         registerView.setOnLogin(() -> primaryStage.setScene(loginScene));
+        loginView.setOnLogin(() -> primaryStage.setScene(marketsScene));
+        marketsView.setOnLogout(() -> primaryStage.setScene(loginScene));
 
         primaryStage.setScene(loginScene);
     }
