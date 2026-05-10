@@ -1,5 +1,7 @@
 package com.polymarket.ui;
 
+import com.polymarket.domain.dto.BetRequest;
+import com.polymarket.domain.dto.OutcomeLabel;
 import com.polymarket.model.events;
 import com.polymarket.model.outcomes;
 
@@ -11,6 +13,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -21,7 +24,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class MarketsListView {
@@ -30,12 +35,15 @@ public class MarketsListView {
     private Runnable onLogout;
     private Consumer<Long> onMarketClick;
     private Runnable onCreateMarket;
+    private Consumer<BetRequest> onPlaceBet;
+    private Long currentUserId;
 
     private final ObservableList<events> marketList = FXCollections.observableArrayList();
 
     private Label marketsCountLabel;
     private GridPane marketsGrid;
     private VBox marketsContent;
+    private Label balanceValue;
 
     public MarketsListView() {
         root = new BorderPane();
@@ -126,9 +134,17 @@ public class MarketsListView {
         Button yesBtn = new Button("Yes \u00B7 " + yesPrice);
         yesBtn.getStyleClass().add("btn-yes");
         yesBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        yesBtn.setOnAction(e -> {
+            e.consume();
+            promptAndPlaceBet(event.getId(), OutcomeLabel.YES);
+        });
         Button noBtn = new Button("No \u00B7 " + noPrice);
         noBtn.getStyleClass().add("btn-no");
         noBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        noBtn.setOnAction(e -> {
+            e.consume();
+            promptAndPlaceBet(event.getId(), OutcomeLabel.NO);
+        });
         buttonsRow.getChildren().addAll(yesBtn, noBtn);
 
         HBox footerRow = new HBox(0);
@@ -231,7 +247,7 @@ public class MarketsListView {
         balanceLabel.setFont(Font.font("Inter", 10));
         HBox balanceValueBox = new HBox(6);
         balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        Label balanceValue = new Label("0.00");
+        balanceValue = new Label("0.00");
         balanceValue.getStyleClass().add("balance-value");
         balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
         Label balanceCurrency = new Label("$NVB");
@@ -399,6 +415,39 @@ public class MarketsListView {
 
     public BorderPane getView() {
         return root;
+    }
+
+    private void promptAndPlaceBet(long eventId, OutcomeLabel outcome) {
+        if (currentUserId == null) return;
+        TextInputDialog dialog = new TextInputDialog("10");
+        dialog.setTitle("Place Bet");
+        dialog.setHeaderText("Enter amount to bet on " + outcome);
+        dialog.setContentText("Amount ($NVB):");
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(amountStr -> {
+            try {
+                BigDecimal amount = new BigDecimal(amountStr.trim());
+                if (amount.compareTo(BigDecimal.ZERO) > 0 && onPlaceBet != null) {
+                    onPlaceBet.accept(new BetRequest(currentUserId, eventId, outcome, amount, false));
+                }
+            } catch (NumberFormatException | ArithmeticException ex) {
+                System.err.println("Invalid bet amount: " + amountStr);
+            }
+        });
+    }
+
+    public void setBalance(double balance) {
+        if (balanceValue != null) {
+            balanceValue.setText(String.format("%.2f", balance));
+        }
+    }
+
+    public void setCurrentUserId(Long userId) {
+        this.currentUserId = userId;
+    }
+
+    public void setOnPlaceBet(Consumer<BetRequest> onPlaceBet) {
+        this.onPlaceBet = onPlaceBet;
     }
 
     public void setOnLogout(Runnable onLogout) {

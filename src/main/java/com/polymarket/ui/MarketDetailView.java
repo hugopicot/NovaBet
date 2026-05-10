@@ -1,5 +1,7 @@
 package com.polymarket.ui;
 
+import com.polymarket.domain.dto.BetRequest;
+import com.polymarket.domain.dto.OutcomeLabel;
 import com.polymarket.model.events;
 import com.polymarket.model.outcomes;
 
@@ -15,11 +17,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Polyline;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class MarketDetailView {
 
@@ -28,6 +31,10 @@ public class MarketDetailView {
     private Runnable onMarketsClick;
     private Runnable onEditMarket;
     private Runnable onDeleteMarket;
+    private Consumer<BetRequest> onPlaceBet;
+    private Long currentUserId;
+    private Long currentEventId;
+    private List<outcomes> currentOutcomes;
 
     private Label questionLabel;
     private Label volumeLabel;
@@ -38,6 +45,8 @@ public class MarketDetailView {
     private Label descriptionLabel;
     private Label yesToggleBtn;
     private Label noToggleBtn;
+    private Label balanceValue;
+    private TextField amountField;
 
     public MarketDetailView() {
         root = new BorderPane();
@@ -48,6 +57,8 @@ public class MarketDetailView {
 
     public void setEventData(events event, List<outcomes> outcomes) {
         if (event == null) return;
+        this.currentEventId = event.getId();
+        this.currentOutcomes = outcomes;
 
         questionLabel.setText(event.getTitle() != null ? event.getTitle() : "");
 
@@ -137,7 +148,7 @@ public class MarketDetailView {
         balanceLabel.setFont(Font.font("Inter", 10));
         HBox balanceValueBox = new HBox(6);
         balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        Label balanceValue = new Label("0.00");
+        balanceValue = new Label("0.00");
         balanceValue.getStyleClass().add("balance-value");
         balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
         Label balanceCurrency = new Label("$NVB");
@@ -248,6 +259,7 @@ public class MarketDetailView {
 
         content.getChildren().addAll(
             createMarketHeader(),
+            createTradeSection(),
             createAboutSection()
         );
 
@@ -333,6 +345,71 @@ public class MarketDetailView {
 
         aboutBox.getChildren().addAll(title, descriptionLabel);
         return aboutBox;
+    }
+
+    private VBox createTradeSection() {
+        VBox tradeBox = new VBox(12);
+        tradeBox.getStyleClass().add("info-card");
+        tradeBox.setPadding(new Insets(16, 16, 16, 16));
+
+        Label title = new Label("PLACE YOUR BET");
+        title.getStyleClass().add("info-card-title");
+        title.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+
+        HBox amountRow = new HBox(10);
+        amountRow.setAlignment(Pos.CENTER_LEFT);
+        Label amountLabel = new Label("Amount:");
+        amountLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        amountField = new TextField();
+        amountField.setPromptText("e.g. 10.00");
+        amountField.getStyleClass().add("search-field");
+        amountField.setFont(Font.font("Inter", 13));
+        amountField.setPrefWidth(200);
+        amountRow.getChildren().addAll(amountLabel, amountField);
+
+        HBox buttonsRow = new HBox(10);
+        buttonsRow.setAlignment(Pos.CENTER_LEFT);
+        Button yesBtn = new Button("Buy Yes");
+        yesBtn.getStyleClass().add("btn-yes");
+        yesBtn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
+        yesBtn.setOnAction(e -> placeBet(OutcomeLabel.YES));
+        Button noBtn = new Button("Buy No");
+        noBtn.getStyleClass().add("btn-no");
+        noBtn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
+        noBtn.setOnAction(e -> placeBet(OutcomeLabel.NO));
+        buttonsRow.getChildren().addAll(yesBtn, noBtn);
+
+        tradeBox.getChildren().addAll(title, amountRow, buttonsRow);
+        return tradeBox;
+    }
+
+    private void placeBet(OutcomeLabel outcome) {
+        if (currentUserId == null || currentEventId == null || onPlaceBet == null) return;
+        String amountStr = amountField.getText();
+        if (amountStr == null || amountStr.isBlank()) return;
+        try {
+            BigDecimal amount = new BigDecimal(amountStr.trim());
+            if (amount.compareTo(BigDecimal.ZERO) > 0) {
+                onPlaceBet.accept(new BetRequest(currentUserId, currentEventId, outcome, amount, false));
+                amountField.clear();
+            }
+        } catch (NumberFormatException | ArithmeticException ex) {
+            System.err.println("Invalid bet amount: " + amountStr);
+        }
+    }
+
+    public void setBalance(double balance) {
+        if (balanceValue != null) {
+            balanceValue.setText(String.format("%.2f", balance));
+        }
+    }
+
+    public void setCurrentUserId(Long userId) {
+        this.currentUserId = userId;
+    }
+
+    public void setOnPlaceBet(Consumer<BetRequest> onPlaceBet) {
+        this.onPlaceBet = onPlaceBet;
     }
 
     public BorderPane getView() {

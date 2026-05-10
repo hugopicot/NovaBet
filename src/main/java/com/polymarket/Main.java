@@ -1,11 +1,20 @@
 package com.polymarket;
 
+import com.polymarket.dao.betsDao;
 import com.polymarket.dao.eventsDao;
 import com.polymarket.dao.outcomesDao;
+import com.polymarket.dao.transactionsDao;
+import com.polymarket.dao.walletsDao;
+import com.polymarket.domain.dto.BetRequest;
+import com.polymarket.domain.dto.BetResult;
+import com.polymarket.domain.service.BettingService;
+import com.polymarket.domain.service.BettingServiceImpl;
 import com.polymarket.domain.service.MarketService;
 import com.polymarket.domain.service.MarketServiceImpl;
 import com.polymarket.model.events;
 import com.polymarket.model.outcomes;
+import com.polymarket.model.users;
+import com.polymarket.model.wallets;
 import com.polymarket.ui.CreateMarketView;
 import com.polymarket.ui.DeleteMarketView;
 import com.polymarket.ui.MarketDetailView;
@@ -16,6 +25,7 @@ import com.polymarket.ui.auth.AuthModule;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
@@ -41,6 +51,9 @@ public class Main extends Application {
     private Stage primaryStage;
     private String css;
     private Long selectedMarketId;
+    private Long currentUserId;
+    private BettingService bettingService;
+    private walletsDao walletDao;
 
     @Override
     public void start(Stage primaryStage) {
@@ -51,6 +64,10 @@ public class Main extends Application {
             eventsDao eventDao = new eventsDao();
             outcomesDao outcomeDao = new outcomesDao();
             marketService = new MarketServiceImpl(eventDao, outcomeDao);
+            walletDao = new walletsDao();
+            bettingService = new BettingServiceImpl(
+                outcomeDao, eventDao, walletDao, new betsDao(), new transactionsDao()
+            );
         } catch (Exception e) {
             System.err.println("Failed to connect to database: " + e.getMessage());
             e.printStackTrace();
@@ -74,6 +91,13 @@ public class Main extends Application {
 
         AuthModule authModule = new AuthModule(primaryStage, css);
         authModule.setOnLoginSuccess(() -> {
+            users user = authModule.getCurrentUser();
+            if (user != null) {
+                currentUserId = user.getId();
+                marketsView.setCurrentUserId(currentUserId);
+                detailView.setCurrentUserId(currentUserId);
+                refreshBalance();
+            }
             loadMarkets();
             primaryStage.setScene(marketsScene);
         });
@@ -185,6 +209,41 @@ public class Main extends Application {
             loadMarkets();
             primaryStage.setScene(marketsScene);
         });
+
+        marketsView.setOnPlaceBet(this::handlePlaceBet);
+        detailView.setOnPlaceBet(this::handlePlaceBet);
+    }
+
+    private void handlePlaceBet(BetRequest request) {
+        if (bettingService == null) return;
+        try {
+            BetResult result = bettingService.buyShares(request);
+            refreshBalance();
+            showAlert(Alert.AlertType.INFORMATION, "Bet placed",
+                String.format("You bought %d shares for %s $NVB. Remaining balance: %s $NVB",
+                    result.shareCount(), result.totalCost(), result.remainingBalance()));
+        } catch (Exception ex) {
+            System.err.println("Betting error: " + ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Bet failed", ex.getMessage());
+        }
+    }
+
+    private void refreshBalance() {
+        if (walletDao == null || currentUserId == null) return;
+        wallets wallet = walletDao.findByUserId(currentUserId);
+        if (wallet != null) {
+            double total = wallet.getRealBalance() + wallet.getVirtualBalance();
+            marketsView.setBalance(total);
+            detailView.setBalance(total);
+        }
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private void loadMarkets() {

@@ -24,6 +24,7 @@ public class AuthModule {
 
     private usersDao userDao;
     private walletsDao walletDao;
+    private users currentUser;
 
     private LoginView loginView;
     private RegisterView registerView;
@@ -109,12 +110,17 @@ public class AuthModule {
         try {
             users user = userDao.findByEmail(email);
             if (user != null && BCrypt.checkpw(password, user.getPasswordHash())) {
+                this.currentUser = user;
                 return true;
             }
         } catch (Exception e) {
             System.err.println("Auth error: " + e.getMessage());
         }
         return false;
+    }
+
+    public users getCurrentUser() {
+        return currentUser;
     }
 
     private void register(String name, String email, String password) {
