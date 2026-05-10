@@ -1,8 +1,8 @@
 package com.polymarket.domain.service;
 
-import com.polymarket.domain.model.BetRequest;
-import com.polymarket.domain.model.BetResult;
-import com.polymarket.domain.model.OutcomeLabel;
+import com.polymarket.domain.dto.BetRequest;
+import com.polymarket.domain.dto.BetResult;
+import com.polymarket.domain.dto.OutcomeLabel;
 
 import java.math.BigDecimal;
 

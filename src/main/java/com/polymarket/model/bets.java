@@ -15,7 +15,6 @@ public class bets {
         this.potential_win=potential_win;
     }
 
-    // Constructeur sans id (utile pour l'ajout)
     public bets(int user_id, int outcome_id, int amount, int potential_win) {
         this.user_id = user_id;
         this.outcome_id = outcome_id;
@@ -23,11 +22,9 @@ public class bets {
         this.potential_win = potential_win;
     }
 
-    // Constructeur vide
     public bets() {
     }
 
-    // Getters
     public int getId() {
         return id;
     }
@@ -48,7 +45,6 @@ public class bets {
         return potential_win;
     }
 
-    // Setters
     public void setId(int id) {
         this.id = id;
     }
@@ -78,6 +74,5 @@ public class bets {
                 ", amount=" + amount +
                 ", potential_win=" + potential_win +
                 '}';
-
-
-    }}
+    }
+}

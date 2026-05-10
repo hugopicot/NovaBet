@@ -2,7 +2,6 @@ package com.polymarket.dao;
 
 import com.polymarket.model.transactions;
 import com.polymarket.util.DatabaseConnection;
-import com.polymarket.util.DatabaseConnection;
 
 import java.sql.*;
 import java.util.ArrayList;
