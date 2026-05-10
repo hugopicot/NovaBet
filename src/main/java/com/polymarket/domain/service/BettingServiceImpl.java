@@ -21,7 +21,9 @@ import com.polymarket.model.wallets;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class BettingServiceImpl implements BettingService {
 
@@ -75,11 +77,12 @@ public class BettingServiceImpl implements BettingService {
         );
         betDao.add(bet);
 
+        String createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         transactionDao.add(new transactions(
             request.userId(),
             "BET_PLACED",
             totalCost.negate().doubleValue(),
-            Instant.now().toString()
+            createdAt
         ));
 
         wallets updatedWallet = walletDao.findById(wallet.getId());
@@ -160,7 +163,14 @@ public class BettingServiceImpl implements BettingService {
     }
 
     private outcomes getAndValidateOutcome(long eventId, OutcomeLabel label) {
-        outcomes outcome = outcomeDao.findById(eventId);
+        List<outcomes> outcomes = outcomeDao.findByEventId(eventId);
+        outcomes outcome = null;
+        for (outcomes o : outcomes) {
+            if (label.name().equalsIgnoreCase(o.getLabel())) {
+                outcome = o;
+                break;
+            }
+        }
         if (outcome == null) {
             throw new OutcomeNotFoundException(
                 "Outcome " + label + " not found for event: " + eventId
@@ -171,7 +181,7 @@ public class BettingServiceImpl implements BettingService {
     }
 
     private wallets getAndValidateWallet(long userId, BigDecimal requiredAmount) {
-        wallets wallet = walletDao.findById(userId);
+        wallets wallet = walletDao.findByUserId(userId);
         if (wallet == null) {
             throw new InsufficientFundsException(
                 "Wallet not found for user: " + userId
@@ -206,12 +216,11 @@ public class BettingServiceImpl implements BettingService {
     }
 
     private BigDecimal calculateSharePriceFromOdds(BigDecimal odds, OutcomeLabel outcome) {
-        BigDecimal probability = BigDecimal.ONE.divide(odds, 10, RoundingMode.HALF_UP);
-
-        if (probability.compareTo(BigDecimal.ZERO) < 0 || probability.compareTo(BigDecimal.ONE) > 0) {
-            throw new InvalidBetException("Invalid odds resulting in probability outside [0,1]: " + odds);
+        // In the DB, 'odds' column stores probability (0.0 - 1.0), not traditional odds
+        if (odds.compareTo(BigDecimal.ZERO) < 0 || odds.compareTo(BigDecimal.ONE) > 0) {
+            throw new InvalidBetException("Invalid probability outside [0,1]: " + odds);
         }
 
-        return probability.setScale(SHARE_PRICE_SCALE, RoundingMode.HALF_UP);
+        return odds.setScale(SHARE_PRICE_SCALE, RoundingMode.HALF_UP);
     }
 }
