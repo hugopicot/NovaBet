@@ -110,3 +110,962 @@
     -fx-text-fill: #0096b4;
     -fx-underline: true;
 }
+
+/* Markets List View Styles */
+
+.logo-version {
+    -fx-text-fill: #484f58;
+}
+
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.nav-item:hover {
+    -fx-background-color: #161b22;
+}
+
+.nav-item-active {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.nav-item-active:hover {
+    -fx-background-color: #1a1f2e;
+}
+
+.nav-icon {
+    -fx-background-color: #484f58;
+    -fx-background-radius: 3;
+}
+
+.nav-icon-active {
+    -fx-background-color: #00b4d8;
+    -fx-background-radius: 3;
+}
+
+.nav-text {
+    -fx-text-fill: #8b949e;
+}
+
+.nav-text-active {
+    -fx-text-fill: #ffffff;
+}
+
+.categories-title {
+    -fx-text-fill: #484f58;
+    -fx-letter-spacing: 1;
+}
+
+.category-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.category-item:hover {
+    -fx-background-color: #161b22;
+}
+
+.category-icon {
+    -fx-background-color: #30363d;
+    -fx-background-radius: 3;
+}
+
+.category-text {
+    -fx-text-fill: #c9d1d9;
+}
+
+.category-count {
+    -fx-text-fill: #484f58;
+}
+
+.casino-icon {
+    -fx-background-color: #f59e0b;
+    -fx-background-radius: 4;
+    -fx-pref-width: 16;
+    -fx-pref-height: 16;
+}
+
+.casino-text {
+    -fx-text-fill: #f59e0b;
+    -fx-font-weight: bold;
+    -fx-font-size: 13;
+}
+
+.hot-badge {
+    -fx-background-color: #ef4444;
+    -fx-background-radius: 10;
+    -fx-pref-width: 32;
+    -fx-pref-height: 16;
+}
+
+.balance-box {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 8;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.balance-label {
+    -fx-text-fill: #484f58;
+}
+
+.balance-value {
+    -fx-text-fill: #ffffff;
+}
+
+.balance-currency {
+    -fx-text-fill: #f59e0b;
+}
+
+.balance-change {
+    -fx-text-fill: #22c55e;
+}
+
+.main-content {
+    -fx-background-color: #0d1117;
+}
+
+.markets-title {
+    -fx-text-fill: #ffffff;
+}
+
+.search-box {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 8;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 0 12;
+}
+
+.search-icon {
+    -fx-background-color: #484f58;
+    -fx-background-radius: 4;
+}
+
+.search-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #c9d1d9;
+    -fx-prompt-text-fill: #484f58;
+    -fx-border: none;
+}
+
+.search-field:focused {
+    -fx-background-color: transparent;
+}
+
+.header-balance-box {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 20;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 20;
+}
+
+.balance-icon {
+    -fx-background-color: linear-gradient(to bottom right, #f59e0b, #f97316);
+    -fx-background-radius: 10;
+}
+
+.header-balance-value {
+    -fx-text-fill: #ffffff;
+}
+
+.header-balance-currency {
+    -fx-text-fill: #484f58;
+}
+
+.notification-btn {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 8;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+
+.notification-btn:hover {
+    -fx-background-color: #1a1f2e;
+}
+
+.deposit-btn {
+    -fx-background-color: linear-gradient(to bottom, #fbbf24, #f59e0b);
+    -fx-text-fill: #000000;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 8 20;
+}
+
+.deposit-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #f59e0b, #d97706);
+}
+
+.filter-btn {
+    -fx-background-color: #161b22;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 20;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 20;
+    -fx-cursor: hand;
+    -fx-padding: 6 16;
+}
+
+.filter-btn:hover {
+    -fx-background-color: #1a1f2e;
+    -fx-text-fill: #c9d1d9;
+}
+
+.filter-btn-active {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #000000;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-padding: 6 16;
+    -fx-font-weight: bold;
+}
+
+.sort-btn {
+    -fx-background-color: #161b22;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 8;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 6 14;
+}
+
+.sort-btn:hover {
+    -fx-background-color: #1a1f2e;
+    -fx-text-fill: #c9d1d9;
+}
+
+.stats-count {
+    -fx-text-fill: #ffffff;
+}
+
+.stats-text-muted {
+    -fx-text-fill: #484f58;
+}
+
+.live-badge {
+    -fx-background-color: #1a0a0a;
+    -fx-background-radius: 12;
+    -fx-border-color: #ef4444;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-padding: 4 10;
+}
+
+.live-dot {
+    -fx-background-color: #ef4444;
+    -fx-background-radius: 3;
+}
+
+.live-text {
+    -fx-text-fill: #ef4444;
+}
+
+.markets-scroll {
+    -fx-background-color: transparent;
+    -fx-border: none;
+}
+
+.markets-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.market-card {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 12;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-cursor: hand;
+}
+
+.market-card:hover {
+    -fx-border-color: #30363d;
+    -fx-background-color: #1a1f2e;
+}
+
+.market-icon-container {
+    -fx-background-color: #1a2235;
+    -fx-background-radius: 8;
+    -fx-alignment: center;
+}
+
+.market-question {
+    -fx-text-fill: #ffffff;
+}
+
+.progress-bar-bg {
+    -fx-background-color: #1a2235;
+    -fx-background-radius: 2;
+}
+
+.progress-bar-yes {
+    -fx-background-color: #22c55e;
+    -fx-background-radius: 2 0 0 2;
+}
+
+.progress-bar-no {
+    -fx-background-color: #3d1f1f;
+    -fx-background-radius: 0 2 2 0;
+}
+
+.percent-yes {
+    -fx-text-fill: #22c55e;
+}
+
+.percent-no {
+    -fx-text-fill: #8b949e;
+}
+
+.btn-yes {
+    -fx-background-color: #0a2a1a;
+    -fx-text-fill: #22c55e;
+    -fx-background-radius: 8;
+    -fx-border-color: #22c55e;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 8 16;
+}
+
+.btn-yes:hover {
+    -fx-background-color: #0d3320;
+}
+
+.btn-no {
+    -fx-background-color: #2a0a0a;
+    -fx-text-fill: #ef4444;
+    -fx-background-radius: 8;
+    -fx-border-color: #ef4444;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 8 16;
+}
+
+.btn-no:hover {
+    -fx-background-color: #330d0d;
+}
+
+.footer-label {
+    -fx-text-fill: #484f58;
+}
+
+/* Market Detail View Styles */
+
+.breadcrumb-text {
+    -fx-text-fill: #484f58;
+    -fx-cursor: hand;
+}
+
+.breadcrumb-text:hover {
+    -fx-text-fill: #8b949e;
+}
+
+.breadcrumb-separator {
+    -fx-text-fill: #30363d;
+}
+
+.breadcrumb-text-active {
+    -fx-text-fill: #ffffff;
+}
+
+.detail-scroll {
+    -fx-background-color: transparent;
+    -fx-border: none;
+}
+
+.detail-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.detail-question {
+    -fx-text-fill: #ffffff;
+}
+
+.meta-label {
+    -fx-text-fill: #484f58;
+}
+
+.prob-label {
+    -fx-text-fill: #484f58;
+}
+
+.prob-value {
+    -fx-text-fill: #22c55e;
+}
+
+.prob-percent {
+    -fx-text-fill: #22c55e;
+}
+
+.prob-change {
+    -fx-text-fill: #22c55e;
+}
+
+.chart-section {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 12;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.chart-title {
+    -fx-text-fill: #8b949e;
+}
+
+.time-btn {
+    -fx-background-color: #1a2235;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 6;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 4 12;
+}
+
+.time-btn:hover {
+    -fx-background-color: #1f2a3a;
+    -fx-text-fill: #c9d1d9;
+}
+
+.time-btn-active {
+    -fx-background-color: #30363d;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 6;
+    -fx-border-color: #484f58;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 4 12;
+}
+
+.chart-area {
+    -fx-background-color: transparent;
+}
+
+.chart-polyline {
+    -fx-stroke: #22c55e;
+    -fx-stroke-width: 2;
+    -fx-fill: transparent;
+}
+
+.left-column {
+    -fx-pref-width: 400;
+    -fx-max-width: 400;
+}
+
+.right-column {
+    -fx-pref-width: 340;
+    -fx-max-width: 340;
+}
+
+.info-card {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 12;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.info-card-title {
+    -fx-text-fill: #484f58;
+}
+
+.info-card-text {
+    -fx-text-fill: #c9d1d9;
+    -fx-line-spacing: 2;
+}
+
+.holder-avatar {
+    -fx-background-color: #30363d;
+    -fx-background-radius: 12;
+}
+
+.holder-address {
+    -fx-text-fill: #c9d1d9;
+}
+
+.holder-yes-badge {
+    -fx-background-color: #0a2a1a;
+    -fx-text-fill: #22c55e;
+    -fx-background-radius: 4;
+    -fx-padding: 2 8;
+}
+
+.holder-no-badge {
+    -fx-background-color: #2a0a0a;
+    -fx-text-fill: #ef4444;
+    -fx-background-radius: 4;
+    -fx-padding: 2 8;
+}
+
+.holder-amount {
+    -fx-text-fill: #8b949e;
+}
+
+.trade-panel {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 12;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.yes-no-toggle {
+    -fx-background-color: #1a2235;
+    -fx-background-radius: 8;
+    -fx-padding: 3;
+}
+
+.yes-toggle-active {
+    -fx-background-color: #0a2a1a;
+    -fx-text-fill: #22c55e;
+    -fx-background-radius: 6;
+    -fx-border-color: #22c55e;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 8 16;
+    -fx-pref-width: 120;
+}
+
+.no-toggle {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 8 16;
+    -fx-pref-width: 120;
+}
+
+.no-toggle:hover {
+    -fx-text-fill: #c9d1d9;
+}
+
+.buy-sell-active {
+    -fx-background-color: #30363d;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 4 12;
+}
+
+.buy-sell-toggle {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 4 12;
+}
+
+.buy-sell-toggle:hover {
+    -fx-text-fill: #c9d1d9;
+}
+
+.limit-btn {
+    -fx-background-color: #1a2235;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 6;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 4 10;
+}
+
+.limit-btn:hover {
+    -fx-background-color: #1f2a3a;
+    -fx-text-fill: #c9d1d9;
+}
+
+.amount-label {
+    -fx-text-fill: #484f58;
+}
+
+.amount-input-box {
+    -fx-background-color: #1a2235;
+    -fx-background-radius: 8;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 0 12;
+}
+
+.amount-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+    -fx-border: none;
+    -fx-pref-height: 40;
+}
+
+.amount-field:focused {
+    -fx-background-color: transparent;
+}
+
+.currency-label {
+    -fx-text-fill: #484f58;
+}
+
+.quick-amount-btn {
+    -fx-background-color: #1a2235;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 6;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 6 14;
+    -fx-pref-width: 70;
+}
+
+.quick-amount-btn:hover {
+    -fx-background-color: #1f2a3a;
+    -fx-text-fill: #c9d1d9;
+}
+
+.summary-label {
+    -fx-text-fill: #8b949e;
+}
+
+.summary-value {
+    -fx-text-fill: #c9d1d9;
+}
+
+.summary-value-highlight {
+    -fx-text-fill: #22c55e;
+}
+
+.buy-button {
+    -fx-background-color: #0ea5e9;
+    -fx-text-fill: #000000;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 12 16;
+}
+
+.buy-button:hover {
+    -fx-background-color: #0284c7;
+}
+
+.orderbook-panel {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 12;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.orderbook-title {
+    -fx-text-fill: #484f58;
+}
+
+.spread-label {
+    -fx-text-fill: #484f58;
+}
+
+.ob-col-label {
+    -fx-text-fill: #484f58;
+}
+
+.ob-ask-price {
+    -fx-text-fill: #ef4444;
+}
+
+.ob-ask-shares {
+    -fx-text-fill: #ef4444;
+}
+
+.ob-ask-total {
+    -fx-text-fill: #ef4444;
+}
+
+.ob-bid-price {
+    -fx-text-fill: #22c55e;
+}
+
+.ob-bid-shares {
+    -fx-text-fill: #22c55e;
+}
+
+.ob-bid-total {
+    -fx-text-fill: #22c55e;
+}
+
+.mid-price {
+    -fx-text-fill: #ffffff;
+}
+
+/* Create Market View Styles */
+
+.step-label {
+    -fx-text-fill: #484f58;
+}
+
+.form-page-title {
+    -fx-text-fill: #ffffff;
+}
+
+.form-page-subtitle {
+    -fx-text-fill: #8b949e;
+}
+
+.form-card {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 12;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.form-field-label {
+    -fx-text-fill: #484f58;
+}
+
+.form-input {
+    -fx-background-color: #1a2235;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #c9d1d9;
+    -fx-prompt-text-fill: #484f58;
+    -fx-font-size: 14;
+    -fx-padding: 10 14;
+}
+
+.form-input:focused {
+    -fx-border-color: #0ea5e9;
+    -fx-background-color: #1f2a3a;
+}
+
+.form-hint {
+    -fx-text-fill: #484f58;
+}
+
+.probability-box {
+    -fx-background-color: #1a2235;
+    -fx-background-radius: 8;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.prob-yes-label {
+    -fx-text-fill: #22c55e;
+}
+
+.prob-no-label {
+    -fx-text-fill: #ef4444;
+}
+
+.prob-slider {
+    -fx-background-color: transparent;
+}
+
+.prob-slider .track {
+    -fx-background-color: #30363d;
+    -fx-background-radius: 4;
+    -fx-pref-height: 8;
+}
+
+.prob-slider .thumb {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 10;
+    -fx-pref-width: 20;
+    -fx-pref-height: 20;
+}
+
+.btn-back {
+    -fx-background-color: #161b22;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 8;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 10 20;
+}
+
+.btn-back:hover {
+    -fx-background-color: #1a1f2e;
+    -fx-text-fill: #c9d1d9;
+}
+
+.btn-continue {
+    -fx-background-color: #0ea5e9;
+    -fx-text-fill: #000000;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 12 24;
+}
+
+.btn-continue:hover {
+    -fx-background-color: #0284c7;
+}
+
+.btn-save {
+    -fx-background-color: #22c55e;
+    -fx-text-fill: #000000;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 12 24;
+}
+
+.btn-save:hover {
+    -fx-background-color: #16a34a;
+}
+
+.danger-label {
+    -fx-text-fill: #ef4444;
+}
+
+.warning-card {
+    -fx-background-color: #1a0a0a;
+    -fx-background-radius: 12;
+    -fx-border-color: #ef4444;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.info-row-label {
+    -fx-text-fill: #8b949e;
+}
+
+.info-row-value {
+    -fx-text-fill: #c9d1d9;
+}
+
+.form-input-danger {
+    -fx-background-color: #1a0a0a;
+    -fx-border-color: #ef4444;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #c9d1d9;
+    -fx-prompt-text-fill: #484f58;
+    -fx-font-size: 14;
+    -fx-padding: 10 14;
+}
+
+.form-input-danger:focused {
+    -fx-border-color: #dc2626;
+    -fx-background-color: #1f0d0d;
+}
+
+.btn-delete {
+    -fx-background-color: #ef4444;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 12 24;
+}
+
+.btn-delete:hover {
+    -fx-background-color: #dc2626;
+}
+
+.action-btn-edit {
+    -fx-background-color: #161b22;
+    -fx-text-fill: #8b949e;
+    -fx-background-radius: 6;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 6 14;
+}
+
+.action-btn-edit:hover {
+    -fx-background-color: #1a1f2e;
+    -fx-text-fill: #c9d1d9;
+}
+
+.action-btn-delete {
+    -fx-background-color: #2a0a0a;
+    -fx-text-fill: #ef4444;
+    -fx-background-radius: 6;
+    -fx-border-color: #ef4444;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+    -fx-padding: 6 14;
+}
+
+.action-btn-delete:hover {
+    -fx-background-color: #330d0d;
+}
+
+.delete-dialog {
+    -fx-background-color: #161b22;
+    -fx-background-radius: 16;
+    -fx-border-color: #1a2235;
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+}
+
+.warning-icon {
+    -fx-background-color: #ef4444;
+    -fx-background-radius: 24;
+    -fx-shape: "M 0 -20 L 17.32 10 L -17.32 10 Z";
+}
+
+.delete-dialog-title {
+    -fx-text-fill: #ffffff;
+}
+
+.delete-dialog-subtitle {
+    -fx-text-fill: #8b949e;
+}
+
+.delete-market-preview {
+    -fx-background-color: #1a2235;
+    -fx-background-radius: 8;
+    -fx-border-color: #30363d;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.delete-preview-question {
+    -fx-text-fill: #c9d1d9;
+}
+
+.delete-preview-meta {
+    -fx-text-fill: #484f58;
+}
+
+.delete-confirm-label {
+    -fx-text-fill: #484f58;
+}
+
+.delete-confirm-input {
+    -fx-background-color: #1a0a0a;
+    -fx-border-color: #ef4444;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #c9d1d9;
+    -fx-prompt-text-fill: #484f58;
+    -fx-font-size: 14;
+    -fx-padding: 10 14;
+}
+
+.delete-confirm-input:focused {
+    -fx-border-color: #dc2626;
+    -fx-background-color: #1f0d0d;
+}
+
