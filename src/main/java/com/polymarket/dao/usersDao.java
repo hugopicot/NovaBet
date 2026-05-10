@@ -106,18 +106,45 @@ import java.util.List;
             }
         }
 
-        // Supprimer un utilisateur
-        public void delete(Long id) {
-            String sql = "DELETE FROM users WHERE id = ?";
+// Supprimer un utilisateur
+    public void delete(Long id) {
+        String sql = "DELETE FROM users WHERE id = ?";
 
-            try {
-                PreparedStatement ps = connection.prepareStatement(sql);
-                ps.setLong(1, id);
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setLong(1, id);
 
-                ps.executeUpdate();
+            ps.executeUpdate();
 
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
+
+    // Récupérer un utilisateur par email
+    public users findByEmail(String email) {
+        String sql = "SELECT * FROM users WHERE email = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, email);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new users(
+                        rs.getLong("id"),
+                        rs.getString("username"),
+                        rs.getString("email"),
+                        rs.getString("password_hash"),
+                        rs.getString("created_at")
+                );
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+}

@@ -19,6 +19,12 @@ public class RegisterView {
 
     private BorderPane root;
     private Runnable onLogin;
+    private Runnable onRegister;
+
+    private TextField nameField;
+    private TextField emailField;
+    private PasswordField passwordField;
+    private PasswordField confirmPasswordField;
 
     public RegisterView() {
         root = new BorderPane();
@@ -82,9 +88,16 @@ public class RegisterView {
         formFields.setPrefWidth(380);
 
         VBox nameBox = createInputField("Full Name", "John Doe", false);
+        nameField = (TextField) nameBox.getChildren().get(1);
+
         VBox emailBox = createInputField("Email", "you@example.com", false);
+        emailField = (TextField) emailBox.getChildren().get(1);
+
         VBox passwordBox = createInputField("Password", "••••••••", true);
+        passwordField = (PasswordField) passwordBox.getChildren().get(1);
+
         VBox confirmBox = createInputField("Confirm Password", "••••••••", true);
+        confirmPasswordField = (PasswordField) confirmBox.getChildren().get(1);
 
         formFields.getChildren().addAll(nameBox, emailBox, passwordBox, confirmBox);
 
@@ -93,6 +106,9 @@ public class RegisterView {
         registerButton.setPrefWidth(380);
         registerButton.setPrefHeight(48);
         registerButton.setFont(Font.font("Inter", FontWeight.SEMI_BOLD, 15));
+        registerButton.setOnAction(e -> {
+            if (onRegister != null) onRegister.run();
+        });
 
         HBox switchBox = new HBox(8);
         switchBox.setAlignment(Pos.CENTER);
@@ -139,5 +155,25 @@ public class RegisterView {
 
     public void setOnLogin(Runnable onLogin) {
         this.onLogin = onLogin;
+    }
+
+    public void setOnRegister(Runnable onRegister) {
+        this.onRegister = onRegister;
+    }
+
+    public String getName() {
+        return nameField.getText();
+    }
+
+    public String getEmail() {
+        return emailField.getText();
+    }
+
+    public String getPassword() {
+        return passwordField.getText();
+    }
+
+    public String getConfirmPassword() {
+        return confirmPasswordField.getText();
     }
 }

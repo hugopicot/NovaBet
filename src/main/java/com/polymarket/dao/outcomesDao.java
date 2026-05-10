@@ -116,4 +116,32 @@ public class outcomesDao {
             e.printStackTrace();
         }
     }
+
+    // Récupérer les outcomes par event_id
+    public List<outcomes> findByEventId(Long eventId) {
+        List<outcomes> list = new ArrayList<>();
+        String sql = "SELECT * FROM outcomes WHERE event_id = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setLong(1, eventId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                outcomes outcome = new outcomes(
+                        rs.getLong("id"),
+                        rs.getLong("event_id"),
+                        rs.getString("label"),
+                        rs.getDouble("odds")
+                );
+                list.add(outcome);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }

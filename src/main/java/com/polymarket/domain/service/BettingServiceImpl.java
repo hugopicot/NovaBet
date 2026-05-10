@@ -69,7 +69,7 @@ public class BettingServiceImpl implements BettingService {
 
         bets bet = new bets(
             (int) request.userId(),
-            (int) outcome.getId(),
+            outcome.getId().intValue(),
             totalCost.intValue(),
             potentialWin.intValue()
         );

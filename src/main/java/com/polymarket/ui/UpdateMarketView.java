@@ -1,5 +1,7 @@
 package com.polymarket.ui;
 
+import com.polymarket.model.events;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -18,12 +20,52 @@ public class UpdateMarketView {
 
     private BorderPane root;
     private Runnable onBack;
+    private Runnable onMarketsClick;
+    private OnMarketUpdatedCallback onMarketUpdated;
+
+    private TextField questionField;
+    private TextField categoryField;
+    private TextField dateField;
+    private TextField descriptionField;
+    private Slider probabilitySlider;
+    private Label yesPercentLabel;
+    private Label noPercentLabel;
+
+    private events currentEvent;
+
+    public interface OnMarketUpdatedCallback {
+        void onUpdated(events event, double yesProbability);
+    }
 
     public UpdateMarketView() {
         root = new BorderPane();
         root.getStyleClass().add("main-container");
         root.setLeft(createSidebar());
         root.setCenter(createMainContent());
+    }
+
+    public void setEventData(events event) {
+        this.currentEvent = event;
+        if (event != null) {
+            questionField.setText(event.getTitle() != null ? event.getTitle() : "");
+            descriptionField.setText(event.getDescription() != null ? event.getDescription() : "");
+            dateField.setText(event.getResolution() != null ? event.getResolution() : "");
+            probabilitySlider.setValue(50);
+        }
+    }
+
+    public events getMarketFromForm() {
+        if (currentEvent == null) {
+            currentEvent = new events();
+        }
+        currentEvent.setTitle(questionField.getText());
+        currentEvent.setDescription(descriptionField.getText());
+        currentEvent.setResolution(dateField.getText());
+        return currentEvent;
+    }
+
+    public double getYesProbability() {
+        return probabilitySlider.getValue() / 100.0;
     }
 
     private VBox createSidebar() {
@@ -44,15 +86,20 @@ public class UpdateMarketView {
         Label logoText = new Label("NovaBet");
         logoText.getStyleClass().add("logo-text");
         logoText.setFont(Font.font("Inter", FontWeight.BOLD, 16));
-        Label logoVersion = new Label("v0.4.2 · alpha");
+        Label logoVersion = new Label("v0.4.2 \u00B7 alpha");
         logoVersion.getStyleClass().add("logo-version");
         logoVersion.setFont(Font.font("Inter", 10));
         logoTextContainer.getChildren().addAll(logoText, logoVersion);
         logoBox.getChildren().addAll(logoIcon, logoTextContainer);
 
         VBox navItems = new VBox(4);
+        HBox marketsNav = createNavItem("Markets", false);
+        marketsNav.setCursor(javafx.scene.Cursor.HAND);
+        marketsNav.setOnMouseClicked(e -> {
+            if (onMarketsClick != null) onMarketsClick.run();
+        });
         navItems.getChildren().addAll(
-            createNavItem("Markets", false),
+            marketsNav,
             createNavItem("Portfolio", false),
             createNavItem("Create market", true),
             createNavItem("History", false)
@@ -60,39 +107,11 @@ public class UpdateMarketView {
 
         topSection.getChildren().addAll(logoBox, navItems);
 
-        VBox categoriesSection = new VBox(8);
-        categoriesSection.setPadding(new Insets(16, 16, 0, 16));
-        Label categoriesTitle = new Label("CATEGORIES");
-        categoriesTitle.getStyleClass().add("categories-title");
-        categoriesTitle.setFont(Font.font("Inter", FontWeight.MEDIUM, 11));
-        categoriesSection.getChildren().add(categoriesTitle);
-
-        VBox categoryItems = new VBox(4);
-        categoryItems.getChildren().addAll(
-            createCategoryItem("Tech / AI", "248"),
-            createCategoryItem("Sport", "412"),
-            createCategoryItem("Absurd", "87")
-        );
-        categoriesSection.getChildren().add(categoryItems);
-
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
         VBox bottomSection = new VBox(12);
         bottomSection.setPadding(new Insets(0, 16, 20, 16));
-
-        HBox casinoBox = new HBox(10);
-        casinoBox.setAlignment(Pos.CENTER_LEFT);
-        casinoBox.setPadding(new Insets(8, 0, 8, 0));
-        Label casinoIcon = new Label("");
-        casinoIcon.getStyleClass().add("casino-icon");
-        Label casinoText = new Label("Casino");
-        casinoText.getStyleClass().add("casino-text");
-        Region hotBadge = new Region();
-        hotBadge.getStyleClass().add("hot-badge");
-        Region spacer2 = new Region();
-        HBox.setHgrow(spacer2, Priority.ALWAYS);
-        casinoBox.getChildren().addAll(casinoIcon, casinoText, spacer2, hotBadge);
 
         VBox balanceBox = new VBox(4);
         balanceBox.getStyleClass().add("balance-box");
@@ -102,21 +121,18 @@ public class UpdateMarketView {
         balanceLabel.setFont(Font.font("Inter", 10));
         HBox balanceValueBox = new HBox(6);
         balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        Label balanceValue = new Label("12,480.50");
+        Label balanceValue = new Label("0.00");
         balanceValue.getStyleClass().add("balance-value");
         balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
         Label balanceCurrency = new Label("$NVB");
         balanceCurrency.getStyleClass().add("balance-currency");
         balanceCurrency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
         balanceValueBox.getChildren().addAll(balanceValue, balanceCurrency);
-        Label balanceChange = new Label("+240 · 24h");
-        balanceChange.getStyleClass().add("balance-change");
-        balanceChange.setFont(Font.font("Inter", 11));
-        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox, balanceChange);
+        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox);
 
-        bottomSection.getChildren().addAll(casinoBox, balanceBox);
+        bottomSection.getChildren().addAll(balanceBox);
 
-        sidebar.getChildren().addAll(topSection, categoriesSection, spacer, bottomSection);
+        sidebar.getChildren().addAll(topSection, spacer, bottomSection);
         return sidebar;
     }
 
@@ -146,31 +162,6 @@ public class UpdateMarketView {
         return item;
     }
 
-    private HBox createCategoryItem(String text, String count) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setPadding(new Insets(6, 12, 6, 12));
-        item.getStyleClass().add("category-item");
-
-        Region icon = new Region();
-        icon.setPrefSize(16, 16);
-        icon.getStyleClass().add("category-icon");
-
-        Label label = new Label(text);
-        label.getStyleClass().add("category-text");
-        label.setFont(Font.font("Inter", 13));
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label countLabel = new Label(count);
-        countLabel.getStyleClass().add("category-count");
-        countLabel.setFont(Font.font("Inter", 12));
-
-        item.getChildren().addAll(icon, label, spacer, countLabel);
-        return item;
-    }
-
     private BorderPane createMainContent() {
         BorderPane mainContent = new BorderPane();
         mainContent.getStyleClass().add("main-content");
@@ -193,46 +184,10 @@ public class UpdateMarketView {
         pageTitle.getStyleClass().add("markets-title");
         pageTitle.setFont(Font.font("Inter", FontWeight.BOLD, 16));
 
-        HBox searchBox = new HBox(0);
-        searchBox.getStyleClass().add("search-box");
-        searchBox.setPrefWidth(320);
-        searchBox.setPrefHeight(36);
-        Region searchIcon = new Region();
-        searchIcon.getStyleClass().add("search-icon");
-        searchIcon.setPrefSize(16, 16);
-        TextField searchField = new TextField();
-        searchField.setPromptText("Search markets, e.g. \"GPT-5 release\"");
-        searchField.getStyleClass().add("search-field");
-        searchField.setFont(Font.font("Inter", 13));
-        searchBox.getChildren().addAll(searchIcon, searchField);
-
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox balanceBox = new HBox(8);
-        balanceBox.setAlignment(Pos.CENTER);
-        balanceBox.getStyleClass().add("header-balance-box");
-        balanceBox.setPadding(new Insets(6, 14, 6, 14));
-        Region balanceIcon = new Region();
-        balanceIcon.getStyleClass().add("balance-icon");
-        balanceIcon.setPrefSize(20, 20);
-        Label balanceValue = new Label("12,480.50");
-        balanceValue.getStyleClass().add("header-balance-value");
-        balanceValue.setFont(Font.font("Inter", 14));
-        Label balanceCurrency = new Label("$NVB");
-        balanceCurrency.getStyleClass().add("header-balance-currency");
-        balanceCurrency.setFont(Font.font("Inter", 12));
-        balanceBox.getChildren().addAll(balanceIcon, balanceValue, balanceCurrency);
-
-        Region notifBtn = new Region();
-        notifBtn.getStyleClass().add("notification-btn");
-        notifBtn.setPrefSize(36, 36);
-
-        Button depositBtn = new Button("+ DEPOSIT");
-        depositBtn.getStyleClass().add("deposit-btn");
-        depositBtn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
-
-        headerRow.getChildren().addAll(pageTitle, searchBox, spacer, balanceBox, notifBtn, depositBtn);
+        headerRow.getChildren().addAll(pageTitle, spacer);
 
         topBar.getChildren().add(headerRow);
         return topBar;
@@ -266,8 +221,7 @@ public class UpdateMarketView {
         formCard.getChildren().addAll(
             createQuestionField(),
             createCategoryAndDateRow(),
-            createResolutionSourceField(),
-            createLiquidityField(),
+            createDescriptionField(),
             createProbabilitySlider()
         );
 
@@ -284,6 +238,11 @@ public class UpdateMarketView {
         Button saveBtn = new Button("Save changes");
         saveBtn.getStyleClass().add("btn-save");
         saveBtn.setFont(Font.font("Inter", FontWeight.BOLD, 14));
+        saveBtn.setOnAction(e -> {
+            if (onMarketUpdated != null) {
+                onMarketUpdated.onUpdated(getMarketFromForm(), getYesProbability());
+            }
+        });
 
         buttonRow.getChildren().addAll(cancelBtn, saveBtn);
 
@@ -300,15 +259,12 @@ public class UpdateMarketView {
         label.getStyleClass().add("form-field-label");
         label.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
 
-        TextField input = new TextField("Will Anthropic release Claude 5 before September 2026?");
-        input.getStyleClass().add("form-input");
-        input.setFont(Font.font("Inter", 14));
+        questionField = new TextField();
+        questionField.setPromptText("e.g. Will X happen before Y date?");
+        questionField.getStyleClass().add("form-input");
+        questionField.setFont(Font.font("Inter", 14));
 
-        Label hint = new Label("Must resolve to a clear YES or NO based on a public source.");
-        hint.getStyleClass().add("form-hint");
-        hint.setFont(Font.font("Inter", 12));
-
-        field.getChildren().addAll(label, input, hint);
+        field.getChildren().addAll(label, questionField);
         return field;
     }
 
@@ -320,61 +276,40 @@ public class UpdateMarketView {
         Label catLabel = new Label("CATEGORY");
         catLabel.getStyleClass().add("form-field-label");
         catLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-        TextField catInput = new TextField("Tech / AI");
-        catInput.getStyleClass().add("form-input");
-        catInput.setFont(Font.font("Inter", 14));
-        categoryBox.getChildren().addAll(catLabel, catInput);
+        categoryField = new TextField();
+        categoryField.setPromptText("e.g. Tech / AI");
+        categoryField.getStyleClass().add("form-input");
+        categoryField.setFont(Font.font("Inter", 14));
+        categoryBox.getChildren().addAll(catLabel, categoryField);
 
         VBox dateBox = new VBox(8);
         HBox.setHgrow(dateBox, Priority.ALWAYS);
         Label dateLabel = new Label("RESOLUTION DATE");
         dateLabel.getStyleClass().add("form-field-label");
         dateLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-        TextField dateInput = new TextField("2026-09-30");
-        dateInput.getStyleClass().add("form-input");
-        dateInput.setFont(Font.font("Inter", 14));
-        dateBox.getChildren().addAll(dateLabel, dateInput);
+        dateField = new TextField();
+        dateField.setPromptText("e.g. 2026-12-31");
+        dateField.getStyleClass().add("form-input");
+        dateField.setFont(Font.font("Inter", 14));
+        dateBox.getChildren().addAll(dateLabel, dateField);
 
         row.getChildren().addAll(categoryBox, dateBox);
         return row;
     }
 
-    private VBox createResolutionSourceField() {
+    private VBox createDescriptionField() {
         VBox field = new VBox(8);
 
-        Label label = new Label("RESOLUTION SOURCE");
+        Label label = new Label("DESCRIPTION");
         label.getStyleClass().add("form-field-label");
         label.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
 
-        TextField input = new TextField("https://anthropic.com/news");
-        input.getStyleClass().add("form-input");
-        input.setFont(Font.font("Inter", 14));
+        descriptionField = new TextField();
+        descriptionField.setPromptText("Detailed resolution criteria...");
+        descriptionField.getStyleClass().add("form-input");
+        descriptionField.setFont(Font.font("Inter", 14));
 
-        field.getChildren().addAll(label, input);
-        return field;
-    }
-
-    private VBox createLiquidityField() {
-        VBox field = new VBox(8);
-
-        Label label = new Label("INITIAL LIQUIDITY ($PMC)");
-        label.getStyleClass().add("form-field-label");
-        label.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-
-        HBox inputRow = new HBox(12);
-        inputRow.setAlignment(Pos.CENTER_LEFT);
-
-        TextField input = new TextField("500.00");
-        input.getStyleClass().add("form-input");
-        input.setFont(Font.font("Inter", 14));
-        input.setPrefWidth(400);
-
-        Label rangeHint = new Label("min 100 · max 50,000");
-        rangeHint.getStyleClass().add("form-hint");
-        rangeHint.setFont(Font.font("Inter", 12));
-
-        inputRow.getChildren().addAll(input, rangeHint);
-        field.getChildren().addAll(label, inputRow);
+        field.getChildren().addAll(label, descriptionField);
         return field;
     }
 
@@ -390,21 +325,26 @@ public class UpdateMarketView {
         HBox sliderRow = new HBox(16);
         sliderRow.setAlignment(Pos.CENTER);
 
-        Label yesLabel = new Label("50%");
-        yesLabel.getStyleClass().add("prob-yes-label");
-        yesLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
+        yesPercentLabel = new Label("50%");
+        yesPercentLabel.getStyleClass().add("prob-yes-label");
+        yesPercentLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
 
-        Slider slider = new Slider(0, 100, 50);
-        slider.getStyleClass().add("prob-slider");
-        slider.setPrefWidth(400);
-        slider.setShowTickLabels(false);
-        slider.setShowTickMarks(false);
+        probabilitySlider = new Slider(0, 100, 50);
+        probabilitySlider.getStyleClass().add("prob-slider");
+        probabilitySlider.setPrefWidth(400);
+        probabilitySlider.setShowTickLabels(false);
+        probabilitySlider.setShowTickMarks(false);
+        probabilitySlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            int yes = newVal.intValue();
+            yesPercentLabel.setText(yes + "%");
+            noPercentLabel.setText((100 - yes) + "%");
+        });
 
-        Label noLabel = new Label("50%");
-        noLabel.getStyleClass().add("prob-no-label");
-        noLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
+        noPercentLabel = new Label("50%");
+        noPercentLabel.getStyleClass().add("prob-no-label");
+        noPercentLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
 
-        sliderRow.getChildren().addAll(yesLabel, slider, noLabel);
+        sliderRow.getChildren().addAll(yesPercentLabel, probabilitySlider, noPercentLabel);
         field.getChildren().addAll(label, sliderRow);
         return field;
     }
@@ -415,5 +355,13 @@ public class UpdateMarketView {
 
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
+    }
+
+    public void setOnMarketsClick(Runnable onMarketsClick) {
+        this.onMarketsClick = onMarketsClick;
+    }
+
+    public void setOnMarketUpdated(OnMarketUpdatedCallback onMarketUpdated) {
+        this.onMarketUpdated = onMarketUpdated;
     }
 }

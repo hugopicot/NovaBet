@@ -3,6 +3,7 @@ module com.polymarket {
     requires javafx.fxml;
     requires java.sql;
     requires mysql.connector.j;
+    requires jbcrypt;
 
     opens com.polymarket to javafx.fxml;
     opens com.polymarket.ui to javafx.fxml;
@@ -18,4 +19,5 @@ module com.polymarket {
     exports com.polymarket.domain.dto;
     exports com.polymarket.ui;
     exports com.polymarket.ui.auth;
+    opens com.polymarket.domain.service to javafx.base;
 }
