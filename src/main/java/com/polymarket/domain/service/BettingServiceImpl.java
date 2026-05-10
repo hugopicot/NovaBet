@@ -1,16 +1,27 @@
 package com.polymarket.domain.service;
 
+import com.polymarket.dao.betsDao;
+import com.polymarket.dao.eventsDao;
+import com.polymarket.dao.outcomesDao;
+import com.polymarket.dao.transactionsDao;
+import com.polymarket.dao.walletsDao;
+import com.polymarket.domain.dto.BetRequest;
+import com.polymarket.domain.dto.BetResult;
+import com.polymarket.domain.dto.OutcomeLabel;
 import com.polymarket.domain.exception.InsufficientFundsException;
 import com.polymarket.domain.exception.InvalidBetException;
 import com.polymarket.domain.exception.MarketNotOpenException;
 import com.polymarket.domain.exception.OutcomeNotFoundException;
-import com.polymarket.domain.model.*;
-import com.polymarket.domain.port.*;
+import com.polymarket.model.bets;
+import com.polymarket.model.events;
+import com.polymarket.model.outcomes;
+import com.polymarket.model.transactions;
+import com.polymarket.model.wallets;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.SQLException;
 import java.time.Instant;
-import java.util.Optional;
 
 public class BettingServiceImpl implements BettingService {
 
@@ -18,74 +29,67 @@ public class BettingServiceImpl implements BettingService {
     private static final BigDecimal MIN_BET_AMOUNT = new BigDecimal("0.01");
     private static final int SHARE_PRICE_SCALE = 4;
 
-    private final OutcomeRepository outcomeRepository;
-    private final EventRepository eventRepository;
-    private final WalletRepository walletRepository;
-    private final BetRepository betRepository;
-    private final TransactionRepository transactionRepository;
+    private final outcomesDao outcomeDao;
+    private final eventsDao eventDao;
+    private final walletsDao walletDao;
+    private final betsDao betDao;
+    private final transactionsDao transactionDao;
 
     public BettingServiceImpl(
-        OutcomeRepository outcomeRepository,
-        EventRepository eventRepository,
-        WalletRepository walletRepository,
-        BetRepository betRepository,
-        TransactionRepository transactionRepository
-    ) {
-        this.outcomeRepository = outcomeRepository;
-        this.eventRepository = eventRepository;
-        this.walletRepository = walletRepository;
-        this.betRepository = betRepository;
-        this.transactionRepository = transactionRepository;
+        outcomesDao outcomeDao,
+        eventsDao eventDao,
+        walletsDao walletDao,
+        betsDao betDao,
+        transactionsDao transactionDao
+    ) throws SQLException {
+        this.outcomeDao = outcomeDao;
+        this.eventDao = eventDao;
+        this.walletDao = walletDao;
+        this.betDao = betDao;
+        this.transactionDao = transactionDao;
     }
 
     @Override
     public BetResult buyShares(BetRequest request) {
         validateBetRequest(request);
 
-        Event event = getAndValidateEvent(request.eventId());
-        Outcome outcome = getAndValidateOutcome(request.eventId(), request.outcome());
+        events event = getAndValidateEvent(request.eventId());
+        outcomes outcome = getAndValidateOutcome(request.eventId(), request.outcome());
 
-        BigDecimal sharePrice = calculateSharePriceFromOdds(outcome.odds(), request.outcome());
+        BigDecimal sharePrice = calculateSharePriceFromOdds(BigDecimal.valueOf(outcome.getOdds()), request.outcome());
         int shareCount = calculateShareCount(request.amount(), sharePrice);
         BigDecimal totalCost = sharePrice.multiply(BigDecimal.valueOf(shareCount))
             .setScale(2, RoundingMode.HALF_UP);
 
-        Wallet wallet = getAndValidateWallet(request.userId(), totalCost);
+        wallets wallet = getAndValidateWallet(request.userId(), totalCost);
 
-        Wallet updatedWallet = walletRepository.deductFromBalance(
-            wallet.id(),
-            totalCost,
-            request.useVirtualBalance()
-        );
+        deductFromWallet(wallet, totalCost, request.useVirtualBalance());
 
         BigDecimal potentialWin = calculatePotentialWin(shareCount);
 
-        Bet bet = new Bet(
-            0,
-            request.userId(),
-            outcome.id(),
-            totalCost,
-            potentialWin,
-            sharePrice,
-            shareCount,
-            BetStatus.PENDING,
-            Instant.now()
+        bets bet = new bets(
+            (int) request.userId(),
+            (int) outcome.getId(),
+            totalCost.intValue(),
+            potentialWin.intValue()
         );
+        betDao.add(bet);
 
-        Bet savedBet = betRepository.save(bet);
-
-        transactionRepository.save(
+        transactionDao.add(new transactions(
             request.userId(),
-            TransactionType.BET_PLACED,
-            totalCost.negate()
-        );
+            "BET_PLACED",
+            totalCost.negate().doubleValue(),
+            Instant.now().toString()
+        ));
+
+        wallets updatedWallet = walletDao.findById(wallet.getId());
 
         return new BetResult(
-            savedBet,
+            bet,
             sharePrice,
             shareCount,
             totalCost,
-            updatedWallet.totalBalance()
+            BigDecimal.valueOf(updatedWallet.getRealBalance() + updatedWallet.getVirtualBalance())
         );
     }
 
@@ -140,35 +144,41 @@ public class BettingServiceImpl implements BettingService {
         }
     }
 
-    private Event getAndValidateEvent(long eventId) {
-        Event event = eventRepository.findById(eventId)
-            .orElseThrow(() -> new InvalidBetException("Event not found: " + eventId));
+    private events getAndValidateEvent(long eventId) {
+        events event = eventDao.findById(eventId);
+        if (event == null) {
+            throw new InvalidBetException("Event not found: " + eventId);
+        }
 
-        if (!event.isOpen()) {
+        if (!"OPEN".equals(event.getStatus())) {
             throw new MarketNotOpenException(
-                "Market is not open: " + event.title() + " (status: " + event.status() + ")"
+                "Market is not open: " + event.getTitle() + " (status: " + event.getStatus() + ")"
             );
         }
 
         return event;
     }
 
-    private Outcome getAndValidateOutcome(long eventId, OutcomeLabel label) {
-        Outcome outcome = outcomeRepository.findByEventIdAndLabel(eventId, label)
-            .orElseThrow(() -> new OutcomeNotFoundException(
+    private outcomes getAndValidateOutcome(long eventId, OutcomeLabel label) {
+        outcomes outcome = outcomeDao.findById(eventId);
+        if (outcome == null) {
+            throw new OutcomeNotFoundException(
                 "Outcome " + label + " not found for event: " + eventId
-            ));
+            );
+        }
 
         return outcome;
     }
 
-    private Wallet getAndValidateWallet(long userId, BigDecimal requiredAmount) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-            .orElseThrow(() -> new InsufficientFundsException(
+    private wallets getAndValidateWallet(long userId, BigDecimal requiredAmount) {
+        wallets wallet = walletDao.findById(userId);
+        if (wallet == null) {
+            throw new InsufficientFundsException(
                 "Wallet not found for user: " + userId
-            ));
+            );
+        }
 
-        BigDecimal availableBalance = wallet.totalBalance();
+        BigDecimal availableBalance = BigDecimal.valueOf(wallet.getRealBalance() + wallet.getVirtualBalance());
         if (availableBalance.compareTo(requiredAmount) < 0) {
             throw new InsufficientFundsException(
                 "Insufficient funds. Required: " + requiredAmount +
@@ -177,6 +187,22 @@ public class BettingServiceImpl implements BettingService {
         }
 
         return wallet;
+    }
+
+    private void deductFromWallet(wallets wallet, BigDecimal amount, boolean useVirtualFirst) {
+        double amountDouble = amount.doubleValue();
+        if (useVirtualFirst) {
+            double virtual = wallet.getVirtualBalance();
+            if (virtual >= amountDouble) {
+                wallet.setVirtualBalance(virtual - amountDouble);
+            } else {
+                wallet.setVirtualBalance(0);
+                wallet.setRealBalance(wallet.getRealBalance() - (amountDouble - virtual));
+            }
+        } else {
+            wallet.setRealBalance(wallet.getRealBalance() - amountDouble);
+        }
+        walletDao.update(wallet);
     }
 
     private BigDecimal calculateSharePriceFromOdds(BigDecimal odds, OutcomeLabel outcome) {

@@ -1,12 +1,13 @@
-package com.polymarket.domain.model;
+package com.polymarket.domain.dto;
+
+import com.polymarket.model.bets;
 
 import java.math.BigDecimal;
 
 public record BetResult(
-    Bet bet,
+    bets bet,
     BigDecimal sharePrice,
     int shareCount,
     BigDecimal totalCost,
     BigDecimal remainingBalance
-) {
-}
+) {}

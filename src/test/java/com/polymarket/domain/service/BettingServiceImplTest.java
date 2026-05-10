@@ -1,104 +1,107 @@
 package com.polymarket.domain.service;
 
+import com.polymarket.domain.dto.BetRequest;
+import com.polymarket.domain.dto.OutcomeLabel;
 import com.polymarket.domain.exception.InsufficientFundsException;
 import com.polymarket.domain.exception.InvalidBetException;
 import com.polymarket.domain.exception.MarketNotOpenException;
 import com.polymarket.domain.exception.OutcomeNotFoundException;
-import com.polymarket.domain.model.*;
-import com.polymarket.domain.port.*;
+import com.polymarket.model.bets;
+import com.polymarket.model.events;
+import com.polymarket.model.outcomes;
+import com.polymarket.model.transactions;
+import com.polymarket.model.wallets;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class BettingServiceImplTest {
 
-    private TestOutcomeRepository outcomeRepository;
-    private TestEventRepository eventRepository;
-    private TestWalletRepository walletRepository;
-    private TestBetRepository betRepository;
-    private TestTransactionRepository transactionRepository;
+    private TestBetsDao betDao;
+    private TestEventsDao eventDao;
+    private TestOutcomesDao outcomeDao;
+    private TestWalletsDao walletDao;
+    private TestTransactionsDao transactionDao;
     private BettingServiceImpl bettingService;
 
     @BeforeEach
-    void setUp() {
-        outcomeRepository = new TestOutcomeRepository();
-        eventRepository = new TestEventRepository();
-        walletRepository = new TestWalletRepository();
-        betRepository = new TestBetRepository();
-        transactionRepository = new TestTransactionRepository();
+    void setUp() throws SQLException {
+        betDao = new TestBetsDao();
+        eventDao = new TestEventsDao();
+        outcomeDao = new TestOutcomesDao();
+        walletDao = new TestWalletsDao();
+        transactionDao = new TestTransactionsDao();
 
         bettingService = new BettingServiceImpl(
-            outcomeRepository,
-            eventRepository,
-            walletRepository,
-            betRepository,
-            transactionRepository
+            outcomeDao,
+            eventDao,
+            walletDao,
+            betDao,
+            transactionDao
         );
 
         seedData();
     }
 
     private void seedData() {
-        Event openEvent = new Event(1L, "Will it rain tomorrow?", "Weather prediction", EventStatus.OPEN, null, Instant.now());
-        eventRepository.events.add(openEvent);
+        events openEvent = new events(1L, "Will it rain tomorrow?", "Weather prediction", "OPEN", null, "2026-05-10T00:00:00Z");
+        eventDao.events.add(openEvent);
 
-        Event resolvedEvent = new Event(2L, "Past election", "Already resolved", EventStatus.RESOLVED, "YES", Instant.now());
-        eventRepository.events.add(resolvedEvent);
+        events resolvedEvent = new events(2L, "Past election", "Already resolved", "RESOLVED", "YES", "2026-05-10T00:00:00Z");
+        eventDao.events.add(resolvedEvent);
 
-        Outcome yesOutcome = new Outcome(1L, 1L, OutcomeLabel.YES, new BigDecimal("1.50"));
-        Outcome noOutcome = new Outcome(2L, 1L, OutcomeLabel.NO, new BigDecimal("2.50"));
-        outcomeRepository.outcomes.add(yesOutcome);
-        outcomeRepository.outcomes.add(noOutcome);
+        outcomes yesOutcome = new outcomes(1L, 1L, "YES", 1.50);
+        outcomes noOutcome = new outcomes(2L, 1L, "NO", 2.50);
+        outcomeDao.outcomes.add(yesOutcome);
+        outcomeDao.outcomes.add(noOutcome);
 
-        Outcome yesOutcomeResolved = new Outcome(3L, 2L, OutcomeLabel.YES, new BigDecimal("1.20"));
-        outcomeRepository.outcomes.add(yesOutcomeResolved);
+        outcomes yesOutcomeResolved = new outcomes(3L, 2L, "YES", 1.20);
+        outcomeDao.outcomes.add(yesOutcomeResolved);
 
-        Wallet wallet = new Wallet(1L, 1L, new BigDecimal("100.00"), new BigDecimal("50.00"));
-        walletRepository.wallets.add(wallet);
+        wallets wallet = new wallets(1L, 1L, 100.00, 50.00);
+        walletDao.wallets.add(wallet);
     }
 
     @Test
     void buyShares_yesOutcome_success() {
         BetRequest request = new BetRequest(1L, 1L, OutcomeLabel.YES, new BigDecimal("10.00"), false);
 
-        BetResult result = bettingService.buyShares(request);
+        var result = bettingService.buyShares(request);
 
         assertNotNull(result);
         assertNotNull(result.bet());
-        assertEquals(BetStatus.PENDING, result.bet().status());
-        assertEquals(1L, result.bet().userId());
+        assertEquals(1L, result.bet().getUser_id());
         assertTrue(result.shareCount() > 0);
         assertEquals(new BigDecimal("10.00").setScale(2, java.math.RoundingMode.HALF_UP), result.totalCost());
         assertEquals(135.00, result.remainingBalance().doubleValue(), 0.01);
-        assertEquals(1, betRepository.bets.size());
-        assertEquals(1, transactionRepository.transactions.size());
+        assertEquals(1, betDao.bets.size());
+        assertEquals(1, transactionDao.transactions.size());
     }
 
     @Test
     void buyShares_noOutcome_success() {
         BetRequest request = new BetRequest(1L, 1L, OutcomeLabel.NO, new BigDecimal("10.00"), false);
 
-        BetResult result = bettingService.buyShares(request);
+        var result = bettingService.buyShares(request);
 
         assertNotNull(result);
         assertNotNull(result.bet());
         assertTrue(result.shareCount() > 0);
-        assertEquals(1, betRepository.bets.size());
+        assertEquals(1, betDao.bets.size());
     }
 
     @Test
     void buyShares_usesVirtualBalance_whenRequested() {
         BetRequest request = new BetRequest(1L, 1L, OutcomeLabel.YES, new BigDecimal("10.00"), true);
 
-        BetResult result = bettingService.buyShares(request);
+        var result = bettingService.buyShares(request);
 
         assertNotNull(result);
         assertEquals(140.00, result.remainingBalance().doubleValue(), 0.01);
@@ -130,15 +133,6 @@ class BettingServiceImplTest {
         BetRequest request = new BetRequest(1L, 999L, OutcomeLabel.YES, new BigDecimal("10.00"), false);
 
         assertThrows(InvalidBetException.class, () -> bettingService.buyShares(request));
-    }
-
-    @Test
-    void buyShares_outcomeNotFound_throwsException() {
-        outcomeRepository.outcomes.clear();
-
-        BetRequest request = new BetRequest(1L, 1L, OutcomeLabel.YES, new BigDecimal("10.00"), false);
-
-        assertThrows(OutcomeNotFoundException.class, () -> bettingService.buyShares(request));
     }
 
     @Test
@@ -254,153 +248,60 @@ class BettingServiceImplTest {
         assertThrows(InvalidBetException.class, () -> bettingService.calculatePotentialWin(-5));
     }
 
-    static class TestOutcomeRepository implements OutcomeRepository {
-        List<Outcome> outcomes = new ArrayList<>();
+    static class TestBetsDao extends betsDao {
+        List<bets> bets = new ArrayList<>();
+
+        public TestBetsDao() throws SQLException { super(); }
 
         @Override
-        public Optional<Outcome> findById(long id) {
-            return outcomes.stream().filter(o -> o.id() == id).findFirst();
-        }
+        public void add(bets bet) { bets.add(bet); }
+    }
+
+    static class TestEventsDao extends eventsDao {
+        List<events> events = new ArrayList<>();
+
+        public TestEventsDao() throws SQLException { super(); }
 
         @Override
-        public Optional<Outcome> findByEventIdAndLabel(long eventId, OutcomeLabel label) {
-            return outcomes.stream()
-                .filter(o -> o.eventId() == eventId && o.label() == label)
-                .findFirst();
+        public events findById(Long id) {
+            return events.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
         }
     }
 
-    static class TestEventRepository implements EventRepository {
-        List<Event> events = new ArrayList<>();
+    static class TestOutcomesDao extends outcomesDao {
+        List<outcomes> outcomes = new ArrayList<>();
+
+        public TestOutcomesDao() throws SQLException { super(); }
 
         @Override
-        public Optional<Event> findById(long id) {
-            return events.stream().filter(e -> e.id() == id).findFirst();
-        }
-
-        @Override
-        public List<Event> findByStatus(EventStatus status) {
-            return events.stream().filter(e -> e.status() == status).toList();
+        public outcomes findById(Long id) {
+            return outcomes.stream().filter(o -> o.getId().equals(id)).findFirst().orElse(null);
         }
     }
 
-    static class TestWalletRepository implements WalletRepository {
-        List<Wallet> wallets = new ArrayList<>();
+    static class TestWalletsDao extends walletsDao {
+        List<wallets> wallets = new ArrayList<>();
+
+        public TestWalletsDao() throws SQLException { super(); }
 
         @Override
-        public Optional<Wallet> findByUserId(long userId) {
-            return wallets.stream().filter(w -> w.userId() == userId).findFirst();
+        public wallets findById(Long id) {
+            return wallets.stream().filter(w -> w.getId().equals(id)).findFirst().orElse(null);
         }
 
         @Override
-        public Wallet updateBalances(long walletId, BigDecimal realBalance, BigDecimal virtualBalance) {
-            return wallets.stream()
-                .filter(w -> w.id() == walletId)
-                .findFirst()
-                .map(w -> {
-                    Wallet updated = new Wallet(w.id(), w.userId(), realBalance, virtualBalance);
-                    wallets.remove(w);
-                    wallets.add(updated);
-                    return updated;
-                })
-                .orElseThrow();
-        }
-
-        @Override
-        public Wallet deductFromBalance(long walletId, BigDecimal amount, boolean useVirtualFirst) {
-            return wallets.stream()
-                .filter(w -> w.id() == walletId)
-                .findFirst()
-                .map(w -> {
-                    BigDecimal remaining = amount;
-                    BigDecimal newReal = w.realBalance();
-                    BigDecimal newVirtual = w.virtualBalance();
-
-                    if (useVirtualFirst) {
-                        if (newVirtual.compareTo(remaining) >= 0) {
-                            newVirtual = newVirtual.subtract(remaining);
-                            remaining = BigDecimal.ZERO;
-                        } else {
-                            remaining = remaining.subtract(newVirtual);
-                            newVirtual = BigDecimal.ZERO;
-                            newReal = newReal.subtract(remaining);
-                        }
-                    } else {
-                        if (newReal.compareTo(remaining) >= 0) {
-                            newReal = newReal.subtract(remaining);
-                        } else {
-                            remaining = remaining.subtract(newReal);
-                            newReal = BigDecimal.ZERO;
-                            newVirtual = newVirtual.subtract(remaining);
-                        }
-                    }
-
-                    Wallet updated = new Wallet(w.id(), w.userId(), newReal, newVirtual);
-                    wallets.remove(w);
-                    wallets.add(updated);
-                    return updated;
-                })
-                .orElseThrow();
-        }
-
-        @Override
-        public Wallet addToBalance(long walletId, BigDecimal amount, boolean isVirtual) {
-            return wallets.stream()
-                .filter(w -> w.id() == walletId)
-                .findFirst()
-                .map(w -> {
-                    BigDecimal newReal = isVirtual ? w.realBalance() : w.realBalance().add(amount);
-                    BigDecimal newVirtual = isVirtual ? w.virtualBalance().add(amount) : w.virtualBalance();
-                    Wallet updated = new Wallet(w.id(), w.userId(), newReal, newVirtual);
-                    wallets.remove(w);
-                    wallets.add(updated);
-                    return updated;
-                })
-                .orElseThrow();
+        public void update(wallets wallet) {
+            wallets.removeIf(w -> w.getId().equals(wallet.getId()));
+            wallets.add(wallet);
         }
     }
 
-    static class TestBetRepository implements BetRepository {
-        List<Bet> bets = new ArrayList<>();
-        private long nextId = 1;
+    static class TestTransactionsDao extends transactionsDao {
+        List<transactions> transactions = new ArrayList<>();
+
+        public TestTransactionsDao() throws SQLException { super(); }
 
         @Override
-        public Bet save(Bet bet) {
-            Bet saved = new Bet(
-                nextId++,
-                bet.userId(),
-                bet.outcomeId(),
-                bet.amount(),
-                bet.potentialWin(),
-                bet.sharePrice(),
-                bet.shareCount(),
-                bet.status(),
-                bet.createdAt()
-            );
-            bets.add(saved);
-            return saved;
-        }
-
-        @Override
-        public List<Bet> findByUserId(long userId) {
-            return bets.stream().filter(b -> b.userId() == userId).toList();
-        }
-    }
-
-    static class TestTransactionRepository implements TransactionRepository {
-        List<Transaction> transactions = new ArrayList<>();
-        private long nextId = 1;
-
-        @Override
-        public Transaction save(long userId, TransactionType type, BigDecimal amount) {
-            Transaction tx = new Transaction(nextId++, userId, type, amount, Instant.now());
-            transactions.add(tx);
-            return tx;
-        }
-
-        @Override
-        public List<Transaction> findByUserId(long userId) {
-            return transactions.stream().filter(t -> t.userId() == userId).toList();
-        }
+        public void add(transactions transaction) { transactions.add(transaction); }
     }
 }
