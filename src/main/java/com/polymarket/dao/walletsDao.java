@@ -116,4 +116,30 @@ public class walletsDao {
             e.printStackTrace();
         }
     }
+
+    // Récupérer un wallet par user_id
+    public wallets findByUserId(Long userId) {
+        String sql = "SELECT * FROM wallets WHERE user_id = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setLong(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new wallets(
+                        rs.getLong("id"),
+                        rs.getLong("user_id"),
+                        rs.getDouble("real_balance"),
+                        rs.getDouble("virtual_balance")
+                );
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }

@@ -1,5 +1,7 @@
 package com.polymarket.ui;
 
+import com.polymarket.model.events;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -18,12 +20,32 @@ public class DeleteMarketView {
     private BorderPane root;
     private Runnable onBack;
     private Runnable onConfirmDelete;
+    private Runnable onMarketsClick;
+
+    private Label previewQuestion;
+    private Label previewMeta;
+    private TextField confirmInput;
+
+    private events currentEvent;
 
     public DeleteMarketView() {
         root = new BorderPane();
         root.getStyleClass().add("main-container");
         root.setLeft(createSidebar());
         root.setCenter(createDeleteContent());
+    }
+
+    public void setEventData(events event) {
+        this.currentEvent = event;
+        if (event != null) {
+            previewQuestion.setText(event.getTitle() != null ? event.getTitle() : "");
+            String resolution = event.getResolution() != null ? event.getResolution() : "";
+            previewMeta.setText(resolution.isEmpty() ? "" : "Ends " + resolution);
+        }
+    }
+
+    public events getEvent() {
+        return currentEvent;
     }
 
     private VBox createSidebar() {
@@ -44,15 +66,20 @@ public class DeleteMarketView {
         Label logoText = new Label("NovaBet");
         logoText.getStyleClass().add("logo-text");
         logoText.setFont(Font.font("Inter", FontWeight.BOLD, 16));
-        Label logoVersion = new Label("v0.4.2 · alpha");
+        Label logoVersion = new Label("v0.4.2 \u00B7 alpha");
         logoVersion.getStyleClass().add("logo-version");
         logoVersion.setFont(Font.font("Inter", 10));
         logoTextContainer.getChildren().addAll(logoText, logoVersion);
         logoBox.getChildren().addAll(logoIcon, logoTextContainer);
 
         VBox navItems = new VBox(4);
+        HBox marketsNav = createNavItem("Markets", false);
+        marketsNav.setCursor(javafx.scene.Cursor.HAND);
+        marketsNav.setOnMouseClicked(e -> {
+            if (onMarketsClick != null) onMarketsClick.run();
+        });
         navItems.getChildren().addAll(
-            createNavItem("Markets", false),
+            marketsNav,
             createNavItem("Portfolio", false),
             createNavItem("Create market", false),
             createNavItem("History", false)
@@ -60,39 +87,11 @@ public class DeleteMarketView {
 
         topSection.getChildren().addAll(logoBox, navItems);
 
-        VBox categoriesSection = new VBox(8);
-        categoriesSection.setPadding(new Insets(16, 16, 0, 16));
-        Label categoriesTitle = new Label("CATEGORIES");
-        categoriesTitle.getStyleClass().add("categories-title");
-        categoriesTitle.setFont(Font.font("Inter", FontWeight.MEDIUM, 11));
-        categoriesSection.getChildren().add(categoriesTitle);
-
-        VBox categoryItems = new VBox(4);
-        categoryItems.getChildren().addAll(
-            createCategoryItem("Tech / AI", "248"),
-            createCategoryItem("Sport", "412"),
-            createCategoryItem("Absurd", "87")
-        );
-        categoriesSection.getChildren().add(categoryItems);
-
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
         VBox bottomSection = new VBox(12);
         bottomSection.setPadding(new Insets(0, 16, 20, 16));
-
-        HBox casinoBox = new HBox(10);
-        casinoBox.setAlignment(Pos.CENTER_LEFT);
-        casinoBox.setPadding(new Insets(8, 0, 8, 0));
-        Label casinoIcon = new Label("");
-        casinoIcon.getStyleClass().add("casino-icon");
-        Label casinoText = new Label("Casino");
-        casinoText.getStyleClass().add("casino-text");
-        Region hotBadge = new Region();
-        hotBadge.getStyleClass().add("hot-badge");
-        Region spacer2 = new Region();
-        HBox.setHgrow(spacer2, Priority.ALWAYS);
-        casinoBox.getChildren().addAll(casinoIcon, casinoText, spacer2, hotBadge);
 
         VBox balanceBox = new VBox(4);
         balanceBox.getStyleClass().add("balance-box");
@@ -102,21 +101,18 @@ public class DeleteMarketView {
         balanceLabel.setFont(Font.font("Inter", 10));
         HBox balanceValueBox = new HBox(6);
         balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        Label balanceValue = new Label("12,480.50");
+        Label balanceValue = new Label("0.00");
         balanceValue.getStyleClass().add("balance-value");
         balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
         Label balanceCurrency = new Label("$NVB");
         balanceCurrency.getStyleClass().add("balance-currency");
         balanceCurrency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
         balanceValueBox.getChildren().addAll(balanceValue, balanceCurrency);
-        Label balanceChange = new Label("+240 · 24h");
-        balanceChange.getStyleClass().add("balance-change");
-        balanceChange.setFont(Font.font("Inter", 11));
-        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox, balanceChange);
+        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox);
 
-        bottomSection.getChildren().addAll(casinoBox, balanceBox);
+        bottomSection.getChildren().addAll(balanceBox);
 
-        sidebar.getChildren().addAll(topSection, categoriesSection, spacer, bottomSection);
+        sidebar.getChildren().addAll(topSection, spacer, bottomSection);
         return sidebar;
     }
 
@@ -143,31 +139,6 @@ public class DeleteMarketView {
         label.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
 
         item.getChildren().addAll(icon, label);
-        return item;
-    }
-
-    private HBox createCategoryItem(String text, String count) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setPadding(new Insets(6, 12, 6, 12));
-        item.getStyleClass().add("category-item");
-
-        Region icon = new Region();
-        icon.setPrefSize(16, 16);
-        icon.getStyleClass().add("category-icon");
-
-        Label label = new Label(text);
-        label.getStyleClass().add("category-text");
-        label.setFont(Font.font("Inter", 13));
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label countLabel = new Label(count);
-        countLabel.getStyleClass().add("category-count");
-        countLabel.setFont(Font.font("Inter", 12));
-
-        item.getChildren().addAll(icon, label, spacer, countLabel);
         return item;
     }
 
@@ -200,20 +171,13 @@ public class DeleteMarketView {
         marketPreview.getStyleClass().add("delete-market-preview");
         marketPreview.setPadding(new Insets(12, 14, 12, 14));
 
-        Label previewQuestion = new Label("Will Anthropic release Claude 5 before September 2026?");
+        previewQuestion = new Label("");
         previewQuestion.getStyleClass().add("delete-preview-question");
         previewQuestion.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
 
-        HBox previewMeta = new HBox(12);
-        Label metaCat = new Label("Tech / AI");
-        metaCat.getStyleClass().add("delete-preview-meta");
-        metaCat.setFont(Font.font("Inter", 11));
-        Label metaDot = new Label("·");
-        metaDot.getStyleClass().add("delete-preview-meta");
-        Label metaDate = new Label("Sep 30, 2026");
-        metaDate.getStyleClass().add("delete-preview-meta");
-        metaDate.setFont(Font.font("Inter", 11));
-        previewMeta.getChildren().addAll(metaCat, metaDot, metaDate);
+        previewMeta = new Label("");
+        previewMeta.getStyleClass().add("delete-preview-meta");
+        previewMeta.setFont(Font.font("Inter", 11));
 
         marketPreview.getChildren().addAll(previewQuestion, previewMeta);
 
@@ -224,7 +188,7 @@ public class DeleteMarketView {
         confirmLabel.getStyleClass().add("delete-confirm-label");
         confirmLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
 
-        TextField confirmInput = new TextField();
+        confirmInput = new TextField();
         confirmInput.setPromptText("DELETE");
         confirmInput.getStyleClass().add("delete-confirm-input");
         confirmInput.setFont(Font.font("Inter", 14));
@@ -249,7 +213,9 @@ public class DeleteMarketView {
         deleteBtn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
         deleteBtn.setPrefWidth(140);
         deleteBtn.setOnAction(e -> {
-            if (onConfirmDelete != null) onConfirmDelete.run();
+            if ("DELETE".equals(confirmInput.getText()) && onConfirmDelete != null) {
+                onConfirmDelete.run();
+            }
         });
 
         buttonRow.getChildren().addAll(cancelBtn, deleteBtn);
@@ -266,6 +232,10 @@ public class DeleteMarketView {
 
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
+    }
+
+    public void setOnMarketsClick(Runnable onMarketsClick) {
+        this.onMarketsClick = onMarketsClick;
     }
 
     public void setOnConfirmDelete(Runnable onConfirmDelete) {

@@ -77,7 +77,7 @@ public class eventsDao {
         String sql = "INSERT INTO events (title, description, status, resolution, created_at) VALUES (?, ?, ?, ?, ?)";
 
         try {
-            PreparedStatement ps = connection.prepareStatement(sql);
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, event.getTitle());
             ps.setString(2, event.getDescription());
             ps.setString(3, event.getStatus());
@@ -85,6 +85,11 @@ public class eventsDao {
             ps.setString(5, event.getCreatedAt());
 
             ps.executeUpdate();
+
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                event.setId(rs.getLong(1));
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();

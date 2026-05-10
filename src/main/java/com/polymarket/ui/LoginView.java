@@ -21,6 +21,9 @@ public class LoginView {
     private Runnable onRegister;
     private Runnable onLogin;
 
+    private TextField emailField;
+    private PasswordField passwordField;
+
     public LoginView() {
         root = new BorderPane();
         root.getStyleClass().add("main-container");
@@ -83,7 +86,10 @@ public class LoginView {
         formFields.setPrefWidth(380);
 
         VBox emailBox = createInputField("Email", "you@example.com", false);
+        emailField = (TextField) emailBox.getChildren().get(1);
+
         VBox passwordBox = createInputField("Password", "••••••••", true);
+        passwordField = (PasswordField) passwordBox.getChildren().get(1);
 
         formFields.getChildren().addAll(emailBox, passwordBox);
 
@@ -145,5 +151,13 @@ public class LoginView {
 
     public void setOnLogin(Runnable onLogin) {
         this.onLogin = onLogin;
+    }
+
+    public String getEmail() {
+        return emailField.getText();
+    }
+
+    public String getPassword() {
+        return passwordField.getText();
     }
 }
