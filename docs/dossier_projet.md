@@ -11,7 +11,7 @@ Le produit combine la prédiction de marchés et le casino dans une seule applic
 
 ---
 
-## 2. Organisation de l'équipe (Sprint 1)
+## 2. Organisation de l'équipe
 - **Product Owner :** Hugo
 - **Scrum Master :** Siloe
 - **Lead Développeur :** Antonio
@@ -28,11 +28,10 @@ Le produit combine la prédiction de marchés et le casino dans une seule applic
 
 ## 3. Backlog & Planification des Sprints
 
-*Note stratégique : Les User Stories ont été divisées en 3 Sprints pour respecter la méthodologie Agile et garantir un MVP réaliste au Sprint 1.*
 
 ### Sprint 1 : Cadrage + MVP (Fondations)
 - En tant qu'utilisateur, je peux créer un compte et me connecter (Authentification).
-- En tant qu'utilisateur, je peux déposer des $PMC fictifs.
+- En tant qu'utilisateur, je peux déposer la monnaie fictive.
 - En tant qu'utilisateur, je peux voir la liste des marchés ouverts.
 - En tant qu'utilisateur, je peux acheter des parts YES/NO sur un marché.
 
@@ -42,7 +41,7 @@ Le produit combine la prédiction de marchés et le casino dans une seule applic
 - En tant qu'utilisateur, je peux consulter l'historique de mes transactions.
 - En tant qu'utilisateur, je peux créer un nouveau marché de pari.
 
-### Sprint 3 : Finalisation & Funnel (Le Casino OTO)
+### Sprint 3 : Finalisation & Funnel (Casino)
 - En tant qu'utilisateur, au moment de demander un retrait, une offre OTO casino s'affiche pour convertir mes gains en crédits.
 - En tant qu'utilisateur, je peux jouer aux machines à sous avec mes crédits casino.
 - Polissage de l'interface et mise à jour en temps réel des soldes.
@@ -50,4 +49,4 @@ Le produit combine la prédiction de marchés et le casino dans une seule applic
 ---
 
 ## 4. Gestion Financière (Budget Initial : 100 000 €)
-*(À compléter : Tableau de suivi des coûts du Sprint 1 basé sur les rôles de l'équipe)*
+À compléter...

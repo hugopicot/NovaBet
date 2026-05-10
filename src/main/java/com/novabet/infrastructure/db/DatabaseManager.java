@@ -1,4 +1,4 @@
-package com.polymarket.infrastructure.db;
+package com.novabet.infrastructure.db;
 
 import java.io.InputStream;
 import java.sql.Connection;
