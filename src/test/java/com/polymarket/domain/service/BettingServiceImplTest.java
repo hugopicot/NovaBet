@@ -1,5 +1,6 @@
 package com.polymarket.domain.service;
 
+import com.polymarket.dao.*;
 import com.polymarket.domain.dto.BetRequest;
 import com.polymarket.domain.dto.OutcomeLabel;
 import com.polymarket.domain.exception.InsufficientFundsException;
@@ -57,12 +58,12 @@ class BettingServiceImplTest {
         events resolvedEvent = new events(2L, "Past election", "Already resolved", "RESOLVED", "YES", "2026-05-10T00:00:00Z");
         eventDao.events.add(resolvedEvent);
 
-        outcomes yesOutcome = new outcomes(1L, 1L, "YES", 1.50);
-        outcomes noOutcome = new outcomes(2L, 1L, "NO", 2.50);
+        outcomes yesOutcome = new outcomes(1L, 1L, "YES", 0.60);
+        outcomes noOutcome = new outcomes(2L, 1L, "NO", 0.40);
         outcomeDao.outcomes.add(yesOutcome);
         outcomeDao.outcomes.add(noOutcome);
 
-        outcomes yesOutcomeResolved = new outcomes(3L, 2L, "YES", 1.20);
+        outcomes yesOutcomeResolved = new outcomes(3L, 2L, "YES", 0.80);
         outcomeDao.outcomes.add(yesOutcomeResolved);
 
         wallets wallet = new wallets(1L, 1L, 100.00, 50.00);
@@ -79,8 +80,8 @@ class BettingServiceImplTest {
         assertNotNull(result.bet());
         assertEquals(1L, result.bet().getUser_id());
         assertTrue(result.shareCount() > 0);
-        assertEquals(new BigDecimal("10.00").setScale(2, java.math.RoundingMode.HALF_UP), result.totalCost());
-        assertEquals(135.00, result.remainingBalance().doubleValue(), 0.01);
+        assertEquals(new BigDecimal("9.60").setScale(2, java.math.RoundingMode.HALF_UP), result.totalCost());
+        assertEquals(140.40, result.remainingBalance().doubleValue(), 0.01);
         assertEquals(1, betDao.bets.size());
         assertEquals(1, transactionDao.transactions.size());
     }
@@ -104,7 +105,7 @@ class BettingServiceImplTest {
         var result = bettingService.buyShares(request);
 
         assertNotNull(result);
-        assertEquals(140.00, result.remainingBalance().doubleValue(), 0.01);
+        assertEquals(140.40, result.remainingBalance().doubleValue(), 0.01);
     }
 
     @Test
@@ -277,6 +278,17 @@ class BettingServiceImplTest {
         public outcomes findById(Long id) {
             return outcomes.stream().filter(o -> o.getId().equals(id)).findFirst().orElse(null);
         }
+
+        @Override
+        public List<outcomes> findByEventId(Long eventId) {
+            List<outcomes> result = new ArrayList<>();
+            for (outcomes o : outcomes) {
+                if (o.getEventId().equals(eventId)) {
+                    result.add(o);
+                }
+            }
+            return result;
+        }
     }
 
     static class TestWalletsDao extends walletsDao {
@@ -287,6 +299,11 @@ class BettingServiceImplTest {
         @Override
         public wallets findById(Long id) {
             return wallets.stream().filter(w -> w.getId().equals(id)).findFirst().orElse(null);
+        }
+
+        @Override
+        public wallets findByUserId(Long userId) {
+            return wallets.stream().filter(w -> w.getUserId().equals(userId)).findFirst().orElse(null);
         }
 
         @Override
