@@ -29,6 +29,7 @@ public class MarketDetailView {
     private BorderPane root;
     private Runnable onBack;
     private Runnable onMarketsClick;
+    private Runnable onPortfolioClick;
     private Runnable onEditMarket;
     private Runnable onDeleteMarket;
     private Consumer<BetRequest> onPlaceBet;
@@ -120,14 +121,19 @@ public class MarketDetailView {
         logoBox.getChildren().addAll(logoIcon, logoTextContainer);
 
         VBox navItems = new VBox(4);
-        HBox marketsNav = createNavItem("Markets", true);
+        HBox marketsNav = createNavItem("Markets", false);
         marketsNav.setCursor(javafx.scene.Cursor.HAND);
         marketsNav.setOnMouseClicked(e -> {
             if (onMarketsClick != null) onMarketsClick.run();
         });
+        HBox portfolioNav = createNavItem("Portfolio", false);
+        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
+        portfolioNav.setOnMouseClicked(e -> {
+            if (onPortfolioClick != null) onPortfolioClick.run();
+        });
         navItems.getChildren().addAll(
             marketsNav,
-            createNavItem("Portfolio", false),
+            portfolioNav,
             createNavItem("Create market", false),
             createNavItem("History", false)
         );
@@ -422,6 +428,10 @@ public class MarketDetailView {
 
     public void setOnMarketsClick(Runnable onMarketsClick) {
         this.onMarketsClick = onMarketsClick;
+    }
+
+    public void setOnPortfolioClick(Runnable onPortfolioClick) {
+        this.onPortfolioClick = onPortfolioClick;
     }
 
     public void setOnEditMarket(Runnable onEditMarket) {

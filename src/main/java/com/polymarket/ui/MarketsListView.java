@@ -35,6 +35,7 @@ public class MarketsListView {
     private Runnable onLogout;
     private Consumer<Long> onMarketClick;
     private Runnable onCreateMarket;
+    private Runnable onPortfolioClick;
     private Consumer<BetRequest> onPlaceBet;
     private Long currentUserId;
 
@@ -224,9 +225,14 @@ public class MarketsListView {
         createMarketNav.setOnMouseClicked(e -> {
             if (onCreateMarket != null) onCreateMarket.run();
         });
+        HBox portfolioNav = createNavItem("Portfolio", false);
+        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
+        portfolioNav.setOnMouseClicked(e -> {
+            if (onPortfolioClick != null) onPortfolioClick.run();
+        });
         navItems.getChildren().addAll(
             createNavItem("Markets", true),
-            createNavItem("Portfolio", false),
+            portfolioNav,
             createMarketNav,
             createNavItem("History", false)
         );
@@ -460,5 +466,9 @@ public class MarketsListView {
 
     public void setOnCreateMarket(Runnable onCreateMarket) {
         this.onCreateMarket = onCreateMarket;
+    }
+
+    public void setOnPortfolioClick(Runnable onPortfolioClick) {
+        this.onPortfolioClick = onPortfolioClick;
     }
 }
