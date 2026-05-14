@@ -119,4 +119,33 @@ public class betsDao {
             e.printStackTrace();
         }
     }
+
+    // Récupérer les paris par user_id
+    public List<bets> findByUserId(int userId) {
+        List<bets> list = new ArrayList<>();
+        String sql = "SELECT * FROM bets WHERE user_id = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                bets bet = new bets(
+                        rs.getInt("id"),
+                        rs.getInt("user_id"),
+                        rs.getInt("outcome_id"),
+                        rs.getInt("amount"),
+                        rs.getInt("potential_win")
+                );
+                list.add(bet);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }
