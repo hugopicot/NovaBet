@@ -20,7 +20,10 @@ import com.polymarket.ui.DeleteMarketView;
 import com.polymarket.ui.MarketDetailView;
 import com.polymarket.ui.MarketsListView;
 import com.polymarket.ui.UpdateMarketView;
+import com.polymarket.ui.WalletView;
 import com.polymarket.ui.auth.AuthModule;
+import com.polymarket.domain.service.WalletService;
+import com.polymarket.domain.service.WalletServiceImpl;
 
 import javafx.application.Application;
 import javafx.scene.Parent;
@@ -47,13 +50,16 @@ public class Main extends Application {
     private Scene createMarketScene;
     private Scene updateScene;
     private Scene deleteScene;
+    private Scene walletScene;
 
     private Stage primaryStage;
     private String css;
     private Long selectedMarketId;
     private Long currentUserId;
     private BettingService bettingService;
+    private WalletService walletService;
     private walletsDao walletDao;
+    private WalletView walletView;
 
     @Override
     public void start(Stage primaryStage) {
@@ -68,6 +74,8 @@ public class Main extends Application {
             bettingService = new BettingServiceImpl(
                 outcomeDao, eventDao, walletDao, new betsDao(), new transactionsDao()
             );
+            walletService = new WalletServiceImpl(walletDao, new transactionsDao());
+            walletView = new WalletView();
         } catch (Exception e) {
             System.err.println("Failed to connect to database: " + e.getMessage());
             e.printStackTrace();
@@ -86,6 +94,7 @@ public class Main extends Application {
         createMarketScene = createScene(createView.getView());
         updateScene = createScene(updateView.getView());
         deleteScene = createScene(deleteView.getView());
+        walletScene = createScene(walletView.getView());
 
         wireNavigation();
 
@@ -212,6 +221,34 @@ public class Main extends Application {
 
         marketsView.setOnPlaceBet(this::handlePlaceBet);
         detailView.setOnPlaceBet(this::handlePlaceBet);
+
+        marketsView.setOnWalletClick(() -> {
+            loadWallet();
+            primaryStage.setScene(walletScene);
+        });
+        detailView.setOnWalletClick(() -> {
+            loadWallet();
+            primaryStage.setScene(walletScene);
+        });
+        createView.setOnWalletClick(() -> {
+            loadWallet();
+            primaryStage.setScene(walletScene);
+        });
+        updateView.setOnWalletClick(() -> {
+            loadWallet();
+            primaryStage.setScene(walletScene);
+        });
+        deleteView.setOnWalletClick(() -> {
+            loadWallet();
+            primaryStage.setScene(walletScene);
+        });
+
+        walletView.setOnBack(() -> {
+            loadMarkets();
+            primaryStage.setScene(marketsScene);
+        });
+        walletView.setOnDeposit(this::handleDeposit);
+        walletView.setOnWithdraw(this::handleWithdraw);
     }
 
     private void handlePlaceBet(BetRequest request) {
@@ -270,6 +307,45 @@ public class Main extends Application {
             detailView.setEventData(event, outcomes);
         } catch (Exception ex) {
             System.err.println("Error loading market detail: " + ex.getMessage());
+        }
+    }
+
+    private void handleDeposit(double amount) {
+        if (walletService == null || currentUserId == null) return;
+        try {
+            walletService.deposit(currentUserId, amount);
+            refreshBalance();
+            loadWallet();
+        } catch (Exception ex) {
+            System.err.println("Deposit error: " + ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Deposit failed", ex.getMessage());
+        }
+    }
+
+    private void handleWithdraw(double amount) {
+        if (walletService == null || currentUserId == null) return;
+        try {
+            walletService.withdraw(currentUserId, amount);
+            refreshBalance();
+            loadWallet();
+        } catch (Exception ex) {
+            System.err.println("Withdraw error: " + ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Withdraw failed", ex.getMessage());
+        }
+    }
+
+    private void loadWallet() {
+        if (walletService == null || currentUserId == null) return;
+        try {
+            wallets wallet = walletService.getWallet(currentUserId);
+            if (wallet != null) {
+                double total = wallet.getRealBalance() + wallet.getVirtualBalance();
+                walletView.setBalances(total, wallet.getRealBalance(), wallet.getVirtualBalance());
+            }
+            var txs = walletService.getTransactionHistory(currentUserId);
+            walletView.setTransactions(txs);
+        } catch (Exception ex) {
+            System.err.println("Error loading wallet: " + ex.getMessage());
         }
     }
 

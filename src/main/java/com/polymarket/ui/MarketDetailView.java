@@ -29,6 +29,7 @@ public class MarketDetailView {
     private BorderPane root;
     private Runnable onBack;
     private Runnable onMarketsClick;
+    private Runnable onWalletClick;
     private Runnable onEditMarket;
     private Runnable onDeleteMarket;
     private Consumer<BetRequest> onPlaceBet;
@@ -125,10 +126,16 @@ public class MarketDetailView {
         marketsNav.setOnMouseClicked(e -> {
             if (onMarketsClick != null) onMarketsClick.run();
         });
+        HBox walletNav = createNavItem("Wallet", false);
+        walletNav.setCursor(javafx.scene.Cursor.HAND);
+        walletNav.setOnMouseClicked(e -> {
+            if (onWalletClick != null) onWalletClick.run();
+        });
         navItems.getChildren().addAll(
             marketsNav,
             createNavItem("Portfolio", false),
             createNavItem("Create market", false),
+            walletNav,
             createNavItem("History", false)
         );
 
@@ -422,6 +429,10 @@ public class MarketDetailView {
 
     public void setOnMarketsClick(Runnable onMarketsClick) {
         this.onMarketsClick = onMarketsClick;
+    }
+
+    public void setOnWalletClick(Runnable onWalletClick) {
+        this.onWalletClick = onWalletClick;
     }
 
     public void setOnEditMarket(Runnable onEditMarket) {

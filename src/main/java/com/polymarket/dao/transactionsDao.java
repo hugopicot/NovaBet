@@ -120,4 +120,33 @@ public class transactionsDao {
             e.printStackTrace();
         }
     }
+
+    // Récupérer les transactions par user_id (ordre décroissant par date)
+    public List<transactions> findByUserId(Long userId) {
+        List<transactions> list = new ArrayList<>();
+        String sql = "SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setLong(1, userId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                transactions transaction = new transactions(
+                        rs.getLong("id"),
+                        rs.getLong("user_id"),
+                        rs.getString("type"),
+                        rs.getDouble("amount"),
+                        rs.getString("created_at")
+                );
+                list.add(transaction);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }
