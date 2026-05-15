@@ -1,5 +1,6 @@
 package com.polymarket.ui;
 
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -7,13 +8,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Line;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Polyline;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -275,7 +277,7 @@ public class MarketDetailView {
 
         content.getChildren().addAll(
             createMarketHeader(),
-            createChartSection(),
+            createMiddleSection(),
             createBottomSection()
         );
 
@@ -283,7 +285,14 @@ public class MarketDetailView {
         return scrollPane;
     }
 
-    private HBox createMarketHeader() {
+    private VBox createMarketHeader() {
+        VBox headerWrapper = new VBox(8);
+        headerWrapper.setPadding(new Insets(8, 0, 0, 0));
+
+        Label categoryLabel = new Label("Markets · Tech / AI");
+        categoryLabel.getStyleClass().add("detail-category");
+        categoryLabel.setFont(Font.font("Inter", 12));
+
         HBox header = new HBox(16);
         header.setAlignment(Pos.TOP_LEFT);
 
@@ -348,7 +357,8 @@ public class MarketDetailView {
         probabilityBox.getChildren().addAll(probLabel, probRow, probChange);
 
         header.getChildren().addAll(iconContainer, infoBox, spacer, probabilityBox, createActionButtons());
-        return header;
+        headerWrapper.getChildren().addAll(categoryLabel, header);
+        return headerWrapper;
     }
 
     private HBox createActionButtons() {
@@ -372,6 +382,20 @@ public class MarketDetailView {
 
         actionBox.getChildren().addAll(editBtn, deleteBtn);
         return actionBox;
+    }
+
+    private HBox createMiddleSection() {
+        HBox middleSection = new HBox(16);
+
+        VBox chartSection = createChartSection();
+        chartSection.getStyleClass().add("left-column");
+        HBox.setHgrow(chartSection, Priority.ALWAYS);
+
+        VBox tradePanel = createTradePanel();
+        tradePanel.getStyleClass().add("right-column");
+
+        middleSection.getChildren().addAll(chartSection, tradePanel);
+        return middleSection;
     }
 
     private VBox createChartSection() {
@@ -402,8 +426,34 @@ public class MarketDetailView {
         chartArea.getStyleClass().add("chart-area");
         chartArea.setPrefHeight(220);
 
+        double[] points = {
+            0, 200,
+            50, 180,
+            100, 190,
+            150, 150,
+            200, 160,
+            250, 120,
+            300, 130,
+            350, 90,
+            400, 100,
+            450, 70,
+            500, 80,
+            550, 50,
+            600, 60,
+            650, 30,
+            700, 20
+        };
+
+        Polygon fillPolygon = new Polygon();
+        fillPolygon.getStyleClass().add("chart-fill");
+        for (int i = 0; i < points.length; i += 2) {
+            fillPolygon.getPoints().addAll(points[i], points[i + 1]);
+        }
+        fillPolygon.getPoints().addAll(points[points.length - 2], 220.0);
+        fillPolygon.getPoints().addAll(points[0], 220.0);
+
         Polyline chartLine = createChartLine();
-        chartArea.getChildren().add(chartLine);
+        chartArea.getChildren().addAll(fillPolygon, chartLine);
 
         chartSection.getChildren().addAll(chartHeader, chartArea);
         return chartSection;
@@ -455,23 +505,22 @@ public class MarketDetailView {
     private HBox createBottomSection() {
         HBox bottomSection = new HBox(16);
 
-        VBox leftColumn = new VBox(16);
-        leftColumn.getStyleClass().add("left-column");
+        HBox leftBottom = new HBox(16);
+        leftBottom.getStyleClass().add("left-column");
+        HBox.setHgrow(leftBottom, Priority.ALWAYS);
 
-        leftColumn.getChildren().addAll(
-            createAboutSection(),
-            createTopHoldersSection()
-        );
+        VBox aboutSection = createAboutSection();
+        HBox.setHgrow(aboutSection, Priority.ALWAYS);
 
-        VBox rightColumn = new VBox(16);
-        rightColumn.getStyleClass().add("right-column");
+        VBox topHoldersSection = createTopHoldersSection();
+        HBox.setHgrow(topHoldersSection, Priority.ALWAYS);
 
-        rightColumn.getChildren().addAll(
-            createTradePanel(),
-            createOrderBook()
-        );
+        leftBottom.getChildren().addAll(aboutSection, topHoldersSection);
 
-        bottomSection.getChildren().addAll(leftColumn, rightColumn);
+        VBox orderBook = createOrderBook();
+        orderBook.getStyleClass().add("right-column");
+
+        bottomSection.getChildren().addAll(leftBottom, orderBook);
         return bottomSection;
     }
 
@@ -642,7 +691,7 @@ public class MarketDetailView {
     }
 
     private VBox createOrderBook() {
-        VBox orderBook = new VBox(12);
+        VBox orderBook = new VBox(8);
         orderBook.getStyleClass().add("orderbook-panel");
         orderBook.setPadding(new Insets(16, 16, 16, 16));
 
@@ -657,78 +706,77 @@ public class MarketDetailView {
         spreadLabel.setFont(Font.font("Inter", 11));
         obHeader.getChildren().addAll(obTitle, spacer, spreadLabel);
 
-        HBox obColumns = new HBox(0);
-        obColumns.setPadding(new Insets(0, 0, 8, 0));
-        Label priceCol = new Label("Price");
-        priceCol.getStyleClass().add("ob-col-label");
-        priceCol.setFont(Font.font("Inter", 11));
-        Region s1 = new Region();
-        HBox.setHgrow(s1, Priority.ALWAYS);
-        Label sharesCol = new Label("Shares");
-        sharesCol.getStyleClass().add("ob-col-label");
-        sharesCol.setFont(Font.font("Inter", 11));
-        Region s2 = new Region();
-        HBox.setHgrow(s2, Priority.ALWAYS);
-        Label totalCol = new Label("Total");
-        totalCol.getStyleClass().add("ob-col-label");
-        totalCol.setFont(Font.font("Inter", 11));
-        obColumns.getChildren().addAll(priceCol, s1, sharesCol, s2, totalCol);
+        GridPane grid = new GridPane();
+        grid.getStyleClass().add("orderbook-grid");
+        grid.setVgap(4);
 
-        VBox asksBox = new VBox(4);
-        asksBox.getChildren().addAll(
-            createOrderRow("69.0¢", "420", "$290", true),
-            createOrderRow("68.5¢", "1.2K", "$822", true),
-            createOrderRow("68.0¢", "3.4K", "$2.3K", true),
-            createOrderRow("67.5¢", "850", "$574", true)
-        );
+        Label priceHeader = new Label("Price");
+        priceHeader.getStyleClass().add("ob-col-label");
+        Label sharesHeader = new Label("Shares");
+        sharesHeader.getStyleClass().add("ob-col-label");
+        sharesHeader.setAlignment(Pos.CENTER_RIGHT);
+        Label totalHeader = new Label("Total");
+        totalHeader.getStyleClass().add("ob-col-label");
+        totalHeader.setAlignment(Pos.CENTER_RIGHT);
 
-        HBox midPrice = new HBox(0);
-        midPrice.setAlignment(Pos.CENTER);
-        midPrice.setPadding(new Insets(6, 0, 6, 0));
+        grid.addRow(0, priceHeader, sharesHeader, totalHeader);
+
+        String[][] asks = {
+            {"69.0¢", "420", "$290"},
+            {"68.5¢", "1.2K", "$822"},
+            {"68.0¢", "3.4K", "$2.3K"},
+            {"67.5¢", "850", "$574"}
+        };
+
+        for (int i = 0; i < asks.length; i++) {
+            HBox row = new HBox();
+            row.getStyleClass().add("ob-ask-row");
+            Label p = new Label(asks[i][0]);
+            p.getStyleClass().add("ob-ask-price");
+            Label s = new Label(asks[i][1]);
+            s.getStyleClass().add("ob-ask-shares");
+            s.setAlignment(Pos.CENTER_RIGHT);
+            Label t = new Label(asks[i][2]);
+            t.getStyleClass().add("ob-ask-total");
+            t.setAlignment(Pos.CENTER_RIGHT);
+            grid.addRow(i + 1, p, s, t);
+        }
+
         Label midLabel = new Label("67.0¢");
         midLabel.getStyleClass().add("mid-price");
         midLabel.setFont(Font.font("Inter", FontWeight.BOLD, 13));
-        midPrice.getChildren().add(midLabel);
+        GridPane.setHalignment(midLabel, HPos.CENTER);
+        grid.add(midLabel, 0, asks.length + 1, 3, 1);
 
-        VBox bidsBox = new VBox(4);
-        bidsBox.getChildren().addAll(
-            createOrderRow("66.5¢", "2.1K", "$1.4K", false),
-            createOrderRow("66.0¢", "4.5K", "$2.9K", false)
-        );
+        String[][] bids = {
+            {"66.5¢", "2.1K", "$1.4K"},
+            {"66.0¢", "4.5K", "$2.9K"}
+        };
 
-        orderBook.getChildren().addAll(obHeader, obColumns, asksBox, midPrice, bidsBox);
+        for (int i = 0; i < bids.length; i++) {
+            HBox row = new HBox();
+            row.getStyleClass().add("ob-bid-row");
+            Label p = new Label(bids[i][0]);
+            p.getStyleClass().add("ob-bid-price");
+            Label s = new Label(bids[i][1]);
+            s.getStyleClass().add("ob-bid-shares");
+            s.setAlignment(Pos.CENTER_RIGHT);
+            Label t = new Label(bids[i][2]);
+            t.getStyleClass().add("ob-bid-total");
+            t.setAlignment(Pos.CENTER_RIGHT);
+            grid.addRow(i + asks.length + 2, p, s, t);
+        }
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(33.33);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(33.33);
+        ColumnConstraints col3 = new ColumnConstraints();
+        col3.setPercentWidth(33.33);
+        grid.getColumnConstraints().addAll(col1, col2, col3);
+
+        orderBook.getChildren().addAll(obHeader, grid);
         return orderBook;
-    }
-
-    private HBox createOrderRow(String price, String shares, String total, boolean isAsk) {
-        HBox row = new HBox(0);
-        Label priceLabel = new Label(price);
-        if (isAsk) {
-            priceLabel.getStyleClass().add("ob-ask-price");
-        } else {
-            priceLabel.getStyleClass().add("ob-bid-price");
-        }
-        priceLabel.setFont(Font.font("Inter", 12));
-        Region s1 = new Region();
-        HBox.setHgrow(s1, Priority.ALWAYS);
-        Label sharesLabel = new Label(shares);
-        if (isAsk) {
-            sharesLabel.getStyleClass().add("ob-ask-shares");
-        } else {
-            sharesLabel.getStyleClass().add("ob-bid-shares");
-        }
-        sharesLabel.setFont(Font.font("Inter", 12));
-        Region s2 = new Region();
-        HBox.setHgrow(s2, Priority.ALWAYS);
-        Label totalLabel = new Label(total);
-        if (isAsk) {
-            totalLabel.getStyleClass().add("ob-ask-total");
-        } else {
-            totalLabel.getStyleClass().add("ob-bid-total");
-        }
-        totalLabel.setFont(Font.font("Inter", 12));
-        row.getChildren().addAll(priceLabel, s1, sharesLabel, s2, totalLabel);
-        return row;
     }
 
     public BorderPane getView() {
