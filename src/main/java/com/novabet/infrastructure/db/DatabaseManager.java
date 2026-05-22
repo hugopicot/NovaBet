@@ -10,31 +10,27 @@ public class DatabaseManager {
 
     private static final String CONFIG_FILE = "/config.properties";
 
-    public static Connection getConnection() {
+    public static Connection getConnection() throws SQLException {
         Properties props = new Properties();
         try (InputStream in = DatabaseManager.class.getResourceAsStream(CONFIG_FILE)) {
             if (in == null) {
-                System.err.println("Le fichier " + CONFIG_FILE + " est introuvable !");
-                return null;
+                throw new SQLException("Fichier de configuration " + CONFIG_FILE + " introuvable dans le classpath.");
             }
             props.load(in);
-
-            String url = props.getProperty("db.url");
-            String user = props.getProperty("db.user");
-            String pass = props.getProperty("db.password");
-
-            // Assurer le chargement du driver MySQL
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            
-            return DriverManager.getConnection(url, user, pass);
-
-        } catch (SQLException e) {
-            System.err.println("Erreur de connexion à la base de données : " + e.getMessage());
-            // Retourne null au lieu de lever une exception
-            return null;
-        } catch (Exception e) {
-            System.err.println("Erreur de lecture de la configuration : " + e.getMessage());
-            return null;
+        } catch (java.io.IOException e) {
+            throw new SQLException("Impossible de lire " + CONFIG_FILE, e);
         }
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver MySQL introuvable (mysql-connector-j manquant ?)", e);
+        }
+
+        String url = props.getProperty("db.url");
+        String user = props.getProperty("db.user");
+        String pass = props.getProperty("db.password");
+
+        return DriverManager.getConnection(url, user, pass);
     }
 }

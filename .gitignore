@@ -27,6 +27,7 @@ buildNumber.properties
 # Configuration (Credentials)
 config.properties
 src/main/resources/config.properties
+!src/main/resources/config.properties.example
 
 .claude/
 
