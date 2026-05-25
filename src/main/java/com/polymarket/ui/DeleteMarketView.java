@@ -22,6 +22,7 @@ public class DeleteMarketView {
     private Runnable onConfirmDelete;
     private Runnable onMarketsClick;
     private Runnable onPortfolioClick;
+    private Runnable onWalletClick;
 
     private Label previewQuestion;
     private Label previewMeta;
@@ -84,10 +85,16 @@ public class DeleteMarketView {
         portfolioNav.setOnMouseClicked(e -> {
             if (onPortfolioClick != null) onPortfolioClick.run();
         });
+        HBox walletNav = createNavItem("Wallet", false);
+        walletNav.setCursor(javafx.scene.Cursor.HAND);
+        walletNav.setOnMouseClicked(e -> {
+            if (onWalletClick != null) onWalletClick.run();
+        });
         navItems.getChildren().addAll(
             marketsNav,
             portfolioNav,
             createNavItem("Create market", false),
+            walletNav,
             createNavItem("History", false)
         );
 
@@ -246,6 +253,10 @@ public class DeleteMarketView {
 
     public void setOnPortfolioClick(Runnable onPortfolioClick) {
         this.onPortfolioClick = onPortfolioClick;
+    }
+
+    public void setOnWalletClick(Runnable onWalletClick) {
+        this.onWalletClick = onWalletClick;
     }
 
     public void setOnConfirmDelete(Runnable onConfirmDelete) {

@@ -22,6 +22,7 @@ public class UpdateMarketView {
     private Runnable onBack;
     private Runnable onMarketsClick;
     private Runnable onPortfolioClick;
+    private Runnable onWalletClick;
     private OnMarketUpdatedCallback onMarketUpdated;
 
     private TextField questionField;
@@ -104,10 +105,16 @@ public class UpdateMarketView {
         portfolioNav.setOnMouseClicked(e -> {
             if (onPortfolioClick != null) onPortfolioClick.run();
         });
+        HBox walletNav = createNavItem("Wallet", false);
+        walletNav.setCursor(javafx.scene.Cursor.HAND);
+        walletNav.setOnMouseClicked(e -> {
+            if (onWalletClick != null) onWalletClick.run();
+        });
         navItems.getChildren().addAll(
             marketsNav,
             portfolioNav,
             createNavItem("Create market", true),
+            walletNav,
             createNavItem("History", false)
         );
 
@@ -369,6 +376,10 @@ public class UpdateMarketView {
 
     public void setOnPortfolioClick(Runnable onPortfolioClick) {
         this.onPortfolioClick = onPortfolioClick;
+    }
+
+    public void setOnWalletClick(Runnable onWalletClick) {
+        this.onWalletClick = onWalletClick;
     }
 
     public void setOnMarketUpdated(OnMarketUpdatedCallback onMarketUpdated) {
