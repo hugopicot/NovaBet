@@ -1,0 +1,166 @@
+* {
+    -bg-0: #1c1f26;
+    -bg-1: #262932;
+    -bg-2: #2d3039;
+    -bg-3: #393d48;
+
+    -fg-0: #f7f7f8;
+    -fg-1: #dadadd;
+    -fg-2: #9a9ca3;
+    -fg-3: #7e8088;
+
+    -gold:       #e0ac2e;
+    -gold-2:     #c68a2e;
+    -gold-light: #f1cc4a;
+    -gold-soft-bg:     rgba(224, 172, 46, 0.12);
+    -gold-soft-border: rgba(224, 172, 46, 0.30);
+    -gold-glow:        rgba(224, 172, 46, 0.45);
+
+    -neon:   #d847a9;
+    -neon-2: #b85adf;
+}
+
+.casino-shell {
+    -fx-background-color: radial-gradient(center 30% 0%, radius 80%,
+                                          #2a1f3a 0%,
+                                          #19132a 60%,
+                                          #110a1c 100%);
+    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+    -fx-min-width: 1100;
+    -fx-min-height: 700;
+}
+
+.topbar {
+    -fx-background-color: #20142e;
+    -fx-padding: 14 24 14 24;
+    -fx-border-color: transparent transparent -gold-soft-border transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.logo-square {
+    -fx-background-color: linear-gradient(to bottom right, -gold, -neon);
+    -fx-min-width: 22;
+    -fx-min-height: 22;
+    -fx-max-width: 22;
+    -fx-max-height: 22;
+    -fx-background-radius: 5;
+}
+
+.brand {
+    -fx-font-family: "Instrument Serif", "Georgia", serif;
+    -fx-font-size: 18px;
+    -fx-text-fill: -gold;
+}
+
+.chip {
+    -fx-background-color: rgba(0, 0, 0, 0.30);
+    -fx-text-fill: -fg-2;
+    -fx-font-size: 12px;
+    -fx-padding: 6 12 6 12;
+    -fx-background-radius: 999;
+    -fx-cursor: hand;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+}
+
+.balance-pill {
+    -fx-background-color: -gold-soft-bg;
+    -fx-padding: 6 12 6 8;
+    -fx-background-radius: 999;
+    -fx-border-color: -gold;
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+}
+
+.balance-coin {
+    -fx-background-color: linear-gradient(to bottom right, -gold-light, -gold-2);
+    -fx-min-width: 18;
+    -fx-min-height: 18;
+    -fx-max-width: 18;
+    -fx-max-height: 18;
+    -fx-background-radius: 50%;
+    -fx-alignment: center;
+    -fx-text-fill: #2a2014;
+    -fx-font-weight: 900;
+    -fx-font-size: 10px;
+}
+
+.balance-amount {
+    -fx-text-fill: -gold;
+    -fx-font-family: "JetBrains Mono", "Consolas", monospace;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.balance-tag {
+    -fx-text-fill: -gold;
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+}
+
+.btn-gold {
+    -fx-background-color: linear-gradient(to bottom, -gold, -gold-2);
+    -fx-text-fill: #2a2014;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-padding: 8 18 8 18;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.btn-gold:disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
+}
+
+.cat-row {
+    -fx-padding: 18 24 12 24;
+}
+
+.cat-pill {
+    -fx-background-color: rgba(0, 0, 0, 0.30);
+    -fx-text-fill: -fg-1;
+    -fx-font-size: 12px;
+    -fx-padding: 6 14 6 14;
+    -fx-background-radius: 999;
+    -fx-border-color: -gold-soft-border;
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+}
+
+.cat-pill.active {
+    -fx-background-color: -gold;
+    -fx-text-fill: #2a2014;
+    -fx-border-color: -gold;
+    -fx-font-weight: 600;
+}
+
+.games-grid {
+    -fx-padding: 4 24 24 24;
+}
+
+.casino-card {
+    -fx-background-color: linear-gradient(135deg, #3a2549, #221833);
+    -fx-background-radius: 14;
+    -fx-border-color: -gold-soft-border;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-min-width: 240;
+    -fx-pref-height: 200;
+    -fx-alignment: center;
+    -fx-spacing: 12;
+    -fx-padding: 24;
+}
+
+.card-emoji {
+    -fx-font-size: 72px;
+}
+
+.card-name {
+    -fx-text-fill: -fg-0;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
