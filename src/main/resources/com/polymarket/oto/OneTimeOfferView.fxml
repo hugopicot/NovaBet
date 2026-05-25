@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.polymarket.oto.OneTimeOfferController"
+           stylesheets="@oto.css"
+           styleClass="root-pane">
+
+    <!-- PAGE 1 — Retrait -->
+    <VBox fx:id="withdrawBox" alignment="CENTER" styleClass="withdraw-page" spacing="22">
+
+        <Label text="CAISSE" styleClass="label-muted-small"/>
+        <Label text="Combien veux-tu retirer ?" styleClass="page-title"/>
+        <Label text="Solde fictif disponible : 999 999 $NVB" styleClass="label-muted"/>
+
+        <VBox alignment="CENTER" spacing="8" styleClass="withdraw-form">
+            <Label text="MONTANT À RETIRER" styleClass="label-muted-small"/>
+            <TextField fx:id="amountField" promptText="746" styleClass="amount-input"/>
+            <Label fx:id="withdrawError" text=" " styleClass="error-label"/>
+        </VBox>
+
+        <Button fx:id="withdrawBtn" text="Retirer →" styleClass="btn-primary" onAction="#onWithdrawClicked"/>
+    </VBox>
+
+    <!-- PAGE 2 — Modale OTO -->
+    <StackPane fx:id="otoBox" styleClass="oto-backdrop" visible="false" managed="false">
+
+        <VBox styleClass="oto-modal" alignment="TOP_CENTER" prefWidth="540" maxWidth="540" maxHeight="-Infinity">
+
+            <!-- Timer badge (sort du haut de la modale) -->
+            <HBox alignment="CENTER" styleClass="timer-badge" maxWidth="-Infinity">
+                <Label text="⚡ OFFRE LIMITÉE · EXPIRE DANS " styleClass="timer-badge-text"/>
+                <Label fx:id="timerLabel" text="5:00" styleClass="timer-badge-text-mono"/>
+            </HBox>
+
+            <Label text="★ OFFRE UNIQUE ★" styleClass="oto-tag"/>
+
+            <!-- Headlines (2 lignes, montant inline gold) -->
+            <HBox alignment="CENTER" spacing="14" styleClass="headline-row">
+                <Label text="Ne prends pas" styleClass="headline-text"/>
+                <Label fx:id="declineAmountLabel" text="746 $." styleClass="headline-gold"/>
+            </HBox>
+            <HBox alignment="CENTER" spacing="14" styleClass="headline-row">
+                <Label text="Prends jusqu'à" styleClass="headline-text"/>
+                <Label fx:id="maxAmountLabel" text="7 460 $." styleClass="headline-gold-glow"/>
+            </HBox>
+
+            <!-- 3 cards multiplicateurs (rangée avec séparateurs gold transparents) -->
+            <HBox alignment="CENTER" spacing="10" styleClass="oto-cards">
+                <VBox alignment="CENTER" styleClass="oto-card">
+                    <Label text="2×" styleClass="oto-card-multiplier"/>
+                    <Label fx:id="card2xValue" text="1 492 $" styleClass="oto-card-value"/>
+                    <Label text="60%" styleClass="oto-card-odds"/>
+                </VBox>
+                <VBox alignment="CENTER" styleClass="oto-card">
+                    <Label text="5×" styleClass="oto-card-multiplier"/>
+                    <Label fx:id="card5xValue" text="3 730 $" styleClass="oto-card-value"/>
+                    <Label text="30%" styleClass="oto-card-odds"/>
+                </VBox>
+                <VBox alignment="CENTER" styleClass="oto-card">
+                    <Label text="10×" styleClass="oto-card-multiplier"/>
+                    <Label fx:id="card10xValue" text="7 460 $" styleClass="oto-card-value"/>
+                    <Label text="10%" styleClass="oto-card-odds"/>
+                </VBox>
+            </HBox>
+
+            <!-- CTA principal -->
+            <Button fx:id="spinBtn" text="TOURNER LA ROUE · 746 $ → JUSQU'À 7 460 $"
+                    styleClass="btn-gold" onAction="#onSpinClicked" maxWidth="Infinity"/>
+
+            <!-- Lien decline -->
+            <Label fx:id="declineLink" text="Non merci, je préfère prendre le plus petit montant"
+                   styleClass="decline-link" onMouseClicked="#onDeclineClicked"/>
+        </VBox>
+    </StackPane>
+
+</StackPane>
