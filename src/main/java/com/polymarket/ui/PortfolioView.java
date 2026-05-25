@@ -29,6 +29,8 @@ public class PortfolioView {
     private BorderPane root;
     private Runnable onMarketsClick;
     private Runnable onCreateMarketClick;
+    private Runnable onHistoryClick;
+    private Runnable onWalletClick;
     private Consumer<Long> onMarketClick;
     private Long currentUserId;
 
@@ -183,11 +185,22 @@ public class PortfolioView {
         createMarketNav.setOnMouseClicked(e -> {
             if (onCreateMarketClick != null) onCreateMarketClick.run();
         });
+        HBox historyNav = createNavItem("History", false);
+        historyNav.setCursor(javafx.scene.Cursor.HAND);
+        historyNav.setOnMouseClicked(e -> {
+            if (onHistoryClick != null) onHistoryClick.run();
+        });
+        HBox walletNav = createNavItem("Wallet", false);
+        walletNav.setCursor(javafx.scene.Cursor.HAND);
+        walletNav.setOnMouseClicked(e -> {
+            if (onWalletClick != null) onWalletClick.run();
+        });
         navItems.getChildren().addAll(
             marketsNav,
             portfolioNav,
             createMarketNav,
-            createNavItem("History", false)
+            historyNav,
+            walletNav
         );
 
         topSection.getChildren().addAll(logoBox, navItems);
@@ -367,5 +380,13 @@ public class PortfolioView {
 
     public void setOnMarketClick(Consumer<Long> onMarketClick) {
         this.onMarketClick = onMarketClick;
+    }
+
+    public void setOnHistoryClick(Runnable onHistoryClick) {
+        this.onHistoryClick = onHistoryClick;
+    }
+
+    public void setOnWalletClick(Runnable onWalletClick) {
+        this.onWalletClick = onWalletClick;
     }
 }

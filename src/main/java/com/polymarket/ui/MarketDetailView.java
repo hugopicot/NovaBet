@@ -36,6 +36,7 @@ public class MarketDetailView {
     private Runnable onMarketsClick;
     private Runnable onPortfolioClick;
     private Runnable onWalletClick;
+    private Runnable onHistoryClick;
     private Runnable onEditMarket;
     private Runnable onDeleteMarket;
     private Consumer<BetRequest> onPlaceBet;
@@ -92,12 +93,17 @@ public class MarketDetailView {
         walletNav.setOnMouseClicked(e -> {
             if (onWalletClick != null) onWalletClick.run();
         });
+        HBox historyNav = createNavItem("History", false);
+        historyNav.setCursor(javafx.scene.Cursor.HAND);
+        historyNav.setOnMouseClicked(e -> {
+            if (onHistoryClick != null) onHistoryClick.run();
+        });
         navItems.getChildren().addAll(
             marketsNav,
             portfolioNav,
             createNavItem("Create market", false),
             walletNav,
-            createNavItem("History", false)
+            historyNav
         );
 
         topSection.getChildren().addAll(logoBox, navItems);
@@ -144,9 +150,9 @@ public class MarketDetailView {
         balanceLabel.setFont(Font.font("Inter", 10));
         HBox balanceValueBox = new HBox(6);
         balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        Label balanceValueLocal = new Label("12,480.50");
-        balanceValueLocal.getStyleClass().add("balance-value");
-        balanceValueLocal.setFont(Font.font("Inter", FontWeight.BOLD, 18));
+        balanceValue = new Label("12,480.50");
+        balanceValue.getStyleClass().add("balance-value");
+        balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
         Label balanceCurrency = new Label("$NVB");
         balanceCurrency.getStyleClass().add("balance-currency");
         balanceCurrency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
@@ -854,6 +860,10 @@ public class MarketDetailView {
 
     public void setOnWalletClick(Runnable onWalletClick) {
         this.onWalletClick = onWalletClick;
+    }
+
+    public void setOnHistoryClick(Runnable onHistoryClick) {
+        this.onHistoryClick = onHistoryClick;
     }
 
     public void setBalance(double balance) {
