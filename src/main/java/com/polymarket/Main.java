@@ -11,14 +11,12 @@ import com.polymarket.domain.service.BettingService;
 import com.polymarket.domain.service.BettingServiceImpl;
 import com.polymarket.domain.service.MarketService;
 import com.polymarket.domain.service.MarketServiceImpl;
-import com.polymarket.model.events;
-import com.polymarket.model.outcomes;
-import com.polymarket.model.users;
-import com.polymarket.model.wallets;
+import com.polymarket.model.*;
 import com.polymarket.ui.CreateMarketView;
 import com.polymarket.ui.DeleteMarketView;
 import com.polymarket.ui.MarketDetailView;
 import com.polymarket.ui.MarketsListView;
+import com.polymarket.ui.PortfolioView;
 import com.polymarket.ui.UpdateMarketView;
 import com.polymarket.ui.auth.AuthModule;
 
@@ -41,12 +39,14 @@ public class Main extends Application {
     private CreateMarketView createView;
     private UpdateMarketView updateView;
     private DeleteMarketView deleteView;
+    private PortfolioView portfolioView;
 
     private Scene marketsScene;
     private Scene detailScene;
     private Scene createMarketScene;
     private Scene updateScene;
     private Scene deleteScene;
+    private Scene portfolioScene;
 
     private Stage primaryStage;
     private String css;
@@ -80,12 +80,14 @@ public class Main extends Application {
         createView = new CreateMarketView();
         updateView = new UpdateMarketView();
         deleteView = new DeleteMarketView();
+        portfolioView = new PortfolioView();
 
         marketsScene = createScene(marketsView.getView());
         detailScene = createScene(detailView.getView());
         createMarketScene = createScene(createView.getView());
         updateScene = createScene(updateView.getView());
         deleteScene = createScene(deleteView.getView());
+        portfolioScene = createScene(portfolioView.getView());
 
         wireNavigation();
 
@@ -96,6 +98,7 @@ public class Main extends Application {
                 currentUserId = user.getId();
                 marketsView.setCurrentUserId(currentUserId);
                 detailView.setCurrentUserId(currentUserId);
+                portfolioView.setCurrentUserId(currentUserId);
                 refreshBalance();
             }
             loadMarkets();
@@ -117,10 +120,18 @@ public class Main extends Application {
             createView.clearForm();
             primaryStage.setScene(createMarketScene);
         });
+        marketsView.setOnPortfolioClick(() -> {
+            loadPortfolio();
+            primaryStage.setScene(portfolioScene);
+        });
 
         detailView.setOnMarketsClick(() -> {
             loadMarkets();
             primaryStage.setScene(marketsScene);
+        });
+        detailView.setOnPortfolioClick(() -> {
+            loadPortfolio();
+            primaryStage.setScene(portfolioScene);
         });
         detailView.setOnEditMarket(() -> {
             if (selectedMarketId != null) {
@@ -145,6 +156,10 @@ public class Main extends Application {
             loadMarkets();
             primaryStage.setScene(marketsScene);
         });
+        createView.setOnPortfolioClick(() -> {
+            loadPortfolio();
+            primaryStage.setScene(portfolioScene);
+        });
         createView.setOnMarketCreated((event, yesProbability) -> {
             try {
                 marketService.createMarket(event);
@@ -168,6 +183,10 @@ public class Main extends Application {
         updateView.setOnMarketsClick(() -> {
             loadMarkets();
             primaryStage.setScene(marketsScene);
+        });
+        updateView.setOnPortfolioClick(() -> {
+            loadPortfolio();
+            primaryStage.setScene(portfolioScene);
         });
         updateView.setOnMarketUpdated((event, yesProbability) -> {
             try {
@@ -201,6 +220,10 @@ public class Main extends Application {
             loadMarkets();
             primaryStage.setScene(marketsScene);
         });
+        deleteView.setOnPortfolioClick(() -> {
+            loadPortfolio();
+            primaryStage.setScene(portfolioScene);
+        });
         deleteView.setOnConfirmDelete(() -> {
             if (selectedMarketId != null) {
                 marketService.deleteMarket(selectedMarketId);
@@ -208,6 +231,20 @@ public class Main extends Application {
             }
             loadMarkets();
             primaryStage.setScene(marketsScene);
+        });
+
+        portfolioView.setOnMarketsClick(() -> {
+            loadMarkets();
+            primaryStage.setScene(marketsScene);
+        });
+        portfolioView.setOnCreateMarketClick(() -> {
+            createView.clearForm();
+            primaryStage.setScene(createMarketScene);
+        });
+        portfolioView.setOnMarketClick(eventId -> {
+            selectedMarketId = eventId;
+            loadMarketDetail(eventId);
+            primaryStage.setScene(detailScene);
         });
 
         marketsView.setOnPlaceBet(this::handlePlaceBet);
@@ -235,6 +272,7 @@ public class Main extends Application {
             double total = wallet.getRealBalance() + wallet.getVirtualBalance();
             marketsView.setBalance(total);
             detailView.setBalance(total);
+            portfolioView.setBalance(total);
         }
     }
 
@@ -270,6 +308,35 @@ public class Main extends Application {
             detailView.setEventData(event, outcomes);
         } catch (Exception ex) {
             System.err.println("Error loading market detail: " + ex.getMessage());
+        }
+    }
+
+    private void loadPortfolio() {
+        if (currentUserId == null) return;
+        try {
+            betsDao betsDao = new betsDao();
+            List<bets> userBets = betsDao.findByUserId(currentUserId.intValue());
+
+            outcomesDao outcomeDao = new outcomesDao();
+            eventsDao eventsDao = new eventsDao();
+
+            Map<Long, events> eventsMap = new HashMap<>();
+            Map<Long, outcomes> outcomesMap = new HashMap<>();
+
+            for (bets bet : userBets) {
+                outcomes outcome = outcomeDao.findById((long) bet.getOutcome_id());
+                if (outcome != null) {
+                    outcomesMap.put((long) bet.getOutcome_id(), outcome);
+                    events event = eventsDao.findById(outcome.getEventId());
+                    if (event != null) {
+                        eventsMap.put((long) bet.getOutcome_id(), event);
+                    }
+                }
+            }
+
+            portfolioView.setBets(userBets, eventsMap, outcomesMap);
+        } catch (Exception ex) {
+            System.err.println("Error loading portfolio: " + ex.getMessage());
         }
     }
 

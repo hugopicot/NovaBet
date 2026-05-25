@@ -21,6 +21,7 @@ public class UpdateMarketView {
     private BorderPane root;
     private Runnable onBack;
     private Runnable onMarketsClick;
+    private Runnable onPortfolioClick;
     private OnMarketUpdatedCallback onMarketUpdated;
 
     private TextField questionField;
@@ -98,9 +99,14 @@ public class UpdateMarketView {
         marketsNav.setOnMouseClicked(e -> {
             if (onMarketsClick != null) onMarketsClick.run();
         });
+        HBox portfolioNav = createNavItem("Portfolio", false);
+        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
+        portfolioNav.setOnMouseClicked(e -> {
+            if (onPortfolioClick != null) onPortfolioClick.run();
+        });
         navItems.getChildren().addAll(
             marketsNav,
-            createNavItem("Portfolio", false),
+            portfolioNav,
             createNavItem("Create market", true),
             createNavItem("History", false)
         );
@@ -359,6 +365,10 @@ public class UpdateMarketView {
 
     public void setOnMarketsClick(Runnable onMarketsClick) {
         this.onMarketsClick = onMarketsClick;
+    }
+
+    public void setOnPortfolioClick(Runnable onPortfolioClick) {
+        this.onPortfolioClick = onPortfolioClick;
     }
 
     public void setOnMarketUpdated(OnMarketUpdatedCallback onMarketUpdated) {
