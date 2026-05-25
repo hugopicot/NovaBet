@@ -23,6 +23,7 @@ import com.polymarket.ui.WalletView;
 import com.polymarket.ui.auth.AuthModule;
 import com.polymarket.domain.service.WalletService;
 import com.polymarket.domain.service.WalletServiceImpl;
+import com.polymarket.oto.OneTimeOfferController;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -471,13 +472,33 @@ public class Main extends Application {
 
     private void handleWithdraw(double amount) {
         if (walletService == null || currentUserId == null) return;
+        openOneTimeOffer(amount);
+    }
+
+    private void openOneTimeOffer(double amount) {
         try {
-            walletService.withdraw(currentUserId, amount);
-            refreshBalance();
-            loadWallet();
-        } catch (Exception ex) {
-            System.err.println("Withdraw error: " + ex.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Withdraw failed", ex.getMessage());
+            FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/com/polymarket/oto/OneTimeOfferView.fxml")
+            );
+            Parent oto = loader.load();
+            OneTimeOfferController controller = loader.getController();
+            controller.setAmount(amount);
+            controller.setOnClose(() -> {
+                try {
+                    walletService.withdraw(currentUserId, amount);
+                } catch (Exception ex) {
+                    System.err.println("Withdraw error: " + ex.getMessage());
+                    showAlert(Alert.AlertType.ERROR, "Withdraw failed", ex.getMessage());
+                }
+                refreshBalance();
+                loadWallet();
+                primaryStage.setScene(walletScene);
+            });
+            controller.setOnPlayInCasino(this::openCasinoLobby);
+            primaryStage.setScene(createScene(oto));
+        } catch (Exception e) {
+            System.err.println("Cannot open OTO: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Erreur", "Impossible d'ouvrir l'offre : " + e.getMessage());
         }
     }
 

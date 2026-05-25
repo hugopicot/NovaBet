@@ -1,6 +1,7 @@
 package com.polymarket.ui;
 
 import com.polymarket.model.events;
+import com.polymarket.ui.components.ChromeFactory;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -11,9 +12,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextAlignment;
 
 public class DeleteMarketView {
 
@@ -28,221 +31,156 @@ public class DeleteMarketView {
     private Label previewQuestion;
     private Label previewMeta;
     private TextField confirmInput;
+    private Button deleteBtn;
+    private Label sidebarBalance;
+    private Label topbarBalance;
 
     private events currentEvent;
 
     public DeleteMarketView() {
         root = new BorderPane();
         root.getStyleClass().add("main-container");
-        root.setLeft(createSidebar());
-        root.setCenter(createDeleteContent());
+        buildLayout();
+    }
+
+    private void buildLayout() {
+        VBox sidebar = ChromeFactory.sidebar(
+            ChromeFactory.NavId.MARKETS,
+            new ChromeFactory.NavCallbacks(
+                () -> { if (onMarketsClick != null) onMarketsClick.run(); },
+                () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
+                null,
+                () -> { if (onWalletClick != null) onWalletClick.run(); },
+                () -> { if (onHistoryClick != null) onHistoryClick.run(); },
+                null
+            )
+        );
+        sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
+        root.setLeft(sidebar);
+
+        BorderPane main = new BorderPane();
+        main.getStyleClass().add("main-content");
+        HBox topbar = ChromeFactory.topbar("Delete market", "Search markets...", () -> {
+            if (onWalletClick != null) onWalletClick.run();
+        });
+        topbarBalance = ChromeFactory.findTopbarBalance(topbar);
+        main.setTop(topbar);
+
+        StackPane center = new StackPane();
+        center.setPadding(new Insets(40, 24, 40, 24));
+        center.setAlignment(Pos.TOP_CENTER);
+        center.setStyle("-fx-background-color: -bg-0;");
+        center.getChildren().add(buildDialog());
+        main.setCenter(center);
+
+        root.setCenter(main);
+    }
+
+    private VBox buildDialog() {
+        VBox dialog = new VBox(20);
+        dialog.setAlignment(Pos.TOP_CENTER);
+        dialog.setMaxWidth(460);
+        dialog.getStyleClass().add("delete-dialog");
+        dialog.setPadding(new Insets(32, 32, 28, 32));
+
+        StackPane iconWrap = new StackPane();
+        iconWrap.getStyleClass().add("warning-icon");
+        iconWrap.setPrefSize(56, 56);
+        iconWrap.setMinSize(56, 56);
+        iconWrap.setMaxSize(56, 56);
+        Label warn = new Label("!");
+        warn.setFont(Font.font("Inter", FontWeight.EXTRA_BOLD, 26));
+        warn.setStyle("-fx-text-fill: -no;");
+        iconWrap.getChildren().add(warn);
+
+        Label title = new Label("Delete this market?");
+        title.getStyleClass().add("delete-dialog-title");
+        title.setFont(Font.font("Inter", FontWeight.BOLD, 22));
+
+        Label subtitle = new Label("This action cannot be undone. All liquidity and positions will be permanently lost.");
+        subtitle.getStyleClass().add("delete-dialog-subtitle");
+        subtitle.setFont(Font.font("Inter", 13));
+        subtitle.setWrapText(true);
+        subtitle.setTextAlignment(TextAlignment.CENTER);
+
+        VBox preview = new VBox(8);
+        preview.getStyleClass().add("delete-market-preview");
+        preview.setPadding(new Insets(14, 16, 14, 16));
+        preview.setMaxWidth(Double.MAX_VALUE);
+
+        previewQuestion = new Label("");
+        previewQuestion.getStyleClass().add("delete-preview-question");
+        previewQuestion.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
+        previewQuestion.setWrapText(true);
+
+        previewMeta = new Label("");
+        previewMeta.getStyleClass().add("delete-preview-meta");
+        previewMeta.setFont(Font.font("Inter", 11));
+
+        preview.getChildren().addAll(previewQuestion, previewMeta);
+
+        VBox confirmBox = new VBox(8);
+        confirmBox.setAlignment(Pos.CENTER);
+        Label cl = new Label("TYPE DELETE TO CONFIRM");
+        cl.getStyleClass().add("delete-confirm-label");
+
+        confirmInput = new TextField();
+        confirmInput.setPromptText("DELETE");
+        confirmInput.getStyleClass().add("delete-confirm-input");
+        confirmInput.setPrefWidth(280);
+        confirmInput.setAlignment(Pos.CENTER);
+        confirmInput.textProperty().addListener((o, ov, nv) -> {
+            if (deleteBtn != null) deleteBtn.setDisable(!"DELETE".equals(nv));
+        });
+
+        confirmBox.getChildren().addAll(cl, confirmInput);
+
+        HBox buttons = new HBox(10);
+        buttons.setAlignment(Pos.CENTER);
+
+        Button cancel = new Button("Cancel");
+        cancel.getStyleClass().add("btn-back");
+        cancel.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        cancel.setPrefWidth(130);
+        cancel.setOnAction(e -> { if (onBack != null) onBack.run(); });
+
+        deleteBtn = new Button("Delete market");
+        deleteBtn.getStyleClass().add("btn-delete");
+        deleteBtn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
+        deleteBtn.setPrefWidth(160);
+        deleteBtn.setDisable(true);
+        deleteBtn.setOnAction(e -> {
+            if ("DELETE".equals(confirmInput.getText()) && onConfirmDelete != null) {
+                onConfirmDelete.run();
+                confirmInput.clear();
+            }
+        });
+
+        buttons.getChildren().addAll(cancel, deleteBtn);
+
+        dialog.getChildren().addAll(iconWrap, title, subtitle, preview, confirmBox, buttons);
+        return dialog;
     }
 
     public void setEventData(events event) {
         this.currentEvent = event;
         if (event != null) {
             previewQuestion.setText(event.getTitle() != null ? event.getTitle() : "");
-            String resolution = event.getResolution() != null ? event.getResolution() : "";
-            previewMeta.setText(resolution.isEmpty() ? "" : "Ends " + resolution);
+            String r = event.getResolution() != null ? event.getResolution() : "";
+            previewMeta.setText(r.isEmpty() ? "No resolution date" : "Ends " + r);
         }
+        if (confirmInput != null) confirmInput.clear();
+        if (deleteBtn != null) deleteBtn.setDisable(true);
     }
 
     public events getEvent() {
         return currentEvent;
     }
 
-    private VBox createSidebar() {
-        VBox sidebar = new VBox(0);
-        sidebar.getStyleClass().add("sidebar");
-        sidebar.setPrefWidth(220);
-
-        VBox topSection = new VBox(0);
-        topSection.setPadding(new Insets(20, 16, 0, 16));
-
-        HBox logoBox = new HBox(10);
-        logoBox.setAlignment(Pos.CENTER_LEFT);
-        logoBox.setPadding(new Insets(0, 0, 24, 0));
-        Region logoIcon = new Region();
-        logoIcon.getStyleClass().add("logo-icon");
-        logoIcon.setPrefSize(28, 28);
-        VBox logoTextContainer = new VBox(0);
-        Label logoText = new Label("NovaBet");
-        logoText.getStyleClass().add("logo-text");
-        logoText.setFont(Font.font("Inter", FontWeight.BOLD, 16));
-        Label logoVersion = new Label("v0.4.2 \u00B7 alpha");
-        logoVersion.getStyleClass().add("logo-version");
-        logoVersion.setFont(Font.font("Inter", 10));
-        logoTextContainer.getChildren().addAll(logoText, logoVersion);
-        logoBox.getChildren().addAll(logoIcon, logoTextContainer);
-
-        VBox navItems = new VBox(4);
-        HBox marketsNav = createNavItem("Markets", false);
-        marketsNav.setCursor(javafx.scene.Cursor.HAND);
-        marketsNav.setOnMouseClicked(e -> {
-            if (onMarketsClick != null) onMarketsClick.run();
-        });
-        HBox portfolioNav = createNavItem("Portfolio", false);
-        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
-        portfolioNav.setOnMouseClicked(e -> {
-            if (onPortfolioClick != null) onPortfolioClick.run();
-        });
-        HBox walletNav = createNavItem("Wallet", false);
-        walletNav.setCursor(javafx.scene.Cursor.HAND);
-        walletNav.setOnMouseClicked(e -> {
-            if (onWalletClick != null) onWalletClick.run();
-        });
-        HBox historyNav = createNavItem("History", false);
-        historyNav.setCursor(javafx.scene.Cursor.HAND);
-        historyNav.setOnMouseClicked(e -> {
-            if (onHistoryClick != null) onHistoryClick.run();
-        });
-        navItems.getChildren().addAll(
-            marketsNav,
-            portfolioNav,
-            createNavItem("Create market", false),
-            walletNav,
-            historyNav
-        );
-
-        topSection.getChildren().addAll(logoBox, navItems);
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        VBox bottomSection = new VBox(12);
-        bottomSection.setPadding(new Insets(0, 16, 20, 16));
-
-        VBox balanceBox = new VBox(4);
-        balanceBox.getStyleClass().add("balance-box");
-        balanceBox.setPadding(new Insets(12, 14, 12, 14));
-        Label balanceLabel = new Label("BALANCE");
-        balanceLabel.getStyleClass().add("balance-label");
-        balanceLabel.setFont(Font.font("Inter", 10));
-        HBox balanceValueBox = new HBox(6);
-        balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        Label balanceValue = new Label("0.00");
-        balanceValue.getStyleClass().add("balance-value");
-        balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
-        Label balanceCurrency = new Label("$NVB");
-        balanceCurrency.getStyleClass().add("balance-currency");
-        balanceCurrency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
-        balanceValueBox.getChildren().addAll(balanceValue, balanceCurrency);
-        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox);
-
-        bottomSection.getChildren().addAll(balanceBox);
-
-        sidebar.getChildren().addAll(topSection, spacer, bottomSection);
-        return sidebar;
-    }
-
-    private HBox createNavItem(String text, boolean active) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setPadding(new Insets(8, 12, 8, 12));
-        if (active) {
-            item.getStyleClass().add("nav-item-active");
-        } else {
-            item.getStyleClass().add("nav-item");
-        }
-
-        Region icon = new Region();
-        icon.setPrefSize(16, 16);
-        if (active) {
-            icon.getStyleClass().add("nav-icon-active");
-        } else {
-            icon.getStyleClass().add("nav-icon");
-        }
-
-        Label label = new Label(text);
-        label.getStyleClass().add(active ? "nav-text-active" : "nav-text");
-        label.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
-
-        item.getChildren().addAll(icon, label);
-        return item;
-    }
-
-    private VBox createDeleteContent() {
-        VBox content = new VBox(0);
-        content.setAlignment(Pos.CENTER);
-        content.setPadding(new Insets(32, 24, 24, 24));
-
-        VBox dialogBox = new VBox(24);
-        dialogBox.setAlignment(Pos.CENTER);
-        dialogBox.setMaxWidth(440);
-        dialogBox.getStyleClass().add("delete-dialog");
-        dialogBox.setPadding(new Insets(32, 32, 28, 32));
-
-        Region warningIcon = new Region();
-        warningIcon.getStyleClass().add("warning-icon");
-        warningIcon.setPrefSize(48, 48);
-
-        Label title = new Label("Delete this market?");
-        title.getStyleClass().add("delete-dialog-title");
-        title.setFont(Font.font("Inter", FontWeight.BOLD, 20));
-
-        Label subtitle = new Label("This action cannot be undone. All liquidity and positions will be permanently lost.");
-        subtitle.getStyleClass().add("delete-dialog-subtitle");
-        subtitle.setFont(Font.font("Inter", 13));
-        subtitle.setWrapText(true);
-        subtitle.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
-
-        VBox marketPreview = new VBox(10);
-        marketPreview.getStyleClass().add("delete-market-preview");
-        marketPreview.setPadding(new Insets(12, 14, 12, 14));
-
-        previewQuestion = new Label("");
-        previewQuestion.getStyleClass().add("delete-preview-question");
-        previewQuestion.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
-
-        previewMeta = new Label("");
-        previewMeta.getStyleClass().add("delete-preview-meta");
-        previewMeta.setFont(Font.font("Inter", 11));
-
-        marketPreview.getChildren().addAll(previewQuestion, previewMeta);
-
-        VBox confirmBox = new VBox(10);
-        confirmBox.setAlignment(Pos.CENTER);
-
-        Label confirmLabel = new Label("Type DELETE to confirm");
-        confirmLabel.getStyleClass().add("delete-confirm-label");
-        confirmLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-
-        confirmInput = new TextField();
-        confirmInput.setPromptText("DELETE");
-        confirmInput.getStyleClass().add("delete-confirm-input");
-        confirmInput.setFont(Font.font("Inter", 14));
-        confirmInput.setPrefWidth(280);
-        confirmInput.setAlignment(Pos.CENTER);
-
-        confirmBox.getChildren().addAll(confirmLabel, confirmInput);
-
-        HBox buttonRow = new HBox(10);
-        buttonRow.setAlignment(Pos.CENTER);
-
-        Button cancelBtn = new Button("Cancel");
-        cancelBtn.getStyleClass().add("btn-back");
-        cancelBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
-        cancelBtn.setPrefWidth(120);
-        cancelBtn.setOnAction(e -> {
-            if (onBack != null) onBack.run();
-        });
-
-        Button deleteBtn = new Button("Delete market");
-        deleteBtn.getStyleClass().add("btn-delete");
-        deleteBtn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
-        deleteBtn.setPrefWidth(140);
-        deleteBtn.setOnAction(e -> {
-            if ("DELETE".equals(confirmInput.getText()) && onConfirmDelete != null) {
-                onConfirmDelete.run();
-            }
-        });
-
-        buttonRow.getChildren().addAll(cancelBtn, deleteBtn);
-
-        dialogBox.getChildren().addAll(warningIcon, title, subtitle, marketPreview, confirmBox, buttonRow);
-        content.getChildren().add(dialogBox);
-
-        return content;
+    public void setBalance(double balance) {
+        String s = String.format("%.2f", balance);
+        if (sidebarBalance != null) sidebarBalance.setText(s);
+        if (topbarBalance != null) topbarBalance.setText(s);
     }
 
     public BorderPane getView() {
