@@ -1,9 +1,9 @@
-package com.novabet.app.controllers;
+package com.polymarket.app.controllers;
 
-import com.novabet.app.services.StripeIdentityService;
-import com.novabet.app.services.StripePaymentService;
-import com.novabet.app.services.TransactionService;
-import com.novabet.app.services.UserService;
+import com.polymarket.app.services.StripeIdentityService;
+import com.polymarket.app.services.StripePaymentService;
+import com.polymarket.app.services.TransactionService;
+import com.polymarket.app.services.UserService;
 import com.stripe.exception.StripeException;
 
 import javafx.application.Platform;
@@ -79,6 +79,16 @@ public class OnboardingController {
 
     @FXML public void loginWithGoogle() {}
     @FXML public void loginWithApple() {}
+
+    private Runnable onOnboardingComplete;
+
+    public void setOnOnboardingComplete(Runnable callback) {
+        this.onOnboardingComplete = callback;
+    }
+
+    public long getCurrentUserId() {
+        return currentUserId;
+    }
 
     @FXML
     public void initialize() {
@@ -262,10 +272,6 @@ public class OnboardingController {
         step1Box.setVisible(true);
     }
 
-    // ──────────────────────────────────────────────────────────────────
-    // KYC (Stripe Identity)
-    // ──────────────────────────────────────────────────────────────────
-
     @FXML
     public void startKyc() {
         if (currentUserId == -1) {
@@ -352,10 +358,6 @@ public class OnboardingController {
         step4Box.setVisible(true);
     }
 
-    // ──────────────────────────────────────────────────────────────────
-    // Dépôt (Stripe Checkout)
-    // ──────────────────────────────────────────────────────────────────
-
     @FXML
     public void goToStep4() {
         double amount = parseDepositAmount();
@@ -438,7 +440,9 @@ public class OnboardingController {
     @FXML
     public void finishOnboarding() {
         cancelCurrentPoll();
-        // TODO : transition vers la place des marchés (Antonio)
+        if (onOnboardingComplete != null) {
+            onOnboardingComplete.run();
+        }
     }
 
     @FXML
@@ -457,10 +461,6 @@ public class OnboardingController {
             finishBtn.setDisable(selectedCategoriesCount < 2);
         }
     }
-
-    // ──────────────────────────────────────────────────────────────────
-    // Utilitaires
-    // ──────────────────────────────────────────────────────────────────
 
     private void openInBrowser(String url) {
         try {

@@ -1,6 +1,6 @@
-package com.novabet.app.services;
+package com.polymarket.app.services;
 
-import com.novabet.infrastructure.stripe.StripeConfig;
+import com.polymarket.infrastructure.StripeConfig;
 import com.stripe.exception.StripeException;
 import com.stripe.model.identity.VerificationSession;
 import com.stripe.param.identity.VerificationSessionCreateParams;

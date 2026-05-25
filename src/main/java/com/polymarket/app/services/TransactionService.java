@@ -1,6 +1,6 @@
-package com.novabet.app.services;
+package com.polymarket.app.services;
 
-import com.novabet.infrastructure.db.DatabaseManager;
+import com.polymarket.util.DatabaseConnection;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -14,7 +14,7 @@ public class TransactionService {
     public long createPendingDeposit(long userId, double amount, String stripeSessionId) throws SQLException {
         String sql = "INSERT INTO transactions (user_id, type, amount, status, stripe_session_id) "
                 + "VALUES (?, 'deposit', ?, 'pending', ?)";
-        try (Connection conn = DatabaseManager.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             stmt.setLong(1, userId);
             stmt.setBigDecimal(2, BigDecimal.valueOf(amount));
@@ -28,7 +28,7 @@ public class TransactionService {
 
 
     public void confirmDeposit(long transactionId, long userId, double amount, String paymentMethod) throws SQLException {
-        try (Connection conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
             try {
                 updateTransaction(conn, transactionId, paymentMethod);
@@ -43,7 +43,7 @@ public class TransactionService {
 
     public void markFailed(long transactionId) throws SQLException {
         String sql = "UPDATE transactions SET status = 'failed' WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, transactionId);
             stmt.executeUpdate();
