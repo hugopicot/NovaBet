@@ -1,6 +1,6 @@
-package com.novabet.app.services;
+package com.polymarket.app.services;
 
-import com.novabet.infrastructure.stripe.StripeConfig;
+import com.polymarket.infrastructure.StripeConfig;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -50,10 +50,6 @@ public class StripePaymentService {
         return new CheckoutHandle(session.getId(), session.getUrl());
     }
 
-    /**
-     * Retourne le statut de paiement et la méthode utilisée.
-     * paymentStatus possible : "unpaid", "paid", "no_payment_required".
-     */
     public CheckoutResult fetchStatus(String sessionId) throws StripeException {
         StripeConfig.init();
         SessionRetrieveParams params = SessionRetrieveParams.builder()

@@ -1,4 +1,4 @@
-package com.novabet.infrastructure.stripe;
+package com.polymarket.infrastructure;
 
 import com.stripe.Stripe;
 

@@ -6,6 +6,8 @@ public class users {
     private String email;
     private String passwordHash;
     private String createdAt;
+    private String stripeVerificationSessionId;
+    private String kycStatus;
 
     public users(Long id, String username, String email, String passwordHash, String createdAt){
         this.id = id;
@@ -13,6 +15,16 @@ public class users {
         this.email = email;
         this.passwordHash = passwordHash;
         this.createdAt = createdAt;
+    }
+
+    public users(Long id, String username, String email, String passwordHash, String createdAt, String stripeVerificationSessionId, String kycStatus) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.createdAt = createdAt;
+        this.stripeVerificationSessionId = stripeVerificationSessionId;
+        this.kycStatus = kycStatus;
     }
 
     public users(String username, String email, String passwordHash, String createdAt) {
@@ -63,6 +75,22 @@ public class users {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getStripeVerificationSessionId() {
+        return stripeVerificationSessionId;
+    }
+
+    public void setStripeVerificationSessionId(String stripeVerificationSessionId) {
+        this.stripeVerificationSessionId = stripeVerificationSessionId;
+    }
+
+    public String getKycStatus() {
+        return kycStatus;
+    }
+
+    public void setKycStatus(String kycStatus) {
+        this.kycStatus = kycStatus;
     }
 
     @Override
