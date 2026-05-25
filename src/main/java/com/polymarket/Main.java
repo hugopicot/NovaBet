@@ -14,6 +14,7 @@ import com.polymarket.domain.service.MarketServiceImpl;
 import com.polymarket.model.*;
 import com.polymarket.ui.CreateMarketView;
 import com.polymarket.ui.DeleteMarketView;
+import com.polymarket.ui.HistoryView;
 import com.polymarket.ui.MarketDetailView;
 import com.polymarket.ui.MarketsListView;
 import com.polymarket.ui.PortfolioView;
@@ -44,6 +45,7 @@ public class Main extends Application {
     private UpdateMarketView updateView;
     private DeleteMarketView deleteView;
     private PortfolioView portfolioView;
+    private HistoryView historyView;
 
     private Scene marketsScene;
     private Scene detailScene;
@@ -51,6 +53,7 @@ public class Main extends Application {
     private Scene updateScene;
     private Scene deleteScene;
     private Scene portfolioScene;
+    private Scene historyScene;
     private Scene walletScene;
 
     private Stage primaryStage;
@@ -77,6 +80,7 @@ public class Main extends Application {
             );
             walletService = new WalletServiceImpl(walletDao, new transactionsDao());
             walletView = new WalletView();
+            historyView = new HistoryView();
         } catch (Exception e) {
             System.err.println("Failed to connect to database: " + e.getMessage());
             e.printStackTrace();
@@ -97,6 +101,7 @@ public class Main extends Application {
         updateScene = createScene(updateView.getView());
         deleteScene = createScene(deleteView.getView());
         portfolioScene = createScene(portfolioView.getView());
+        historyScene = createScene(historyView.getView());
         walletScene = createScene(walletView.getView());
 
         wireNavigation();
@@ -109,6 +114,7 @@ public class Main extends Application {
                 marketsView.setCurrentUserId(currentUserId);
                 detailView.setCurrentUserId(currentUserId);
                 portfolioView.setCurrentUserId(currentUserId);
+                historyView.setCurrentUserId(currentUserId);
                 refreshBalance();
             }
             loadMarkets();
@@ -257,6 +263,31 @@ public class Main extends Application {
             loadMarketDetail(eventId);
             primaryStage.setScene(detailScene);
         });
+        portfolioView.setOnHistoryClick(() -> {
+            loadHistory();
+            primaryStage.setScene(historyScene);
+        });
+        portfolioView.setOnWalletClick(() -> {
+            loadWallet();
+            primaryStage.setScene(walletScene);
+        });
+
+        historyView.setOnMarketsClick(() -> {
+            loadMarkets();
+            primaryStage.setScene(marketsScene);
+        });
+        historyView.setOnPortfolioClick(() -> {
+            loadPortfolio();
+            primaryStage.setScene(portfolioScene);
+        });
+        historyView.setOnCreateMarketClick(() -> {
+            createView.clearForm();
+            primaryStage.setScene(createMarketScene);
+        });
+        historyView.setOnWalletClick(() -> {
+            loadWallet();
+            primaryStage.setScene(walletScene);
+        });
 
         marketsView.setOnPlaceBet(this::handlePlaceBet);
         detailView.setOnPlaceBet(this::handlePlaceBet);
@@ -265,26 +296,58 @@ public class Main extends Application {
             loadWallet();
             primaryStage.setScene(walletScene);
         });
+        marketsView.setOnHistoryClick(() -> {
+            loadHistory();
+            primaryStage.setScene(historyScene);
+        });
         detailView.setOnWalletClick(() -> {
             loadWallet();
             primaryStage.setScene(walletScene);
+        });
+        detailView.setOnHistoryClick(() -> {
+            loadHistory();
+            primaryStage.setScene(historyScene);
         });
         createView.setOnWalletClick(() -> {
             loadWallet();
             primaryStage.setScene(walletScene);
         });
+        createView.setOnHistoryClick(() -> {
+            loadHistory();
+            primaryStage.setScene(historyScene);
+        });
         updateView.setOnWalletClick(() -> {
             loadWallet();
             primaryStage.setScene(walletScene);
+        });
+        updateView.setOnHistoryClick(() -> {
+            loadHistory();
+            primaryStage.setScene(historyScene);
         });
         deleteView.setOnWalletClick(() -> {
             loadWallet();
             primaryStage.setScene(walletScene);
         });
+        deleteView.setOnHistoryClick(() -> {
+            loadHistory();
+            primaryStage.setScene(historyScene);
+        });
 
         walletView.setOnBack(() -> {
             loadMarkets();
             primaryStage.setScene(marketsScene);
+        });
+        walletView.setOnPortfolioClick(() -> {
+            loadPortfolio();
+            primaryStage.setScene(portfolioScene);
+        });
+        walletView.setOnCreateMarketClick(() -> {
+            createView.clearForm();
+            primaryStage.setScene(createMarketScene);
+        });
+        walletView.setOnHistoryClick(() -> {
+            loadHistory();
+            primaryStage.setScene(historyScene);
         });
         walletView.setOnDeposit(this::handleDeposit);
         walletView.setOnWithdraw(this::handleWithdraw);
@@ -312,6 +375,7 @@ public class Main extends Application {
             marketsView.setBalance(total);
             detailView.setBalance(total);
             portfolioView.setBalance(total);
+            historyView.setBalance(total);
         }
     }
 
@@ -376,6 +440,20 @@ public class Main extends Application {
             portfolioView.setBets(userBets, eventsMap, outcomesMap);
         } catch (Exception ex) {
             System.err.println("Error loading portfolio: " + ex.getMessage());
+        }
+    }
+
+    private void loadHistory() {
+        if (currentUserId == null) return;
+        try {
+            betsDao betsDao = new betsDao();
+            List<bets> userBets = betsDao.findByUserId(currentUserId.intValue());
+            historyView.setBetStats(userBets.size());
+
+            var txs = walletService.getTransactionHistory(currentUserId);
+            historyView.setTransactions(txs);
+        } catch (Exception ex) {
+            System.err.println("Error loading history: " + ex.getMessage());
         }
     }
 

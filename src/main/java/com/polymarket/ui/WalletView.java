@@ -27,6 +27,9 @@ public class WalletView {
 
     private BorderPane root;
     private Runnable onBack;
+    private Runnable onPortfolioClick;
+    private Runnable onCreateMarketClick;
+    private Runnable onHistoryClick;
     private Consumer<Double> onDeposit;
     private Consumer<Double> onWithdraw;
 
@@ -76,12 +79,27 @@ public class WalletView {
         marketsNav.setOnMouseClicked(e -> {
             if (onBack != null) onBack.run();
         });
+        HBox portfolioNav = createNavItem("Portfolio", false);
+        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
+        portfolioNav.setOnMouseClicked(e -> {
+            if (onPortfolioClick != null) onPortfolioClick.run();
+        });
+        HBox createMarketNav = createNavItem("Create market", false);
+        createMarketNav.setCursor(javafx.scene.Cursor.HAND);
+        createMarketNav.setOnMouseClicked(e -> {
+            if (onCreateMarketClick != null) onCreateMarketClick.run();
+        });
+        HBox historyNav = createNavItem("History", false);
+        historyNav.setCursor(javafx.scene.Cursor.HAND);
+        historyNav.setOnMouseClicked(e -> {
+            if (onHistoryClick != null) onHistoryClick.run();
+        });
         navItems.getChildren().addAll(
             marketsNav,
-            createNavItem("Portfolio", false),
-            createNavItem("Create market", false),
+            portfolioNav,
+            createMarketNav,
             createNavItem("Wallet", true),
-            createNavItem("History", false)
+            historyNav
         );
 
         topSection.getChildren().addAll(logoBox, navItems);
@@ -388,6 +406,18 @@ public class WalletView {
 
     public void setOnWithdraw(Consumer<Double> onWithdraw) {
         this.onWithdraw = onWithdraw;
+    }
+
+    public void setOnPortfolioClick(Runnable onPortfolioClick) {
+        this.onPortfolioClick = onPortfolioClick;
+    }
+
+    public void setOnCreateMarketClick(Runnable onCreateMarketClick) {
+        this.onCreateMarketClick = onCreateMarketClick;
+    }
+
+    public void setOnHistoryClick(Runnable onHistoryClick) {
+        this.onHistoryClick = onHistoryClick;
     }
 
     public BorderPane getView() {
