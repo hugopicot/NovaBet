@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ProgressBar?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.polymarket.casino.lobby.CasinoLobbyController"
+      stylesheets="@casino-lobby.css"
+      styleClass="casino-shell">
+
+    <!-- ── Topbar ────────────────────────────────────────────── -->
+    <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="14">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Region styleClass="logo-square"/>
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Bet" styleClass="brand-bet"/>
+                <Label text="Vault" styleClass="brand-vault"/>
+                <Label text=" Casino" styleClass="brand-suffix"/>
+            </HBox>
+        </HBox>
+
+        <Button fx:id="backBtn" text="← Back to markets" styleClass="chip" onAction="#onBackClicked"/>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <HBox styleClass="balance-pill" alignment="CENTER" spacing="8">
+            <Label text="P" styleClass="balance-coin"/>
+            <Label fx:id="balanceLabel" text="0" styleClass="balance-amount"/>
+            <Label text="CASINO CREDIT" styleClass="balance-tag"/>
+        </HBox>
+    </HBox>
+
+    <!-- ── Hero ribbon (wagering progress + cashout) ─────────── -->
+    <VBox styleClass="hero-wrap">
+        <HBox styleClass="hero-ribbon" alignment="CENTER_LEFT" spacing="20">
+            <VBox HBox.hgrow="ALWAYS" spacing="4">
+                <Label text="★ BOOST ACTIVE" styleClass="hero-tag"/>
+                <Label fx:id="heroTitle" text="Your prize is hot." styleClass="hero-title"/>
+                <Label fx:id="heroSubtitle"
+                       text="Wager 1× to unlock withdrawal · 0 / 0 wagered"
+                       styleClass="hero-subtitle"/>
+                <ProgressBar fx:id="wagerProgress" progress="0" styleClass="wager-progress" maxWidth="Infinity"/>
+            </VBox>
+
+            <Button fx:id="cashoutBtn" text="Cashout" styleClass="btn-gold" onAction="#onCashoutClicked" disable="true"/>
+        </HBox>
+    </VBox>
+
+    <!-- ── Filtres (cosmétiques) ─────────────────────────────── -->
+    <HBox styleClass="cat-row" spacing="8">
+        <Button fx:id="filterAll"   text="All"   styleClass="cat-pill,active" onAction="#onFilterAll"/>
+        <Button fx:id="filterSlots" text="Slots" styleClass="cat-pill"        onAction="#onFilterSlots"/>
+        <Button fx:id="filterCrash" text="Crash" styleClass="cat-pill"        onAction="#onFilterCrash"/>
+    </HBox>
+
+    <!-- ── Grille des jeux ───────────────────────────────────── -->
+    <GridPane fx:id="gamesGrid" styleClass="games-grid" hgap="14" vgap="14"/>
+
+</VBox>

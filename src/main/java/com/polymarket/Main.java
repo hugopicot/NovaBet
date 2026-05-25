@@ -23,6 +23,7 @@ import com.polymarket.ui.UpdateMarketView;
 import com.polymarket.ui.auth.AuthModule;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -117,6 +118,7 @@ public class Main extends Application {
             createView.clearForm();
             primaryStage.setScene(createMarketScene);
         });
+        marketsView.setOnCasino(this::openCasinoLobby);
 
         detailView.setOnMarketsClick(() -> {
             loadMarkets();
@@ -291,6 +293,24 @@ public class Main extends Application {
             );
         } catch (Exception e) {
             System.err.println("Failed to load fonts: " + e.getMessage());
+        }
+    }
+
+    private void openCasinoLobby() {
+        try {
+            Parent lobby = FXMLLoader.load(
+                getClass().getResource("/com/polymarket/casino/lobby/CasinoLobbyView.fxml")
+            );
+            Stage lobbyStage = new Stage();
+            lobbyStage.setTitle("NovaBet · Casino Lobby");
+            lobbyStage.setScene(new Scene(lobby, 1200, 800));
+            lobbyStage.initOwner(primaryStage);
+            lobbyStage.show();
+        } catch (Exception e) {
+            Alert err = new Alert(Alert.AlertType.ERROR);
+            err.setHeaderText("Impossible d'ouvrir le casino");
+            err.setContentText(e.getMessage());
+            err.showAndWait();
         }
     }
 
