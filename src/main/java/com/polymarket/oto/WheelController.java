@@ -59,6 +59,11 @@ public class WheelController {
     private double currentStake = 746;
     private boolean spinning = false;
     private boolean spun = false;
+    private Runnable onPlayInCasino;
+
+    public void setOnPlayInCasino(Runnable onPlayInCasino) {
+        this.onPlayInCasino = onPlayInCasino;
+    }
 
     @FXML
     public void initialize() {
@@ -191,10 +196,12 @@ public class WheelController {
 
     @FXML
     private void onPlayInCasinoClicked() {
-        // Pour la démo, on referme — le casino sera codé plus tard
-        // (placeholder volontairement minimal)
+        if (onPlayInCasino != null) {
+            onPlayInCasino.run();
+            return;
+        }
         playInCasinoBtn.setDisable(true);
-        playInCasinoBtn.setText("Casino à venir 🎰");
+        playInCasinoBtn.setText("Casino indisponible");
     }
 
     private static String formatAmount(double v) {

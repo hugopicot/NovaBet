@@ -3,15 +3,17 @@ package com.polymarket.ui;
 import com.polymarket.model.bets;
 import com.polymarket.model.events;
 import com.polymarket.model.outcomes;
+import com.polymarket.ui.components.ChromeFactory;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
+import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -39,14 +41,162 @@ public class PortfolioView {
     private Label totalBetsLabel;
     private Label totalInvestedLabel;
     private Label potentialWinLabel;
+    private Label avgPriceLabel;
     private GridPane betsGrid;
-    private Label balanceValue;
+    private Label sidebarBalance;
+    private Label topbarBalance;
+    private VBox emptyState;
+    private VBox content;
 
     public PortfolioView() {
         root = new BorderPane();
         root.getStyleClass().add("main-container");
-        root.setLeft(createSidebar());
-        root.setCenter(createMainContent());
+        buildLayout();
+    }
+
+    private void buildLayout() {
+        VBox sidebar = ChromeFactory.sidebar(
+            ChromeFactory.NavId.PORTFOLIO,
+            new ChromeFactory.NavCallbacks(
+                () -> { if (onMarketsClick != null) onMarketsClick.run(); },
+                null,
+                () -> { if (onCreateMarketClick != null) onCreateMarketClick.run(); },
+                () -> { if (onWalletClick != null) onWalletClick.run(); },
+                () -> { if (onHistoryClick != null) onHistoryClick.run(); },
+                null
+            )
+        );
+        sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
+        root.setLeft(sidebar);
+
+        BorderPane main = new BorderPane();
+        main.getStyleClass().add("main-content");
+        HBox topbar = ChromeFactory.topbar("Portfolio", "Search positions...", () -> {
+            if (onWalletClick != null) onWalletClick.run();
+        });
+        topbarBalance = ChromeFactory.findTopbarBalance(topbar);
+        main.setTop(topbar);
+        main.setCenter(buildContent());
+        root.setCenter(main);
+    }
+
+    private ScrollPane buildContent() {
+        content = new VBox(20);
+        content.setPadding(new Insets(20, 20, 24, 20));
+
+        content.getChildren().addAll(
+            ChromeFactory.breadcrumb("Markets", "Portfolio",
+                () -> { if (onMarketsClick != null) onMarketsClick.run(); }),
+            buildStatsRow(),
+            buildPositionsHeader(),
+            buildGrid()
+        );
+
+        emptyState = buildEmptyState();
+        emptyState.setVisible(false);
+        emptyState.setManaged(false);
+        content.getChildren().add(emptyState);
+
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.getStyleClass().add("detail-scroll");
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        return scroll;
+    }
+
+    private HBox buildStatsRow() {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        row.getChildren().addAll(
+            statCard("OPEN POSITIONS", totalBetsLabel = mono("0", "stat-card-value"), null, null),
+            statCard("TOTAL INVESTED", totalInvestedLabel = mono("0.00", "stat-card-value"), "$NVB", null),
+            statCard("POTENTIAL WIN",  potentialWinLabel = mono("0.00", "stat-card-value-yes"), "$NVB", null),
+            statCard("AVG ENTRY",      avgPriceLabel = mono("--", "stat-card-value-gold"), "¢", null)
+        );
+
+        for (javafx.scene.Node n : row.getChildren()) {
+            HBox.setHgrow(n, Priority.ALWAYS);
+        }
+        return row;
+    }
+
+    private Label mono(String text, String style) {
+        Label l = new Label(text);
+        l.getStyleClass().addAll("stat-card-value", style);
+        l.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 22));
+        return l;
+    }
+
+    private VBox statCard(String label, Label value, String suffix, String sub) {
+        VBox card = new VBox(8);
+        card.getStyleClass().add("stat-card");
+        Label l = new Label(label);
+        l.getStyleClass().add("stat-card-label");
+
+        HBox row = new HBox(4);
+        row.setAlignment(Pos.BASELINE_LEFT);
+        row.getChildren().add(value);
+        if (suffix != null) {
+            Label s = new Label(suffix);
+            s.getStyleClass().add("stat-card-sub");
+            s.setFont(Font.font("Inter", FontWeight.BOLD, 11));
+            row.getChildren().add(s);
+        }
+        card.getChildren().addAll(l, row);
+        if (sub != null) {
+            Label sl = new Label(sub);
+            sl.getStyleClass().addAll("stat-card-sub", "stat-card-sub-yes");
+            sl.setFont(Font.font("Inter", 11));
+            card.getChildren().add(sl);
+        }
+        return card;
+    }
+
+    private HBox buildPositionsHeader() {
+        HBox row = new HBox(8);
+        row.setAlignment(Pos.CENTER_LEFT);
+        Label t = new Label("OPEN POSITIONS");
+        t.getStyleClass().add("section-title");
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        row.getChildren().addAll(t, sp);
+        return row;
+    }
+
+    private GridPane buildGrid() {
+        betsGrid = new GridPane();
+        betsGrid.setHgap(12);
+        betsGrid.setVgap(12);
+        for (int c = 0; c < 2; c++) {
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setPercentWidth(50);
+            cc.setHgrow(Priority.ALWAYS);
+            betsGrid.getColumnConstraints().add(cc);
+        }
+        return betsGrid;
+    }
+
+    private VBox buildEmptyState() {
+        VBox box = new VBox(8);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(60, 20, 60, 20));
+        box.getStyleClass().add("info-card");
+
+        Label icon = new Label("◧");
+        icon.setFont(Font.font("Inter", 40));
+        icon.setTextFill(javafx.scene.paint.Color.web("#52555B"));
+
+        Label title = new Label("No open positions yet");
+        title.setFont(Font.font("Inter", FontWeight.BOLD, 16));
+        title.setTextFill(javafx.scene.paint.Color.web("#D5D6D9"));
+
+        Label sub = new Label("Pick a market and place your first trade.");
+        sub.getStyleClass().add("empty-state");
+
+        box.getChildren().addAll(icon, title, sub);
+        return box;
     }
 
     public void setBets(List<bets> bets, Map<Long, events> eventsMap, Map<Long, outcomes> outcomesMap) {
@@ -56,304 +206,101 @@ public class PortfolioView {
 
     private void refreshGrid(Map<Long, events> eventsMap, Map<Long, outcomes> outcomesMap) {
         betsGrid.getChildren().clear();
-        int count = betList.size();
-        totalBetsLabel.setText(String.format("%,d", count));
+        totalBetsLabel.setText(String.format("%,d", betList.size()));
 
-        double totalInvested = 0;
-        double totalPotential = 0;
-        for (bets bet : betList) {
-            totalInvested += bet.getAmount();
-            totalPotential += bet.getPotential_win();
+        double inv = 0, pot = 0, sumPrice = 0;
+        int counted = 0;
+        for (bets b : betList) {
+            inv += b.getAmount();
+            pot += b.getPotential_win();
+            outcomes o = outcomesMap.get((long) b.getOutcome_id());
+            if (o != null) {
+                sumPrice += o.getOdds();
+                counted++;
+            }
         }
-        totalInvestedLabel.setText(String.format("%.2f", totalInvested));
-        potentialWinLabel.setText(String.format("%.2f", totalPotential));
+        totalInvestedLabel.setText(String.format("%,.2f", inv));
+        potentialWinLabel.setText(String.format("%,.2f", pot));
+        if (counted > 0) {
+            avgPriceLabel.setText(String.format("%.0f", sumPrice / counted * 100));
+        } else {
+            avgPriceLabel.setText("--");
+        }
+
+        boolean empty = betList.isEmpty();
+        emptyState.setVisible(empty);
+        emptyState.setManaged(empty);
+        betsGrid.setVisible(!empty);
+        betsGrid.setManaged(!empty);
 
         for (int i = 0; i < betList.size(); i++) {
-            bets bet = betList.get(i);
-            events event = eventsMap.get((long) bet.getOutcome_id());
-            outcomes outcome = outcomesMap.get((long) bet.getOutcome_id());
-            int col = i % 2;
-            int row = i / 2;
-            betsGrid.add(createBetCard(bet, event, outcome), col, row);
+            bets b = betList.get(i);
+            events e = eventsMap.get((long) b.getOutcome_id());
+            outcomes o = outcomesMap.get((long) b.getOutcome_id());
+            betsGrid.add(buildBetCard(b, e, o), i % 2, i / 2);
         }
     }
 
-    private VBox createBetCard(bets bet, events event, outcomes outcome) {
+    private VBox buildBetCard(bets bet, events event, outcomes outcome) {
         VBox card = new VBox(12);
-        card.getStyleClass().add("market-card");
-        card.setPadding(new Insets(16, 16, 14, 16));
-        card.setCursor(javafx.scene.Cursor.HAND);
-
-        String marketTitle = event != null ? event.getTitle() : "Unknown Market";
-        String outcomeLabel = outcome != null ? outcome.getLabel() : "?";
-        boolean isYes = "YES".equalsIgnoreCase(outcomeLabel);
-
-        HBox headerRow = new HBox(12);
-        headerRow.setAlignment(Pos.CENTER_LEFT);
-
-        VBox titleBox = new VBox(4);
-        Label marketLabel = new Label(marketTitle);
-        marketLabel.getStyleClass().add("market-question");
-        marketLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        marketLabel.setWrapText(true);
-
-        HBox outcomeRow = new HBox(6);
-        Label outcomeBadge = new Label(outcomeLabel);
-        outcomeBadge.getStyleClass().add(isYes ? "holder-yes-badge" : "holder-no-badge");
-        outcomeBadge.setFont(Font.font("Inter", FontWeight.BOLD, 11));
-        Label betAmountLabel = new Label(String.format("Bet: %d $NVB", bet.getAmount()));
-        betAmountLabel.getStyleClass().add("footer-label");
-        betAmountLabel.setFont(Font.font("Inter", 11));
-        outcomeRow.getChildren().addAll(outcomeBadge, betAmountLabel);
-
-        titleBox.getChildren().addAll(marketLabel, outcomeRow);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        VBox winBox = new VBox(4);
-        winBox.setAlignment(Pos.TOP_RIGHT);
-        Label potentialLabel = new Label("Potential Win");
-        potentialLabel.getStyleClass().add("footer-label");
-        potentialLabel.setFont(Font.font("Inter", 10));
-        Label winValue = new Label(String.format("%d $NVB", bet.getPotential_win()));
-        winValue.getStyleClass().add("prob-value");
-        winValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
-        winBox.getChildren().addAll(potentialLabel, winValue);
-
-        headerRow.getChildren().addAll(titleBox, spacer, winBox);
-
-        HBox footerRow = new HBox(0);
-        Label statusTag = new Label(event != null && event.getStatus() != null ? event.getStatus() : "OPEN");
-        statusTag.getStyleClass().add("footer-label");
-        statusTag.setFont(Font.font("Inter", 11));
-        Label dot = new Label("\u00B7");
-        dot.getStyleClass().add("footer-label");
-        String resolution = event != null && event.getResolution() != null ? event.getResolution() : "";
-        Label endsLabel = new Label(resolution.isEmpty() ? "" : "Ends " + resolution);
-        endsLabel.getStyleClass().add("footer-label");
-        endsLabel.setFont(Font.font("Inter", 11));
-
-        Region footerSpacer = new Region();
-        HBox.setHgrow(footerSpacer, Priority.ALWAYS);
-
-        footerRow.getChildren().addAll(statusTag, dot, endsLabel, footerSpacer);
-
-        card.getChildren().addAll(headerRow, footerRow);
-
+        card.getStyleClass().add("bet-card");
+        card.setPadding(new Insets(16));
+        card.setCursor(Cursor.HAND);
         if (event != null && onMarketClick != null) {
             card.setOnMouseClicked(e -> onMarketClick.accept(event.getId()));
         }
 
+        String title = event != null ? event.getTitle() : "Unknown market";
+        String label = outcome != null ? outcome.getLabel() : "?";
+        boolean isYes = "YES".equalsIgnoreCase(label);
+
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.TOP_LEFT);
+
+        VBox titleBox = new VBox(6);
+        HBox.setHgrow(titleBox, Priority.ALWAYS);
+
+        Label q = new Label(title);
+        q.getStyleClass().add("market-question");
+        q.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
+        q.setWrapText(true);
+
+        HBox badges = new HBox(8);
+        badges.setAlignment(Pos.CENTER_LEFT);
+        Label badge = new Label(label);
+        badge.getStyleClass().add(isYes ? "holder-yes-badge" : "holder-no-badge");
+        badge.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 10));
+        Label bet$ = new Label(String.format("Bet · %d $NVB", bet.getAmount()));
+        bet$.getStyleClass().add("footer-label");
+        bet$.setFont(Font.font("JetBrains Mono", 11));
+        badges.getChildren().addAll(badge, bet$);
+
+        titleBox.getChildren().addAll(q, badges);
+
+        VBox winBox = new VBox(4);
+        winBox.setAlignment(Pos.TOP_RIGHT);
+        Label wl = new Label("POTENTIAL");
+        wl.getStyleClass().add("label-uppercase");
+        Label wv = new Label(String.format("%d", bet.getPotential_win()));
+        wv.setStyle("-fx-text-fill: -yes;");
+        wv.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 18));
+        winBox.getChildren().addAll(wl, wv);
+
+        row.getChildren().addAll(titleBox, winBox);
+
+        HBox footer = new HBox(6);
+        footer.setAlignment(Pos.CENTER_LEFT);
+        Label status = new Label(event != null && event.getStatus() != null ? event.getStatus() : "OPEN");
+        status.getStyleClass().add("footer-label");
+        Label sep = new Label("·");
+        sep.getStyleClass().add("footer-label");
+        String res = event != null && event.getResolution() != null ? event.getResolution() : "";
+        Label ends = new Label(res.isEmpty() ? "" : "Ends " + res);
+        ends.getStyleClass().add("footer-label");
+        footer.getChildren().addAll(status, sep, ends);
+
+        card.getChildren().addAll(row, footer);
         return card;
-    }
-
-    private VBox createSidebar() {
-        VBox sidebar = new VBox(0);
-        sidebar.getStyleClass().add("sidebar");
-        sidebar.setPrefWidth(220);
-
-        VBox topSection = new VBox(0);
-        topSection.setPadding(new Insets(20, 16, 0, 16));
-
-        HBox logoBox = new HBox(10);
-        logoBox.setAlignment(Pos.CENTER_LEFT);
-        logoBox.setPadding(new Insets(0, 0, 24, 0));
-        Region logoIcon = new Region();
-        logoIcon.getStyleClass().add("logo-icon");
-        logoIcon.setPrefSize(28, 28);
-        VBox logoTextContainer = new VBox(0);
-        Label logoText = new Label("NovaBet");
-        logoText.getStyleClass().add("logo-text");
-        logoText.setFont(Font.font("Inter", FontWeight.BOLD, 16));
-        Label logoVersion = new Label("v0.4.2 \u00B7 alpha");
-        logoVersion.getStyleClass().add("logo-version");
-        logoVersion.setFont(Font.font("Inter", 10));
-        logoTextContainer.getChildren().addAll(logoText, logoVersion);
-        logoBox.getChildren().addAll(logoIcon, logoTextContainer);
-
-        VBox navItems = new VBox(4);
-        HBox portfolioNav = createNavItem("Portfolio", true);
-        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
-        HBox marketsNav = createNavItem("Markets", false);
-        marketsNav.setCursor(javafx.scene.Cursor.HAND);
-        marketsNav.setOnMouseClicked(e -> {
-            if (onMarketsClick != null) onMarketsClick.run();
-        });
-        HBox createMarketNav = createNavItem("Create market", false);
-        createMarketNav.setCursor(javafx.scene.Cursor.HAND);
-        createMarketNav.setOnMouseClicked(e -> {
-            if (onCreateMarketClick != null) onCreateMarketClick.run();
-        });
-        HBox historyNav = createNavItem("History", false);
-        historyNav.setCursor(javafx.scene.Cursor.HAND);
-        historyNav.setOnMouseClicked(e -> {
-            if (onHistoryClick != null) onHistoryClick.run();
-        });
-        HBox walletNav = createNavItem("Wallet", false);
-        walletNav.setCursor(javafx.scene.Cursor.HAND);
-        walletNav.setOnMouseClicked(e -> {
-            if (onWalletClick != null) onWalletClick.run();
-        });
-        navItems.getChildren().addAll(
-            marketsNav,
-            portfolioNav,
-            createMarketNav,
-            historyNav,
-            walletNav
-        );
-
-        topSection.getChildren().addAll(logoBox, navItems);
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        VBox bottomSection = new VBox(12);
-        bottomSection.setPadding(new Insets(0, 16, 20, 16));
-
-        VBox balanceBox = new VBox(4);
-        balanceBox.getStyleClass().add("balance-box");
-        balanceBox.setPadding(new Insets(12, 14, 12, 14));
-        Label balanceLabel = new Label("BALANCE");
-        balanceLabel.getStyleClass().add("balance-label");
-        balanceLabel.setFont(Font.font("Inter", 10));
-        HBox balanceValueBox = new HBox(6);
-        balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        balanceValue = new Label("0.00");
-        balanceValue.getStyleClass().add("balance-value");
-        balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
-        Label balanceCurrency = new Label("$NVB");
-        balanceCurrency.getStyleClass().add("balance-currency");
-        balanceCurrency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
-        balanceValueBox.getChildren().addAll(balanceValue, balanceCurrency);
-        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox);
-
-        bottomSection.getChildren().addAll(balanceBox);
-
-        sidebar.getChildren().addAll(topSection, spacer, bottomSection);
-        return sidebar;
-    }
-
-    private HBox createNavItem(String text, boolean active) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setPadding(new Insets(8, 12, 8, 12));
-        if (active) {
-            item.getStyleClass().add("nav-item-active");
-        } else {
-            item.getStyleClass().add("nav-item");
-        }
-
-        Region icon = new Region();
-        icon.setPrefSize(16, 16);
-        if (active) {
-            icon.getStyleClass().add("nav-icon-active");
-        } else {
-            icon.getStyleClass().add("nav-icon");
-        }
-
-        Label label = new Label(text);
-        label.getStyleClass().add(active ? "nav-text-active" : "nav-text");
-        label.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
-
-        item.getChildren().addAll(icon, label);
-        return item;
-    }
-
-    private BorderPane createMainContent() {
-        BorderPane mainContent = new BorderPane();
-        mainContent.getStyleClass().add("main-content");
-
-        mainContent.setTop(createTopBar());
-        mainContent.setCenter(createBetsContent());
-
-        return mainContent;
-    }
-
-    private VBox createTopBar() {
-        VBox topBar = new VBox(0);
-        topBar.setPadding(new Insets(0, 24, 0, 24));
-
-        HBox headerRow = new HBox(16);
-        headerRow.setAlignment(Pos.CENTER_LEFT);
-        headerRow.setPadding(new Insets(16, 0, 12, 0));
-
-        HBox breadcrumb = new HBox(6);
-        breadcrumb.setAlignment(Pos.CENTER_LEFT);
-        Label breadcrumbMarkets = new Label("Markets");
-        breadcrumbMarkets.getStyleClass().add("breadcrumb-text");
-        breadcrumbMarkets.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        breadcrumbMarkets.setCursor(javafx.scene.Cursor.HAND);
-        breadcrumbMarkets.setOnMouseClicked(e -> {
-            if (onMarketsClick != null) onMarketsClick.run();
-        });
-        Label breadcrumbSlash = new Label("/");
-        breadcrumbSlash.getStyleClass().add("breadcrumb-separator");
-        breadcrumbSlash.setFont(Font.font("Inter", 14));
-        Label breadcrumbPortfolio = new Label("Portfolio");
-        breadcrumbPortfolio.getStyleClass().add("breadcrumb-text-active");
-        breadcrumbPortfolio.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        breadcrumb.getChildren().addAll(breadcrumbMarkets, breadcrumbSlash, breadcrumbPortfolio);
-
-        headerRow.getChildren().addAll(breadcrumb);
-
-        topBar.getChildren().add(headerRow);
-        return topBar;
-    }
-
-    private VBox createBetsContent() {
-        VBox betsContent = new VBox(0);
-        betsContent.setPadding(new Insets(0, 24, 24, 24));
-
-        HBox statsRow = new HBox(24);
-        statsRow.setAlignment(Pos.CENTER_LEFT);
-        statsRow.setPadding(new Insets(0, 0, 16, 0));
-
-        VBox totalBetsBox = new VBox(4);
-        Label totalBetsTitle = new Label("Total Bets");
-        totalBetsTitle.getStyleClass().add("footer-label");
-        totalBetsTitle.setFont(Font.font("Inter", 12));
-        totalBetsLabel = new Label("0");
-        totalBetsLabel.getStyleClass().add("stats-count");
-        totalBetsLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
-        totalBetsBox.getChildren().addAll(totalBetsTitle, totalBetsLabel);
-
-        VBox totalInvestedBox = new VBox(4);
-        Label totalInvestedTitle = new Label("Total Invested");
-        totalInvestedTitle.getStyleClass().add("footer-label");
-        totalInvestedTitle.setFont(Font.font("Inter", 12));
-        totalInvestedLabel = new Label("0.00");
-        totalInvestedLabel.getStyleClass().add("stats-count");
-        totalInvestedLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
-        totalInvestedBox.getChildren().addAll(totalInvestedTitle, totalInvestedLabel);
-
-        VBox potentialWinBox = new VBox(4);
-        Label potentialWinTitle = new Label("Potential Win");
-        potentialWinTitle.getStyleClass().add("footer-label");
-        potentialWinTitle.setFont(Font.font("Inter", 12));
-        potentialWinLabel = new Label("0.00");
-        potentialWinLabel.getStyleClass().add("prob-value");
-        potentialWinLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
-        potentialWinBox.getChildren().addAll(potentialWinTitle, potentialWinLabel);
-
-        statsRow.getChildren().addAll(totalBetsBox, totalInvestedBox, potentialWinBox);
-
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.getStyleClass().add("markets-scroll");
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-
-        betsGrid = new GridPane();
-        betsGrid.setHgap(16);
-        betsGrid.setVgap(16);
-        betsGrid.setPadding(new Insets(0, 0, 20, 0));
-
-        scrollPane.setContent(betsGrid);
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
-
-        betsContent.getChildren().addAll(statsRow, scrollPane);
-        return betsContent;
     }
 
     public BorderPane getView() {
@@ -361,9 +308,9 @@ public class PortfolioView {
     }
 
     public void setBalance(double balance) {
-        if (balanceValue != null) {
-            balanceValue.setText(String.format("%.2f", balance));
-        }
+        String s = String.format("%.2f", balance);
+        if (sidebarBalance != null) sidebarBalance.setText(s);
+        if (topbarBalance != null) topbarBalance.setText(s);
     }
 
     public void setCurrentUserId(Long userId) {

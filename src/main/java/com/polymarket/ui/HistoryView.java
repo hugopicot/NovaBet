@@ -1,9 +1,7 @@
 package com.polymarket.ui;
 
-import com.polymarket.model.bets;
-import com.polymarket.model.events;
-import com.polymarket.model.outcomes;
 import com.polymarket.model.transactions;
+import com.polymarket.ui.components.ChromeFactory;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -24,7 +22,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 import java.util.List;
-import java.util.Map;
 
 public class HistoryView {
 
@@ -39,221 +36,134 @@ public class HistoryView {
     private final ObservableList<transactions> transactionList = FXCollections.observableArrayList();
     private Label totalBetsLabel;
     private Label totalTransactionsLabel;
-    private Label balanceValue;
+    private Label netFlowLabel;
+    private Label sidebarBalance;
+    private Label topbarBalance;
 
     public HistoryView() {
         root = new BorderPane();
         root.getStyleClass().add("main-container");
-        root.setLeft(createSidebar());
-        root.setCenter(createMainContent());
+        buildLayout();
     }
 
-    public void setTransactions(List<transactions> transactions) {
-        transactionList.setAll(transactions);
-        totalTransactionsLabel.setText(String.format("%,d", transactions.size()));
-    }
+    private void buildLayout() {
+        VBox sidebar = ChromeFactory.sidebar(
+            ChromeFactory.NavId.HISTORY,
+            new ChromeFactory.NavCallbacks(
+                () -> { if (onMarketsClick != null) onMarketsClick.run(); },
+                () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
+                () -> { if (onCreateMarketClick != null) onCreateMarketClick.run(); },
+                () -> { if (onWalletClick != null) onWalletClick.run(); },
+                null,
+                null
+            )
+        );
+        sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
+        root.setLeft(sidebar);
 
-    public void setBetStats(int totalBets) {
-        totalBetsLabel.setText(String.format("%,d", totalBets));
-    }
-
-    private VBox createSidebar() {
-        VBox sidebar = new VBox(0);
-        sidebar.getStyleClass().add("sidebar");
-        sidebar.setPrefWidth(220);
-
-        VBox topSection = new VBox(0);
-        topSection.setPadding(new Insets(20, 16, 0, 16));
-
-        HBox logoBox = new HBox(10);
-        logoBox.setAlignment(Pos.CENTER_LEFT);
-        logoBox.setPadding(new Insets(0, 0, 24, 0));
-        Region logoIcon = new Region();
-        logoIcon.getStyleClass().add("logo-icon");
-        logoIcon.setPrefSize(28, 28);
-        VBox logoTextContainer = new VBox(0);
-        Label logoText = new Label("NovaBet");
-        logoText.getStyleClass().add("logo-text");
-        logoText.setFont(Font.font("Inter", FontWeight.BOLD, 16));
-        Label logoVersion = new Label("v0.4.2 \u00B7 alpha");
-        logoVersion.getStyleClass().add("logo-version");
-        logoVersion.setFont(Font.font("Inter", 10));
-        logoTextContainer.getChildren().addAll(logoText, logoVersion);
-        logoBox.getChildren().addAll(logoIcon, logoTextContainer);
-
-        VBox navItems = new VBox(4);
-        HBox marketsNav = createNavItem("Markets", false);
-        marketsNav.setCursor(javafx.scene.Cursor.HAND);
-        marketsNav.setOnMouseClicked(e -> {
-            if (onMarketsClick != null) onMarketsClick.run();
-        });
-        HBox portfolioNav = createNavItem("Portfolio", false);
-        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
-        portfolioNav.setOnMouseClicked(e -> {
-            if (onPortfolioClick != null) onPortfolioClick.run();
-        });
-        HBox createMarketNav = createNavItem("Create market", false);
-        createMarketNav.setCursor(javafx.scene.Cursor.HAND);
-        createMarketNav.setOnMouseClicked(e -> {
-            if (onCreateMarketClick != null) onCreateMarketClick.run();
-        });
-        HBox walletNav = createNavItem("Wallet", false);
-        walletNav.setCursor(javafx.scene.Cursor.HAND);
-        walletNav.setOnMouseClicked(e -> {
+        BorderPane main = new BorderPane();
+        main.getStyleClass().add("main-content");
+        HBox topbar = ChromeFactory.topbar("History", "Search history...", () -> {
             if (onWalletClick != null) onWalletClick.run();
         });
-        navItems.getChildren().addAll(
-            marketsNav,
-            portfolioNav,
-            createMarketNav,
-            walletNav,
-            createNavItem("History", true)
+        topbarBalance = ChromeFactory.findTopbarBalance(topbar);
+        main.setTop(topbar);
+        main.setCenter(buildContent());
+        root.setCenter(main);
+    }
+
+    private ScrollPane buildContent() {
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(20, 20, 24, 20));
+
+        content.getChildren().addAll(
+            ChromeFactory.breadcrumb("Markets", "History",
+                () -> { if (onMarketsClick != null) onMarketsClick.run(); }),
+            buildStatsRow(),
+            buildTableSection()
         );
 
-        topSection.getChildren().addAll(logoBox, navItems);
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        VBox bottomSection = new VBox(12);
-        bottomSection.setPadding(new Insets(0, 16, 20, 16));
-
-        VBox balanceBox = new VBox(4);
-        balanceBox.getStyleClass().add("balance-box");
-        balanceBox.setPadding(new Insets(12, 14, 12, 14));
-        Label balanceLabel = new Label("BALANCE");
-        balanceLabel.getStyleClass().add("balance-label");
-        balanceLabel.setFont(Font.font("Inter", 10));
-        HBox balanceValueBox = new HBox(6);
-        balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        balanceValue = new Label("0.00");
-        balanceValue.getStyleClass().add("balance-value");
-        balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
-        Label balanceCurrency = new Label("$NVB");
-        balanceCurrency.getStyleClass().add("balance-currency");
-        balanceCurrency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
-        balanceValueBox.getChildren().addAll(balanceValue, balanceCurrency);
-        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox);
-
-        bottomSection.getChildren().addAll(balanceBox);
-
-        sidebar.getChildren().addAll(topSection, spacer, bottomSection);
-        return sidebar;
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.getStyleClass().add("detail-scroll");
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        return scroll;
     }
 
-    private HBox createNavItem(String text, boolean active) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setPadding(new Insets(8, 12, 8, 12));
-        if (active) {
-            item.getStyleClass().add("nav-item-active");
-        } else {
-            item.getStyleClass().add("nav-item");
+    private HBox buildStatsRow() {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        row.getChildren().addAll(
+            statCard("TOTAL BETS",     totalBetsLabel = bigMono("0", "stat-card-value")),
+            statCard("TRANSACTIONS",   totalTransactionsLabel = bigMono("0", "stat-card-value")),
+            statCard("NET FLOW",       netFlowLabel = bigMono("0.00", "stat-card-value-gold"))
+        );
+        for (javafx.scene.Node n : row.getChildren()) {
+            HBox.setHgrow(n, Priority.ALWAYS);
         }
-
-        Region icon = new Region();
-        icon.setPrefSize(16, 16);
-        if (active) {
-            icon.getStyleClass().add("nav-icon-active");
-        } else {
-            icon.getStyleClass().add("nav-icon");
-        }
-
-        Label label = new Label(text);
-        label.getStyleClass().add(active ? "nav-text-active" : "nav-text");
-        label.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
-
-        item.getChildren().addAll(icon, label);
-        return item;
+        return row;
     }
 
-    private BorderPane createMainContent() {
-        BorderPane mainContent = new BorderPane();
-        mainContent.getStyleClass().add("main-content");
-
-        mainContent.setTop(createTopBar());
-        mainContent.setCenter(createHistoryContent());
-
-        return mainContent;
+    private Label bigMono(String text, String style) {
+        Label l = new Label(text);
+        l.getStyleClass().addAll("stat-card-value", style);
+        l.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 22));
+        return l;
     }
 
-    private VBox createTopBar() {
-        VBox topBar = new VBox(0);
-        topBar.setPadding(new Insets(0, 24, 0, 24));
-
-        HBox headerRow = new HBox(16);
-        headerRow.setAlignment(Pos.CENTER_LEFT);
-        headerRow.setPadding(new Insets(16, 0, 12, 0));
-
-        HBox breadcrumb = new HBox(6);
-        breadcrumb.setAlignment(Pos.CENTER_LEFT);
-        Label breadcrumbMarkets = new Label("Markets");
-        breadcrumbMarkets.getStyleClass().add("breadcrumb-text");
-        breadcrumbMarkets.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        breadcrumbMarkets.setCursor(javafx.scene.Cursor.HAND);
-        breadcrumbMarkets.setOnMouseClicked(e -> {
-            if (onMarketsClick != null) onMarketsClick.run();
-        });
-        Label breadcrumbSlash = new Label("/");
-        breadcrumbSlash.getStyleClass().add("breadcrumb-separator");
-        breadcrumbSlash.setFont(Font.font("Inter", 14));
-        Label breadcrumbHistory = new Label("History");
-        breadcrumbHistory.getStyleClass().add("breadcrumb-text-active");
-        breadcrumbHistory.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        breadcrumb.getChildren().addAll(breadcrumbMarkets, breadcrumbSlash, breadcrumbHistory);
-
-        headerRow.getChildren().addAll(breadcrumb);
-
-        topBar.getChildren().add(headerRow);
-        return topBar;
+    private VBox statCard(String label, Label value) {
+        VBox card = new VBox(8);
+        card.getStyleClass().add("stat-card");
+        Label l = new Label(label);
+        l.getStyleClass().add("stat-card-label");
+        card.getChildren().addAll(l, value);
+        return card;
     }
 
-    private VBox createHistoryContent() {
-        VBox historyContent = new VBox(0);
-        historyContent.setPadding(new Insets(0, 24, 24, 24));
+    private VBox buildTableSection() {
+        VBox section = new VBox(10);
+        VBox.setVgrow(section, Priority.ALWAYS);
 
-        HBox statsRow = new HBox(24);
-        statsRow.setAlignment(Pos.CENTER_LEFT);
-        statsRow.setPadding(new Insets(0, 0, 16, 0));
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label title = new Label("TRANSACTION HISTORY");
+        title.getStyleClass().add("section-title");
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        Label hint = new Label("Most recent first");
+        hint.getStyleClass().add("footer-label");
+        header.getChildren().addAll(title, sp, hint);
 
-        VBox totalBetsBox = new VBox(4);
-        Label totalBetsTitle = new Label("Total Bets");
-        totalBetsTitle.getStyleClass().add("footer-label");
-        totalBetsTitle.setFont(Font.font("Inter", 12));
-        totalBetsLabel = new Label("0");
-        totalBetsLabel.getStyleClass().add("stats-count");
-        totalBetsLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
-        totalBetsBox.getChildren().addAll(totalBetsTitle, totalBetsLabel);
-
-        VBox totalTxBox = new VBox(4);
-        Label totalTxTitle = new Label("Transactions");
-        totalTxTitle.getStyleClass().add("footer-label");
-        totalTxTitle.setFont(Font.font("Inter", 12));
-        totalTransactionsLabel = new Label("0");
-        totalTransactionsLabel.getStyleClass().add("stats-count");
-        totalTransactionsLabel.setFont(Font.font("Inter", FontWeight.BOLD, 20));
-        totalTxBox.getChildren().addAll(totalTxTitle, totalTransactionsLabel);
-
-        statsRow.getChildren().addAll(totalBetsBox, totalTxBox);
-
-        VBox tableSection = new VBox(8);
-        Label tableTitle = new Label("TRANSACTION HISTORY");
-        tableTitle.getStyleClass().add("footer-label");
-        tableTitle.setFont(Font.font("Inter", FontWeight.BOLD, 12));
+        VBox wrap = new VBox(0);
+        wrap.getStyleClass().add("table-card");
 
         transactionTable = new TableView<>();
         transactionTable.setItems(transactionList);
-        transactionTable.getStyleClass().add("market-card");
         transactionTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        transactionTable.setPrefHeight(440);
+        transactionTable.setPlaceholder(new Label("No transactions yet"));
 
-        TableColumn<transactions, String> dateCol = new TableColumn<>("Date");
+        TableColumn<transactions, String> dateCol = new TableColumn<>("DATE");
         dateCol.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
-        dateCol.setPrefWidth(200);
+        dateCol.setCellFactory(c -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(item);
+                    setStyle("-fx-text-fill: -fg-2; -fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px;");
+                }
+            }
+        });
 
-        TableColumn<transactions, String> typeCol = new TableColumn<>("Type");
+        TableColumn<transactions, String> typeCol = new TableColumn<>("TYPE");
         typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
-        typeCol.setPrefWidth(120);
-        typeCol.setCellFactory(col -> new TableCell<transactions, String>() {
+        typeCol.setCellFactory(c -> new TableCell<>() {
             @Override
             protected void updateItem(String type, boolean empty) {
                 super.updateItem(type, empty);
@@ -262,49 +172,56 @@ public class HistoryView {
                     setGraphic(null);
                 } else {
                     Label badge = new Label(type);
-                    badge.setFont(Font.font("Inter", FontWeight.BOLD, 11));
-                    if ("DEPOSIT".equalsIgnoreCase(type)) {
-                        badge.getStyleClass().add("holder-yes-badge");
-                    } else {
-                        badge.getStyleClass().add("holder-no-badge");
-                    }
+                    badge.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 10));
+                    boolean isDeposit = "DEPOSIT".equalsIgnoreCase(type) || "WIN".equalsIgnoreCase(type) || "BET_REFUND".equalsIgnoreCase(type);
+                    badge.getStyleClass().add(isDeposit ? "holder-yes-badge" : "holder-no-badge");
                     setGraphic(badge);
                     setText(null);
                 }
             }
         });
 
-        TableColumn<transactions, Double> amountCol = new TableColumn<>("Amount");
-        amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        amountCol.setPrefWidth(150);
-        amountCol.setCellFactory(col -> new TableCell<transactions, Double>() {
+        TableColumn<transactions, Double> amtCol = new TableColumn<>("AMOUNT");
+        amtCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        amtCol.setCellFactory(c -> new TableCell<>() {
             @Override
             protected void updateItem(Double amount, boolean empty) {
                 super.updateItem(amount, empty);
                 if (empty || amount == null) {
                     setText(null);
+                    setStyle("");
                 } else {
                     String sign = amount >= 0 ? "+" : "";
-                    setText(String.format("%s%.2f $NVB", sign, amount));
-                    if (amount >= 0) {
-                        setStyle("-fx-text-fill: #22c55e;");
-                    } else {
-                        setStyle("-fx-text-fill: #ef4444;");
-                    }
-                    setFont(Font.font("Inter", FontWeight.BOLD, 12));
+                    setText(String.format("%s%,.2f $NVB", sign, amount));
+                    setStyle(amount >= 0
+                        ? "-fx-text-fill: -yes; -fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; -fx-font-size: 12px;"
+                        : "-fx-text-fill: -no; -fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; -fx-font-size: 12px;");
                 }
             }
         });
 
-        transactionTable.getColumns().addAll(dateCol, typeCol, amountCol);
+        transactionTable.getColumns().addAll(dateCol, typeCol, amtCol);
 
-        VBox.setVgrow(transactionTable, Priority.ALWAYS);
+        wrap.getChildren().add(transactionTable);
+        VBox.setVgrow(wrap, Priority.ALWAYS);
 
-        tableSection.getChildren().addAll(tableTitle, transactionTable);
-        VBox.setVgrow(tableSection, Priority.ALWAYS);
+        section.getChildren().addAll(header, wrap);
+        return section;
+    }
 
-        historyContent.getChildren().addAll(statsRow, tableSection);
-        return historyContent;
+    public void setTransactions(List<transactions> transactions) {
+        transactionList.setAll(transactions);
+        totalTransactionsLabel.setText(String.format("%,d", transactions.size()));
+
+        double net = 0;
+        for (transactions tx : transactions) {
+            net += tx.getAmount();
+        }
+        netFlowLabel.setText(String.format("%s%,.2f", net >= 0 ? "+" : "", net));
+    }
+
+    public void setBetStats(int totalBets) {
+        totalBetsLabel.setText(String.format("%,d", totalBets));
     }
 
     public BorderPane getView() {
@@ -312,9 +229,9 @@ public class HistoryView {
     }
 
     public void setBalance(double balance) {
-        if (balanceValue != null) {
-            balanceValue.setText(String.format("%.2f", balance));
-        }
+        String s = String.format("%.2f", balance);
+        if (sidebarBalance != null) sidebarBalance.setText(s);
+        if (topbarBalance != null) topbarBalance.setText(s);
     }
 
     public void setCurrentUserId(Long userId) {

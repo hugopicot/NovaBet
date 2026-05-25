@@ -1,6 +1,8 @@
 package com.polymarket.ui;
 
 import com.polymarket.model.transactions;
+import com.polymarket.ui.components.ChromeFactory;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -8,6 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -16,6 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -33,181 +37,56 @@ public class WalletView {
     private Consumer<Double> onDeposit;
     private Consumer<Double> onWithdraw;
 
-    private Label sidebarBalanceValue;
-    private Label mainTotalValue;
-    private Label mainRealValue;
-    private Label mainVirtualValue;
+    private Label sidebarBalance;
+    private Label topbarBalance;
+    private Label totalValue;
+    private Label realValue;
+    private Label virtualValue;
     private TextField depositField;
     private TextField withdrawField;
     private TableView<transactions> historyTable;
-    private ObservableList<transactions> transactionList = FXCollections.observableArrayList();
+    private final ObservableList<transactions> transactionList = FXCollections.observableArrayList();
 
     public WalletView() {
         root = new BorderPane();
         root.getStyleClass().add("main-container");
-        root.setLeft(createSidebar());
-        root.setCenter(createMainContent());
+        buildLayout();
     }
 
-    private VBox createSidebar() {
-        VBox sidebar = new VBox(0);
-        sidebar.getStyleClass().add("sidebar");
-        sidebar.setPrefWidth(220);
-
-        VBox topSection = new VBox(0);
-        topSection.setPadding(new Insets(20, 16, 0, 16));
-
-        HBox logoBox = new HBox(10);
-        logoBox.setAlignment(Pos.CENTER_LEFT);
-        logoBox.setPadding(new Insets(0, 0, 24, 0));
-        Region logoIcon = new Region();
-        logoIcon.getStyleClass().add("logo-icon");
-        logoIcon.setPrefSize(28, 28);
-        VBox logoTextContainer = new VBox(0);
-        Label logoText = new Label("NovaBet");
-        logoText.getStyleClass().add("logo-text");
-        logoText.setFont(Font.font("Inter", FontWeight.BOLD, 16));
-        Label logoVersion = new Label("v0.4.2 \u00B7 alpha");
-        logoVersion.getStyleClass().add("logo-version");
-        logoVersion.setFont(Font.font("Inter", 10));
-        logoTextContainer.getChildren().addAll(logoText, logoVersion);
-        logoBox.getChildren().addAll(logoIcon, logoTextContainer);
-
-        VBox navItems = new VBox(4);
-        HBox marketsNav = createNavItem("Markets", false);
-        marketsNav.setCursor(javafx.scene.Cursor.HAND);
-        marketsNav.setOnMouseClicked(e -> {
-            if (onBack != null) onBack.run();
-        });
-        HBox portfolioNav = createNavItem("Portfolio", false);
-        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
-        portfolioNav.setOnMouseClicked(e -> {
-            if (onPortfolioClick != null) onPortfolioClick.run();
-        });
-        HBox createMarketNav = createNavItem("Create market", false);
-        createMarketNav.setCursor(javafx.scene.Cursor.HAND);
-        createMarketNav.setOnMouseClicked(e -> {
-            if (onCreateMarketClick != null) onCreateMarketClick.run();
-        });
-        HBox historyNav = createNavItem("History", false);
-        historyNav.setCursor(javafx.scene.Cursor.HAND);
-        historyNav.setOnMouseClicked(e -> {
-            if (onHistoryClick != null) onHistoryClick.run();
-        });
-        navItems.getChildren().addAll(
-            marketsNav,
-            portfolioNav,
-            createMarketNav,
-            createNavItem("Wallet", true),
-            historyNav
+    private void buildLayout() {
+        VBox sidebar = ChromeFactory.sidebar(
+            ChromeFactory.NavId.WALLET,
+            new ChromeFactory.NavCallbacks(
+                () -> { if (onBack != null) onBack.run(); },
+                () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
+                () -> { if (onCreateMarketClick != null) onCreateMarketClick.run(); },
+                null,
+                () -> { if (onHistoryClick != null) onHistoryClick.run(); },
+                null
+            )
         );
+        sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
+        root.setLeft(sidebar);
 
-        topSection.getChildren().addAll(logoBox, navItems);
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        VBox bottomSection = new VBox(12);
-        bottomSection.setPadding(new Insets(0, 16, 20, 16));
-
-        VBox balanceBox = new VBox(4);
-        balanceBox.getStyleClass().add("balance-box");
-        balanceBox.setPadding(new Insets(12, 14, 12, 14));
-        Label balanceLabel = new Label("BALANCE");
-        balanceLabel.getStyleClass().add("balance-label");
-        balanceLabel.setFont(Font.font("Inter", 10));
-        HBox balanceValueBox = new HBox(6);
-        balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        sidebarBalanceValue = new Label("0.00");
-        sidebarBalanceValue.getStyleClass().add("balance-value");
-        sidebarBalanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
-        Label balanceCurrency = new Label("$NVB");
-        balanceCurrency.getStyleClass().add("balance-currency");
-        balanceCurrency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
-        balanceValueBox.getChildren().addAll(sidebarBalanceValue, balanceCurrency);
-        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox);
-
-        bottomSection.getChildren().addAll(balanceBox);
-
-        sidebar.getChildren().addAll(topSection, spacer, bottomSection);
-        return sidebar;
+        BorderPane main = new BorderPane();
+        main.getStyleClass().add("main-content");
+        HBox topbar = ChromeFactory.topbar("Wallet", "Search transactions...", null);
+        topbarBalance = ChromeFactory.findTopbarBalance(topbar);
+        main.setTop(topbar);
+        main.setCenter(buildContent());
+        root.setCenter(main);
     }
 
-    private HBox createNavItem(String text, boolean active) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setPadding(new Insets(8, 12, 8, 12));
-        if (active) {
-            item.getStyleClass().add("nav-item-active");
-        } else {
-            item.getStyleClass().add("nav-item");
-        }
-
-        Region icon = new Region();
-        icon.setPrefSize(16, 16);
-        if (active) {
-            icon.getStyleClass().add("nav-icon-active");
-        } else {
-            icon.getStyleClass().add("nav-icon");
-        }
-
-        Label label = new Label(text);
-        label.getStyleClass().add(active ? "nav-text-active" : "nav-text");
-        label.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
-
-        item.getChildren().addAll(icon, label);
-        return item;
-    }
-
-    private BorderPane createMainContent() {
-        BorderPane mainContent = new BorderPane();
-        mainContent.getStyleClass().add("main-content");
-        mainContent.setTop(createTopBar());
-        mainContent.setCenter(createContentBody());
-        return mainContent;
-    }
-
-    private VBox createTopBar() {
-        VBox topBar = new VBox(0);
-        topBar.setPadding(new Insets(0, 24, 0, 24));
-
-        HBox headerRow = new HBox(16);
-        headerRow.setAlignment(Pos.CENTER_LEFT);
-        headerRow.setPadding(new Insets(16, 0, 12, 0));
-
-        HBox breadcrumb = new HBox(6);
-        breadcrumb.setAlignment(Pos.CENTER_LEFT);
-        Label breadcrumbMarkets = new Label("Markets");
-        breadcrumbMarkets.getStyleClass().add("breadcrumb-text");
-        breadcrumbMarkets.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        breadcrumbMarkets.setCursor(javafx.scene.Cursor.HAND);
-        breadcrumbMarkets.setOnMouseClicked(e -> {
-            if (onBack != null) onBack.run();
-        });
-        Label breadcrumbSlash = new Label("/");
-        breadcrumbSlash.getStyleClass().add("breadcrumb-separator");
-        breadcrumbSlash.setFont(Font.font("Inter", 14));
-        Label breadcrumbWallet = new Label("Wallet");
-        breadcrumbWallet.getStyleClass().add("breadcrumb-text-active");
-        breadcrumbWallet.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        breadcrumb.getChildren().addAll(breadcrumbMarkets, breadcrumbSlash, breadcrumbWallet);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        headerRow.getChildren().addAll(breadcrumb, spacer);
-        topBar.getChildren().addAll(headerRow);
-        return topBar;
-    }
-
-    private ScrollPane createContentBody() {
+    private ScrollPane buildContent() {
         VBox content = new VBox(20);
-        content.setPadding(new Insets(0, 24, 24, 24));
+        content.setPadding(new Insets(20, 20, 24, 20));
 
         content.getChildren().addAll(
-            createBalanceSection(),
-            createActionsSection(),
-            createHistorySection()
+            ChromeFactory.breadcrumb("Markets", "Wallet",
+                () -> { if (onBack != null) onBack.run(); }),
+            buildBalances(),
+            buildActions(),
+            buildHistory()
         );
 
         ScrollPane scroll = new ScrollPane(content);
@@ -218,109 +97,120 @@ public class WalletView {
         return scroll;
     }
 
-    private HBox createBalanceSection() {
-        HBox section = new HBox(16);
-        section.setAlignment(Pos.TOP_LEFT);
+    private HBox buildBalances() {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
 
-        mainTotalValue = new Label("0.00");
-        mainRealValue = new Label("0.00");
-        mainVirtualValue = new Label("0.00");
+        VBox total = balanceCard("TOTAL BALANCE", totalValue = bigMono("0.00"), true);
+        VBox real  = balanceCard("REAL",          realValue  = bigMono("0.00"), false);
+        VBox virt  = balanceCard("VIRTUAL",       virtualValue = bigMono("0.00"), false);
 
-        VBox totalCard = createInfoCard("TOTAL BALANCE", mainTotalValue, "balance-value");
-        VBox realCard = createInfoCard("REAL BALANCE", mainRealValue, "info-card-text");
-        VBox virtualCard = createInfoCard("VIRTUAL BALANCE", mainVirtualValue, "info-card-text");
+        HBox.setHgrow(total, Priority.ALWAYS);
+        HBox.setHgrow(real, Priority.ALWAYS);
+        HBox.setHgrow(virt, Priority.ALWAYS);
 
-        section.getChildren().addAll(totalCard, realCard, virtualCard);
-        return section;
+        row.getChildren().addAll(total, real, virt);
+        return row;
     }
 
-    private VBox createInfoCard(String title, Label valueLabel, String valueStyleClass) {
-        VBox card = new VBox(8);
-        card.getStyleClass().add("info-card");
-        card.setPadding(new Insets(16, 16, 16, 16));
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.setPrefWidth(220);
+    private Label bigMono(String text) {
+        Label l = new Label(text);
+        l.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 28));
+        l.setStyle("-fx-text-fill: -fg-0;");
+        return l;
+    }
 
-        Label titleLabel = new Label(title);
-        titleLabel.getStyleClass().add("info-card-title");
-        titleLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+    private VBox balanceCard(String title, Label value, boolean primary) {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("stat-card");
+        card.setPadding(new Insets(20));
 
-        valueLabel.getStyleClass().add(valueStyleClass);
-        valueLabel.setFont(Font.font("Inter", FontWeight.BOLD, 28));
+        Label l = new Label(title);
+        l.getStyleClass().add("stat-card-label");
 
-        Label currency = new Label("$NVB");
-        currency.getStyleClass().add("balance-currency");
-        currency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
+        if (primary) {
+            value.setStyle("-fx-text-fill: -gold; -fx-effect: dropshadow(gaussian, rgba(229,200,74,0.4), 14, 0, 0, 0);");
+        }
 
-        HBox valueBox = new HBox(6);
-        valueBox.setAlignment(Pos.CENTER_LEFT);
-        valueBox.getChildren().addAll(valueLabel, currency);
+        HBox row = new HBox(6);
+        row.setAlignment(Pos.BASELINE_LEFT);
+        Label curr = new Label("$NVB");
+        curr.setStyle("-fx-text-fill: -gold; -fx-font-weight: bold; -fx-font-size: 12px;");
+        row.getChildren().addAll(value, curr);
 
-        card.getChildren().addAll(titleLabel, valueBox);
+        card.getChildren().addAll(l, row);
         return card;
     }
 
-    private HBox createActionsSection() {
-        HBox section = new HBox(16);
-        section.setAlignment(Pos.TOP_LEFT);
+    private HBox buildActions() {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
 
-        VBox depositCard = createActionCard(
-            "Deposit",
-            "Add virtual funds to your wallet",
-            "Amount",
-            "Deposit",
+        VBox deposit = actionCard(
+            "DEPOSIT",
+            "Add $NVB to your wallet to start trading.",
+            "deposit",
+            "+ Deposit",
+            true,
             field -> depositField = field,
-            () -> handleDeposit()
+            this::handleDeposit
         );
-
-        VBox withdrawCard = createActionCard(
-            "Withdraw",
-            "Withdraw virtual funds from your wallet",
-            "Amount",
-            "Withdraw",
+        VBox withdraw = actionCard(
+            "WITHDRAW",
+            "Take your $NVB out. A special offer may apply.",
+            "withdraw",
+            "Withdraw →",
+            false,
             field -> withdrawField = field,
-            () -> handleWithdraw()
+            this::handleWithdraw
         );
 
-        section.getChildren().addAll(depositCard, withdrawCard);
-        return section;
+        HBox.setHgrow(deposit, Priority.ALWAYS);
+        HBox.setHgrow(withdraw, Priority.ALWAYS);
+        row.getChildren().addAll(deposit, withdraw);
+        return row;
     }
 
-    private VBox createActionCard(String title, String subtitle, String prompt, String btnText,
-                                   Consumer<TextField> fieldConsumer, Runnable onAction) {
+    private VBox actionCard(String title, String subtitle, String prompt, String btnText,
+                            boolean gold, Consumer<TextField> consumer, Runnable onAction) {
         VBox card = new VBox(16);
-        card.getStyleClass().add("info-card");
-        card.setPadding(new Insets(16, 16, 16, 16));
-        card.setPrefWidth(360);
+        card.getStyleClass().add("wallet-action-card");
 
-        Label titleLabel = new Label(title.toUpperCase());
-        titleLabel.getStyleClass().add("info-card-title");
-        titleLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        Label t = new Label(title);
+        t.getStyleClass().add("section-title");
 
-        Label subtitleLabel = new Label(subtitle);
-        subtitleLabel.getStyleClass().add("info-card-text");
-        subtitleLabel.setFont(Font.font("Inter", 13));
+        Label s = new Label(subtitle);
+        s.setStyle("-fx-text-fill: -fg-2; -fx-font-size: 13px;");
+        s.setWrapText(true);
 
-        HBox inputRow = new HBox(10);
-        inputRow.setAlignment(Pos.CENTER_LEFT);
+        Label amtLabel = new Label("AMOUNT ($NVB)");
+        amtLabel.getStyleClass().add("amount-label");
+
         TextField field = new TextField();
         field.setPromptText(prompt);
-        field.getStyleClass().add("search-field");
-        field.setFont(Font.font("Inter", 13));
-        field.setPrefWidth(200);
-        fieldConsumer.accept(field);
-        inputRow.getChildren().addAll(field);
+        field.getStyleClass().add(gold ? "wallet-amount-input-gold" : "wallet-amount-input");
+        if (gold) field.getStyleClass().add("wallet-amount-input");
+        consumer.accept(field);
+        field.setOnAction(e -> onAction.run());
+
+        HBox quick = new HBox(6);
+        for (String preset : new String[]{"100", "500", "1000", "5000"}) {
+            Button q = new Button("$" + preset);
+            q.getStyleClass().add("quick-amount-btn");
+            q.setFont(Font.font("JetBrains Mono", FontWeight.MEDIUM, 11));
+            HBox.setHgrow(q, Priority.ALWAYS);
+            q.setMaxWidth(Double.MAX_VALUE);
+            q.setOnAction(e -> field.setText(preset));
+            quick.getChildren().add(q);
+        }
 
         Button btn = new Button(btnText);
-        if ("Deposit".equals(btnText)) {
-            btn.getStyleClass().add("deposit-btn");
-        } else {
-            btn.getStyleClass().add("btn-back");
-        }
+        btn.getStyleClass().add(gold ? "btn-gold-cta" : "buy-button");
         btn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
+        btn.setMaxWidth(Double.MAX_VALUE);
         btn.setOnAction(e -> onAction.run());
 
-        card.getChildren().addAll(titleLabel, subtitleLabel, inputRow, btn);
+        card.getChildren().addAll(t, s, amtLabel, field, quick, btn);
         return card;
     }
 
@@ -332,9 +222,7 @@ public class WalletView {
                 onDeposit.accept(amount);
                 depositField.clear();
             }
-        } catch (NumberFormatException ex) {
-            // ignore invalid input
-        }
+        } catch (NumberFormatException ignored) {}
     }
 
     private void handleWithdraw() {
@@ -345,51 +233,95 @@ public class WalletView {
                 onWithdraw.accept(amount);
                 withdrawField.clear();
             }
-        } catch (NumberFormatException ex) {
-            // ignore invalid input
-        }
+        } catch (NumberFormatException ignored) {}
     }
 
-    private VBox createHistorySection() {
-        VBox section = new VBox(12);
+    private VBox buildHistory() {
+        VBox section = new VBox(10);
 
-        Label title = new Label("TRANSACTION HISTORY");
-        title.getStyleClass().add("info-card-title");
-        title.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label t = new Label("TRANSACTION HISTORY");
+        t.getStyleClass().add("section-title");
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        Label hint = new Label("Most recent first");
+        hint.getStyleClass().add("footer-label");
+        header.getChildren().addAll(t, sp, hint);
 
-        VBox tableCard = new VBox(0);
-        tableCard.getStyleClass().add("info-card");
-        tableCard.setPadding(new Insets(16, 16, 16, 16));
+        VBox wrap = new VBox(0);
+        wrap.getStyleClass().add("table-card");
 
         historyTable = new TableView<>();
         historyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         historyTable.setPrefHeight(320);
-
-        TableColumn<transactions, String> dateCol = new TableColumn<>("Date");
-        dateCol.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
-        dateCol.setMinWidth(140);
-
-        TableColumn<transactions, String> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
-        typeCol.setMinWidth(120);
-
-        TableColumn<transactions, Double> amountCol = new TableColumn<>("Amount");
-        amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
-        amountCol.setMinWidth(120);
-
-        historyTable.getColumns().addAll(dateCol, typeCol, amountCol);
         historyTable.setItems(transactionList);
+        historyTable.setPlaceholder(new Label("No transactions yet"));
 
-        tableCard.getChildren().addAll(historyTable);
-        section.getChildren().addAll(title, tableCard);
+        TableColumn<transactions, String> dateCol = new TableColumn<>("DATE");
+        dateCol.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+        dateCol.setCellFactory(c -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); setStyle(""); }
+                else {
+                    setText(item);
+                    setStyle("-fx-text-fill: -fg-2; -fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px;");
+                }
+            }
+        });
+
+        TableColumn<transactions, String> typeCol = new TableColumn<>("TYPE");
+        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
+        typeCol.setCellFactory(c -> new TableCell<>() {
+            @Override
+            protected void updateItem(String type, boolean empty) {
+                super.updateItem(type, empty);
+                if (empty || type == null) { setText(null); setGraphic(null); }
+                else {
+                    Label badge = new Label(type);
+                    badge.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 10));
+                    boolean inflow = "DEPOSIT".equalsIgnoreCase(type) || "WIN".equalsIgnoreCase(type);
+                    badge.getStyleClass().add(inflow ? "holder-yes-badge" : "holder-no-badge");
+                    setGraphic(badge);
+                    setText(null);
+                }
+            }
+        });
+
+        TableColumn<transactions, Double> amtCol = new TableColumn<>("AMOUNT");
+        amtCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        amtCol.setCellFactory(c -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double amount, boolean empty) {
+                super.updateItem(amount, empty);
+                if (empty || amount == null) { setText(null); setStyle(""); }
+                else {
+                    String sign = amount >= 0 ? "+" : "";
+                    setText(String.format("%s%,.2f $NVB", sign, amount));
+                    setStyle(amount >= 0
+                        ? "-fx-text-fill: -yes; -fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; -fx-font-size: 12px;"
+                        : "-fx-text-fill: -no; -fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; -fx-font-size: 12px;");
+                }
+            }
+        });
+
+        historyTable.getColumns().addAll(dateCol, typeCol, amtCol);
+        wrap.getChildren().add(historyTable);
+        VBox.setVgrow(wrap, Priority.ALWAYS);
+
+        section.getChildren().addAll(header, wrap);
         return section;
     }
 
     public void setBalances(double total, double real, double virtual) {
-        sidebarBalanceValue.setText(String.format("%.2f", total));
-        mainTotalValue.setText(String.format("%.2f", total));
-        mainRealValue.setText(String.format("%.2f", real));
-        mainVirtualValue.setText(String.format("%.2f", virtual));
+        String tt = String.format("%,.2f", total);
+        if (sidebarBalance != null) sidebarBalance.setText(tt);
+        if (topbarBalance != null) topbarBalance.setText(tt);
+        if (totalValue != null) totalValue.setText(tt);
+        if (realValue != null) realValue.setText(String.format("%,.2f", real));
+        if (virtualValue != null) virtualValue.setText(String.format("%,.2f", virtual));
     }
 
     public void setTransactions(List<transactions> transactions) {

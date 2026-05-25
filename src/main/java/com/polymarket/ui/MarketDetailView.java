@@ -8,6 +8,7 @@ import com.polymarket.model.bets;
 import com.polymarket.model.events;
 import com.polymarket.model.outcomes;
 import com.polymarket.model.users;
+import com.polymarket.ui.components.ChromeFactory;
 
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -53,7 +54,9 @@ public class MarketDetailView {
     private Long currentEventId;
     private List<outcomes> currentOutcomes;
     private events currentEvent;
-    private Label balanceValue;
+
+    private Label sidebarBalance;
+    private Label topbarBalance;
     private TextField amountField;
 
     private Label headerQuestion;
@@ -68,8 +71,8 @@ public class MarketDetailView {
     private GridPane orderBookGrid;
     private Label orderBookMidPrice;
     private Label orderBookSpread;
-    private VBox topHoldersSection;
-    private VBox orderBookPanel;
+    private StackPane headerIcon;
+    private Label headerIconLabel;
 
     private Button yesBtn;
     private Button noBtn;
@@ -86,468 +89,368 @@ public class MarketDetailView {
     public MarketDetailView() {
         root = new BorderPane();
         root.getStyleClass().add("main-container");
-        root.setLeft(createSidebar());
-        root.setCenter(createMainContent());
+        buildLayout();
     }
 
-    private VBox createSidebar() {
-        VBox sidebar = new VBox(0);
-        sidebar.getStyleClass().add("sidebar");
-        sidebar.setPrefWidth(220);
+    private void buildLayout() {
+        VBox sidebar = ChromeFactory.sidebar(
+            ChromeFactory.NavId.MARKETS,
+            new ChromeFactory.NavCallbacks(
+                () -> { if (onMarketsClick != null) onMarketsClick.run(); },
+                () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
+                null,
+                () -> { if (onWalletClick != null) onWalletClick.run(); },
+                () -> { if (onHistoryClick != null) onHistoryClick.run(); },
+                null
+            )
+        );
+        sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
+        root.setLeft(sidebar);
 
-        VBox topSection = new VBox(0);
-        topSection.setPadding(new Insets(20, 16, 0, 16));
-
-        HBox logoBox = new HBox(10);
-        logoBox.setAlignment(Pos.CENTER_LEFT);
-        logoBox.setPadding(new Insets(0, 0, 24, 0));
-        Region logoIcon = new Region();
-        logoIcon.getStyleClass().add("logo-icon");
-        logoIcon.setPrefSize(28, 28);
-        VBox logoTextContainer = new VBox(0);
-        Label logoText = new Label("NovaBet");
-        logoText.getStyleClass().add("logo-text");
-        logoText.setFont(Font.font("Inter", FontWeight.BOLD, 16));
-        Label logoVersion = new Label("v0.4.2 · alpha");
-        logoVersion.getStyleClass().add("logo-version");
-        logoVersion.setFont(Font.font("Inter", 10));
-        logoTextContainer.getChildren().addAll(logoText, logoVersion);
-        logoBox.getChildren().addAll(logoIcon, logoTextContainer);
-
-        VBox navItems = new VBox(4);
-        HBox marketsNav = createNavItem("Markets", true);
-        marketsNav.setCursor(javafx.scene.Cursor.HAND);
-        marketsNav.setOnMouseClicked(e -> {
-            if (onMarketsClick != null) onMarketsClick.run();
-        });
-        HBox portfolioNav = createNavItem("Portfolio", false);
-        portfolioNav.setCursor(javafx.scene.Cursor.HAND);
-        portfolioNav.setOnMouseClicked(e -> {
-            if (onPortfolioClick != null) onPortfolioClick.run();
-        });
-        HBox walletNav = createNavItem("Wallet", false);
-        walletNav.setCursor(javafx.scene.Cursor.HAND);
-        walletNav.setOnMouseClicked(e -> {
+        BorderPane main = new BorderPane();
+        main.getStyleClass().add("main-content");
+        HBox topbar = ChromeFactory.topbar("Market detail", "Search markets...", () -> {
             if (onWalletClick != null) onWalletClick.run();
         });
-        HBox historyNav = createNavItem("History", false);
-        historyNav.setCursor(javafx.scene.Cursor.HAND);
-        historyNav.setOnMouseClicked(e -> {
-            if (onHistoryClick != null) onHistoryClick.run();
-        });
-        navItems.getChildren().addAll(
-            marketsNav,
-            portfolioNav,
-            createNavItem("Create market", false),
-            walletNav,
-            historyNav
-        );
-
-        topSection.getChildren().addAll(logoBox, navItems);
-
-        VBox categoriesSection = new VBox(8);
-        categoriesSection.setPadding(new Insets(16, 16, 0, 16));
-        Label categoriesTitle = new Label("CATEGORIES");
-        categoriesTitle.getStyleClass().add("categories-title");
-        categoriesTitle.setFont(Font.font("Inter", FontWeight.MEDIUM, 11));
-        categoriesSection.getChildren().add(categoriesTitle);
-
-        VBox categoryItems = new VBox(4);
-        categoryItems.getChildren().addAll(
-            createCategoryItem("Tech / AI", "248"),
-            createCategoryItem("Sport", "412"),
-            createCategoryItem("Absurd", "87")
-        );
-        categoriesSection.getChildren().add(categoryItems);
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        VBox bottomSection = new VBox(12);
-        bottomSection.setPadding(new Insets(0, 16, 20, 16));
-
-        HBox casinoBox = new HBox(10);
-        casinoBox.setAlignment(Pos.CENTER_LEFT);
-        casinoBox.setPadding(new Insets(8, 0, 8, 0));
-        Label casinoIcon = new Label("");
-        casinoIcon.getStyleClass().add("casino-icon");
-        Label casinoText = new Label("Casino");
-        casinoText.getStyleClass().add("casino-text");
-        Region hotBadge = new Region();
-        hotBadge.getStyleClass().add("hot-badge");
-        Region spacer2 = new Region();
-        HBox.setHgrow(spacer2, Priority.ALWAYS);
-        casinoBox.getChildren().addAll(casinoIcon, casinoText, spacer2, hotBadge);
-
-        VBox balanceBox = new VBox(4);
-        balanceBox.getStyleClass().add("balance-box");
-        balanceBox.setPadding(new Insets(12, 14, 12, 14));
-        Label balanceLabel = new Label("BALANCE");
-        balanceLabel.getStyleClass().add("balance-label");
-        balanceLabel.setFont(Font.font("Inter", 10));
-        HBox balanceValueBox = new HBox(6);
-        balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        balanceValue = new Label("0.00");
-        balanceValue.getStyleClass().add("balance-value");
-        balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
-        Label balanceCurrency = new Label("$NVB");
-        balanceCurrency.getStyleClass().add("balance-currency");
-        balanceCurrency.setFont(Font.font("Inter", FontWeight.BOLD, 12));
-        balanceValueBox.getChildren().addAll(balanceValue, balanceCurrency);
-        Label balanceChange = new Label("+240 · 24h");
-        balanceChange.getStyleClass().add("balance-change");
-        balanceChange.setFont(Font.font("Inter", 11));
-        balanceBox.getChildren().addAll(balanceLabel, balanceValueBox, balanceChange);
-
-        bottomSection.getChildren().addAll(casinoBox, balanceBox);
-
-        sidebar.getChildren().addAll(topSection, categoriesSection, spacer, bottomSection);
-        return sidebar;
+        topbarBalance = ChromeFactory.findTopbarBalance(topbar);
+        main.setTop(topbar);
+        main.setCenter(buildContent());
+        root.setCenter(main);
     }
 
-    private HBox createNavItem(String text, boolean active) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setPadding(new Insets(8, 12, 8, 12));
-        if (active) {
-            item.getStyleClass().add("nav-item-active");
-        } else {
-            item.getStyleClass().add("nav-item");
-        }
+    private ScrollPane buildContent() {
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(14, 20, 24, 20));
 
-        Region icon = new Region();
-        icon.setPrefSize(16, 16);
-        if (active) {
-            icon.getStyleClass().add("nav-icon-active");
-        } else {
-            icon.getStyleClass().add("nav-icon");
-        }
+        HBox crumbRow = new HBox();
+        crumbRow.setAlignment(Pos.CENTER_LEFT);
+        crumbRow.getChildren().add(ChromeFactory.breadcrumb("Markets", "Detail",
+            () -> { if (onMarketsClick != null) onMarketsClick.run(); }));
+        content.getChildren().add(crumbRow);
 
-        Label label = new Label(text);
-        label.getStyleClass().add(active ? "nav-text-active" : "nav-text");
-        label.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        content.getChildren().add(buildHeader());
+        content.getChildren().add(buildMiddle());
+        content.getChildren().add(buildBottom());
 
-        item.getChildren().addAll(icon, label);
-        return item;
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.getStyleClass().add("detail-scroll");
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        return scroll;
     }
 
-    private HBox createCategoryItem(String text, String count) {
-        HBox item = new HBox(10);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setPadding(new Insets(6, 12, 6, 12));
-        item.getStyleClass().add("category-item");
+    private VBox buildHeader() {
+        VBox wrap = new VBox(10);
+        wrap.getStyleClass().add("info-card");
+        wrap.setPadding(new Insets(20));
 
-        Region icon = new Region();
-        icon.setPrefSize(16, 16);
-        icon.getStyleClass().add("category-icon");
+        HBox row = new HBox(16);
+        row.setAlignment(Pos.TOP_LEFT);
 
-        Label label = new Label(text);
-        label.getStyleClass().add("category-text");
-        label.setFont(Font.font("Inter", 13));
+        headerIcon = new StackPane();
+        headerIcon.getStyleClass().add("market-icon-container");
+        headerIcon.setPrefSize(56, 56);
+        headerIcon.setMinSize(56, 56);
+        headerIcon.setMaxSize(56, 56);
+        headerIconLabel = new Label("✨");
+        headerIconLabel.setFont(Font.font("Segoe UI Emoji", 26));
+        headerIcon.getChildren().add(headerIconLabel);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        VBox info = new VBox(8);
+        HBox.setHgrow(info, Priority.ALWAYS);
 
-        Label countLabel = new Label(count);
-        countLabel.getStyleClass().add("category-count");
-        countLabel.setFont(Font.font("Inter", 12));
+        Label category = new Label("MARKETS");
+        category.getStyleClass().add("label-uppercase");
 
-        item.getChildren().addAll(icon, label, spacer, countLabel);
-        return item;
-    }
-
-    private BorderPane createMainContent() {
-        BorderPane mainContent = new BorderPane();
-        mainContent.getStyleClass().add("main-content");
-
-        mainContent.setTop(createTopBar());
-        mainContent.setCenter(createDetailContent());
-
-        return mainContent;
-    }
-
-    private VBox createTopBar() {
-        VBox topBar = new VBox(0);
-        topBar.setPadding(new Insets(0, 24, 0, 24));
-
-        HBox headerRow = new HBox(16);
-        headerRow.setAlignment(Pos.CENTER_LEFT);
-        headerRow.setPadding(new Insets(16, 0, 12, 0));
-
-        HBox breadcrumb = new HBox(6);
-        breadcrumb.setAlignment(Pos.CENTER_LEFT);
-        Label breadcrumbMarkets = new Label("Markets");
-        breadcrumbMarkets.getStyleClass().add("breadcrumb-text");
-        breadcrumbMarkets.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        breadcrumbMarkets.setCursor(javafx.scene.Cursor.HAND);
-        breadcrumbMarkets.setOnMouseClicked(e -> {
-            if (onMarketsClick != null) onMarketsClick.run();
-        });
-        Label breadcrumbSlash = new Label("/");
-        breadcrumbSlash.getStyleClass().add("breadcrumb-separator");
-        breadcrumbSlash.setFont(Font.font("Inter", 14));
-        Label breadcrumbDetail = new Label("Detail");
-        breadcrumbDetail.getStyleClass().add("breadcrumb-text-active");
-        breadcrumbDetail.setFont(Font.font("Inter", FontWeight.MEDIUM, 14));
-        breadcrumb.getChildren().addAll(breadcrumbMarkets, breadcrumbSlash, breadcrumbDetail);
-
-        HBox searchBox = new HBox(0);
-        searchBox.getStyleClass().add("search-box");
-        searchBox.setPrefWidth(320);
-        searchBox.setPrefHeight(36);
-        Region searchIcon = new Region();
-        searchIcon.getStyleClass().add("search-icon");
-        searchIcon.setPrefSize(16, 16);
-        TextField searchField = new TextField();
-        searchField.setPromptText("Search markets, e.g. \"GPT-5 release\"");
-        searchField.getStyleClass().add("search-field");
-        searchField.setFont(Font.font("Inter", 13));
-        searchBox.getChildren().addAll(searchIcon, searchField);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        HBox balanceBox = new HBox(8);
-        balanceBox.setAlignment(Pos.CENTER);
-        balanceBox.getStyleClass().add("header-balance-box");
-        balanceBox.setPadding(new Insets(6, 14, 6, 14));
-        Region balanceIcon = new Region();
-        balanceIcon.getStyleClass().add("balance-icon");
-        balanceIcon.setPrefSize(20, 20);
-        Label balanceValue = new Label("0.00");
-        balanceValue.getStyleClass().add("header-balance-value");
-        balanceValue.setFont(Font.font("Inter", 14));
-        Label balanceCurrency = new Label("$NVB");
-        balanceCurrency.getStyleClass().add("header-balance-currency");
-        balanceCurrency.setFont(Font.font("Inter", 12));
-        balanceBox.getChildren().addAll(balanceIcon, balanceValue, balanceCurrency);
-
-        Region notifBtn = new Region();
-        notifBtn.getStyleClass().add("notification-btn");
-        notifBtn.setPrefSize(36, 36);
-
-        Button depositBtn = new Button("+ DEPOSIT");
-        depositBtn.getStyleClass().add("deposit-btn");
-        depositBtn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
-
-        headerRow.getChildren().addAll(breadcrumb, searchBox, spacer, balanceBox, notifBtn, depositBtn);
-
-        topBar.getChildren().add(headerRow);
-        return topBar;
-    }
-
-    private ScrollPane createDetailContent() {
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.getStyleClass().add("detail-scroll");
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-
-        VBox content = new VBox(20);
-        content.setPadding(new Insets(0, 24, 24, 24));
-
-        content.getChildren().addAll(
-            createMarketHeader(),
-            createMiddleSection(),
-            createBottomSection()
-        );
-
-        scrollPane.setContent(content);
-        return scrollPane;
-    }
-
-    private VBox createMarketHeader() {
-        VBox headerWrapper = new VBox(8);
-        headerWrapper.setPadding(new Insets(8, 0, 0, 0));
-
-        Label categoryLabel = new Label("Markets");
-        categoryLabel.getStyleClass().add("detail-category");
-        categoryLabel.setFont(Font.font("Inter", 12));
-
-        HBox header = new HBox(16);
-        header.setAlignment(Pos.TOP_LEFT);
-
-        StackPane iconContainer = new StackPane();
-        iconContainer.getStyleClass().add("market-icon-container");
-        iconContainer.setPrefSize(56, 56);
-        Label iconLabel = new Label("\uD83C\uDFB2");
-        iconLabel.setFont(Font.font(28));
-        iconContainer.getChildren().add(iconLabel);
-
-        VBox infoBox = new VBox(6);
         headerQuestion = new Label("");
         headerQuestion.getStyleClass().add("detail-question");
-        headerQuestion.setFont(Font.font("Inter", FontWeight.BOLD, 20));
+        headerQuestion.setFont(Font.font("Inter", FontWeight.BOLD, 22));
         headerQuestion.setWrapText(true);
 
-        HBox metaRow = new HBox(16);
-        metaRow.setAlignment(Pos.CENTER_LEFT);
+        HBox meta = new HBox(14);
+        meta.setAlignment(Pos.CENTER_LEFT);
         volumeLabel = new Label("");
         volumeLabel.getStyleClass().add("meta-label");
-        volumeLabel.setFont(Font.font("Inter", 13));
+        volumeLabel.setFont(Font.font("Inter", 12));
         endsLabel = new Label("");
         endsLabel.getStyleClass().add("meta-label");
-        endsLabel.setFont(Font.font("Inter", 13));
+        endsLabel.setFont(Font.font("Inter", 12));
 
-        HBox liveBadge = new HBox(6);
-        liveBadge.setAlignment(Pos.CENTER);
-        liveBadge.getStyleClass().add("live-badge");
-        Region liveDot = new Region();
-        liveDot.getStyleClass().add("live-dot");
-        liveDot.setPrefSize(6, 6);
+        HBox live = new HBox(5);
+        live.setAlignment(Pos.CENTER);
+        live.getStyleClass().add("live-badge");
+        Region dot = new Region();
+        dot.getStyleClass().add("live-dot");
+        dot.setPrefSize(5, 5);
+        dot.setMinSize(5, 5);
+        dot.setMaxSize(5, 5);
         liveText = new Label("LIVE");
         liveText.getStyleClass().add("live-text");
-        liveText.setFont(Font.font("Inter", FontWeight.BOLD, 10));
-        liveBadge.getChildren().addAll(liveDot, liveText);
+        liveText.setFont(Font.font("Inter", FontWeight.BOLD, 9));
+        live.getChildren().addAll(dot, liveText);
 
-        metaRow.getChildren().addAll(volumeLabel, endsLabel, liveBadge);
-        infoBox.getChildren().addAll(headerQuestion, metaRow);
+        meta.getChildren().addAll(volumeLabel, endsLabel, live);
+        info.getChildren().addAll(category, headerQuestion, meta);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        VBox probabilityBox = new VBox(4);
-        probabilityBox.setAlignment(Pos.TOP_RIGHT);
-        probLabel = new Label("YES probability");
-        probLabel.getStyleClass().add("prob-label");
-        probLabel.setFont(Font.font("Inter", 12));
+        VBox probBox = new VBox(2);
+        probBox.setAlignment(Pos.TOP_RIGHT);
+        probLabel = new Label("YES PROBABILITY");
+        probLabel.getStyleClass().add("label-uppercase");
+        HBox probRow = new HBox(2);
+        probRow.setAlignment(Pos.BASELINE_RIGHT);
         probValue = new Label("--");
         probValue.getStyleClass().add("prob-value");
-        probValue.setFont(Font.font("Inter", FontWeight.BOLD, 42));
+        probValue.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 38));
         probPercent = new Label("%");
         probPercent.getStyleClass().add("prob-percent");
-        probPercent.setFont(Font.font("Inter", FontWeight.BOLD, 20));
-        HBox probRow = new HBox(2);
-        probRow.setAlignment(Pos.TOP_RIGHT);
+        probPercent.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 18));
         probRow.getChildren().addAll(probValue, probPercent);
-        probabilityBox.getChildren().addAll(probLabel, probRow);
+        probBox.getChildren().addAll(probLabel, probRow);
 
-        header.getChildren().addAll(iconContainer, infoBox, spacer, probabilityBox, createActionButtons());
-        headerWrapper.getChildren().addAll(categoryLabel, header);
-        return headerWrapper;
+        HBox actions = new HBox(8);
+        actions.setAlignment(Pos.TOP_RIGHT);
+        actions.setPadding(new Insets(0, 0, 0, 16));
+
+        Button edit = new Button("Edit");
+        edit.getStyleClass().add("action-btn-edit");
+        edit.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        edit.setOnAction(e -> { if (onEditMarket != null) onEditMarket.run(); });
+
+        Button del = new Button("Delete");
+        del.getStyleClass().add("action-btn-delete");
+        del.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        del.setOnAction(e -> { if (onDeleteMarket != null) onDeleteMarket.run(); });
+
+        actions.getChildren().addAll(edit, del);
+
+        row.getChildren().addAll(headerIcon, info, probBox, actions);
+        wrap.getChildren().add(row);
+        return wrap;
     }
 
-    private HBox createActionButtons() {
-        HBox actionBox = new HBox(8);
-        actionBox.setAlignment(Pos.CENTER);
-        actionBox.setPadding(new Insets(0, 0, 0, 16));
+    private HBox buildMiddle() {
+        HBox row = new HBox(16);
+        row.setAlignment(Pos.TOP_LEFT);
 
-        Button editBtn = new Button("Edit");
-        editBtn.getStyleClass().add("action-btn-edit");
-        editBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-        editBtn.setOnAction(e -> {
-            if (onEditMarket != null) onEditMarket.run();
-        });
+        VBox left = buildProbabilityCard();
+        HBox.setHgrow(left, Priority.ALWAYS);
 
-        Button deleteBtn = new Button("Delete");
-        deleteBtn.getStyleClass().add("action-btn-delete");
-        deleteBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-        deleteBtn.setOnAction(e -> {
-            if (onDeleteMarket != null) onDeleteMarket.run();
-        });
+        VBox trade = buildTradePanel();
+        trade.setMinWidth(320);
+        trade.setPrefWidth(340);
+        trade.setMaxWidth(360);
 
-        actionBox.getChildren().addAll(editBtn, deleteBtn);
-        return actionBox;
+        row.getChildren().addAll(left, trade);
+        return row;
     }
 
-    private HBox createMiddleSection() {
-        HBox middleSection = new HBox(16);
+    private VBox buildProbabilityCard() {
+        VBox card = new VBox(12);
+        card.getStyleClass().add("info-card");
+        card.setPadding(new Insets(20));
 
-        VBox tradePanel = createTradePanel();
-        tradePanel.getStyleClass().add("right-column");
+        Label title = new Label("PROBABILITY");
+        title.getStyleClass().add("info-card-title");
 
-        middleSection.getChildren().addAll(tradePanel);
-        return middleSection;
+        VBox barWrap = new VBox(8);
+        barWrap.setPadding(new Insets(16, 0, 0, 0));
+
+        HBox legend = new HBox();
+        legend.setAlignment(Pos.CENTER_LEFT);
+        HBox yesL = new HBox(6);
+        yesL.setAlignment(Pos.CENTER_LEFT);
+        Region yd = new Region();
+        yd.setStyle("-fx-background-color: -yes; -fx-background-radius: 999;");
+        yd.setPrefSize(8, 8);
+        yd.setMinSize(8, 8);
+        yd.setMaxSize(8, 8);
+        Label yesLab = new Label("YES");
+        yesLab.setStyle("-fx-text-fill: -yes; -fx-font-size: 11px; -fx-font-weight: bold;");
+        yesL.getChildren().addAll(yd, yesLab);
+
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+
+        HBox noL = new HBox(6);
+        noL.setAlignment(Pos.CENTER_RIGHT);
+        Label noLab = new Label("NO");
+        noLab.setStyle("-fx-text-fill: -no; -fx-font-size: 11px; -fx-font-weight: bold;");
+        Region nd = new Region();
+        nd.setStyle("-fx-background-color: -no; -fx-background-radius: 999;");
+        nd.setPrefSize(8, 8);
+        nd.setMinSize(8, 8);
+        nd.setMaxSize(8, 8);
+        noL.getChildren().addAll(noLab, nd);
+
+        legend.getChildren().addAll(yesL, sp, noL);
+        barWrap.getChildren().add(legend);
+
+        StackPane bigBar = new StackPane();
+        bigBar.setStyle("-fx-background-color: -no-dim; -fx-background-radius: 4;");
+        bigBar.setPrefHeight(10);
+        bigBar.setMinHeight(10);
+        bigBar.setMaxHeight(10);
+        bigBar.setAlignment(Pos.CENTER_LEFT);
+        Region yesFill = new Region();
+        yesFill.setStyle("-fx-background-color: -yes; -fx-background-radius: 4 0 0 4;");
+        yesFill.setPrefHeight(10);
+        yesFill.setMinHeight(10);
+        yesFill.setMaxHeight(10);
+        bigBar.getChildren().add(yesFill);
+
+        HBox legendVals = new HBox();
+        legendVals.setAlignment(Pos.CENTER_LEFT);
+        Label yv = new Label("--%");
+        yv.setStyle("-fx-text-fill: -yes; -fx-font-family: 'JetBrains Mono'; -fx-font-size: 14px; -fx-font-weight: bold;");
+        yv.setId("yesProbLabel");
+        Region s2 = new Region();
+        HBox.setHgrow(s2, Priority.ALWAYS);
+        Label nv = new Label("--%");
+        nv.setStyle("-fx-text-fill: -no; -fx-font-family: 'JetBrains Mono'; -fx-font-size: 14px; -fx-font-weight: bold;");
+        nv.setId("noProbLabel");
+        legendVals.getChildren().addAll(yv, s2, nv);
+
+        barWrap.getChildren().addAll(bigBar, legendVals);
+
+        bigBar.widthProperty().addListener((o, ov, nvw) -> updateProbBarFill(yesFill, nvw.doubleValue()));
+
+        card.getChildren().addAll(title, barWrap);
+        return card;
     }
 
-    private VBox createTradePanel() {
+    private void updateProbBarFill(Region fill, double totalWidth) {
+        outcomes y = findOutcome(OutcomeLabel.YES);
+        if (y == null) return;
+        double pct = y.getOdds();
+        fill.setPrefWidth(totalWidth * pct);
+    }
+
+    private VBox buildTradePanel() {
         VBox panel = new VBox(14);
         panel.getStyleClass().add("trade-panel");
-        panel.setPadding(new Insets(16, 16, 16, 16));
+        panel.setPadding(new Insets(16));
 
-        HBox yesNoToggle = new HBox(0);
-        yesNoToggle.getStyleClass().add("yes-no-toggle");
+        Label title = new Label("PLACE A TRADE");
+        title.getStyleClass().add("info-card-title");
+
+        HBox yn = new HBox(0);
+        yn.getStyleClass().add("yes-no-toggle");
         yesBtn = new Button("Yes --¢");
         yesBtn.getStyleClass().add("yes-toggle-active");
-        yesBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        yesBtn.setFont(Font.font("Inter", FontWeight.BOLD, 13));
+        HBox.setHgrow(yesBtn, Priority.ALWAYS);
+        yesBtn.setMaxWidth(Double.MAX_VALUE);
         yesBtn.setOnAction(e -> selectOutcome(OutcomeLabel.YES));
         noBtn = new Button("No --¢");
         noBtn.getStyleClass().add("no-toggle");
         noBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        HBox.setHgrow(noBtn, Priority.ALWAYS);
+        noBtn.setMaxWidth(Double.MAX_VALUE);
         noBtn.setOnAction(e -> selectOutcome(OutcomeLabel.NO));
-        yesNoToggle.getChildren().addAll(yesBtn, noBtn);
+        yn.getChildren().addAll(yesBtn, noBtn);
 
-        HBox buySellRow = new HBox(8);
-        buySellRow.setAlignment(Pos.CENTER_LEFT);
+        HBox bs = new HBox(6);
         buyToggle = new Button("Buy");
         buyToggle.getStyleClass().add("buy-sell-active");
-        buyToggle.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        buyToggle.setFont(Font.font("Inter", FontWeight.BOLD, 12));
         buyToggle.setOnAction(e -> setTradeMode(true));
         sellToggle = new Button("Sell");
         sellToggle.getStyleClass().add("buy-sell-toggle");
-        sellToggle.setFont(Font.font("Inter", 12));
+        sellToggle.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
         sellToggle.setOnAction(e -> setTradeMode(false));
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        buySellRow.getChildren().addAll(buyToggle, sellToggle, spacer);
+        bs.getChildren().addAll(buyToggle, sellToggle);
 
-        Label amountLabel = new Label("AMOUNT ($NVB)");
-        amountLabel.getStyleClass().add("amount-label");
-        amountLabel.setFont(Font.font("Inter", 11));
+        Label amtLabel = new Label("AMOUNT");
+        amtLabel.getStyleClass().add("amount-label");
 
-        HBox amountInputBox = new HBox(0);
-        amountInputBox.getStyleClass().add("amount-input-box");
-        amountField = new TextField("");
+        HBox amtBox = new HBox(0);
+        amtBox.getStyleClass().add("amount-input-box");
+        amountField = new TextField();
         amountField.setPromptText("0.00");
         amountField.getStyleClass().add("amount-field");
-        amountField.setFont(Font.font("Inter", 14));
-        Label currencyLabel = new Label("$NVB");
-        currencyLabel.getStyleClass().add("currency-label");
-        currencyLabel.setFont(Font.font("Inter", 12));
-        amountInputBox.getChildren().addAll(amountField, currencyLabel);
+        amountField.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 16));
+        HBox.setHgrow(amountField, Priority.ALWAYS);
+        Label curr = new Label("$NVB");
+        curr.getStyleClass().add("currency-label");
+        curr.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        amtBox.getChildren().addAll(amountField, curr);
+        amountField.textProperty().addListener((o, ov, nv) -> updateSummary());
 
-        amountField.textProperty().addListener((obs, old, newVal) -> updateSummary());
+        HBox quick = new HBox(6);
+        Button q25 = quickAmount("$25"); q25.setOnAction(e -> amountField.setText("25"));
+        Button q100 = quickAmount("$100"); q100.setOnAction(e -> amountField.setText("100"));
+        Button q500 = quickAmount("$500"); q500.setOnAction(e -> amountField.setText("500"));
+        Button qmax = quickAmount("MAX"); qmax.setOnAction(e -> amountField.setText("10000"));
+        HBox.setHgrow(q25, Priority.ALWAYS); q25.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(q100, Priority.ALWAYS); q100.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(q500, Priority.ALWAYS); q500.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(qmax, Priority.ALWAYS); qmax.setMaxWidth(Double.MAX_VALUE);
+        quick.getChildren().addAll(q25, q100, q500, qmax);
 
-        HBox quickAmounts = new HBox(6);
-        Button q25 = createQuickAmount("$25");
-        q25.setOnAction(e -> amountField.setText("25"));
-        Button q100 = createQuickAmount("$100");
-        q100.setOnAction(e -> amountField.setText("100"));
-        Button q500 = createQuickAmount("$500");
-        q500.setOnAction(e -> amountField.setText("500"));
-        Button qMax = createQuickAmount("MAX");
-        qMax.setOnAction(e -> amountField.setText("10000"));
-        quickAmounts.getChildren().addAll(q25, q100, q500, qMax);
+        Region divider = new Region();
+        divider.getStyleClass().add("divider");
 
-        VBox summaryBox = new VBox(8);
-        summaryBox.setPadding(new Insets(4, 0, 0, 0));
-        summaryBox.getChildren().addAll(
-            createSummaryRow("Avg price", summaryAvgPrice = new Label("--")),
-            createSummaryRow("Shares", summaryShares = new Label("--")),
-            createSummaryRow("Potential return", summaryReturn = new Label("--"), true)
+        VBox summary = new VBox(8);
+        summary.setPadding(new Insets(4, 0, 4, 0));
+        summary.getChildren().addAll(
+            summaryRow("Avg price", summaryAvgPrice = mono("--", false)),
+            summaryRow("Shares",    summaryShares = mono("--", false)),
+            summaryRow("Potential", summaryReturn = mono("--", true))
         );
 
         buyButton = new Button("Buy YES");
         buyButton.getStyleClass().add("buy-button");
-        buyButton.setFont(Font.font("Inter", FontWeight.BOLD, 14));
+        buyButton.setFont(Font.font("Inter", FontWeight.BOLD, 13));
+        buyButton.setMaxWidth(Double.MAX_VALUE);
         buyButton.setOnAction(e -> executeTrade());
 
-        panel.getChildren().addAll(yesNoToggle, buySellRow, amountLabel, amountInputBox, quickAmounts, summaryBox, buyButton);
+        panel.getChildren().addAll(title, yn, bs, amtLabel, amtBox, quick, divider, summary, buyButton);
         return panel;
+    }
+
+    private Label mono(String text, boolean highlight) {
+        Label l = new Label(text);
+        l.getStyleClass().add(highlight ? "summary-value-highlight" : "summary-value");
+        l.setFont(Font.font("JetBrains Mono", highlight ? FontWeight.BOLD : FontWeight.MEDIUM, 12));
+        return l;
+    }
+
+    private HBox summaryRow(String label, Label value) {
+        HBox row = new HBox();
+        row.setAlignment(Pos.CENTER_LEFT);
+        Label l = new Label(label);
+        l.getStyleClass().add("summary-label");
+        l.setFont(Font.font("Inter", 12));
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        row.getChildren().addAll(l, sp, value);
+        return row;
+    }
+
+    private Button quickAmount(String text) {
+        Button b = new Button(text);
+        b.getStyleClass().add("quick-amount-btn");
+        b.setFont(Font.font("JetBrains Mono", FontWeight.MEDIUM, 11));
+        return b;
     }
 
     private void selectOutcome(OutcomeLabel outcome) {
         selectedOutcome = outcome;
         if (outcome == OutcomeLabel.YES) {
-            yesBtn.getStyleClass().clear();
-            yesBtn.getStyleClass().add("yes-toggle-active");
-            noBtn.getStyleClass().clear();
-            noBtn.getStyleClass().add("no-toggle");
+            yesBtn.getStyleClass().setAll("yes-toggle-active");
+            noBtn.getStyleClass().setAll("no-toggle");
         } else {
-            noBtn.getStyleClass().clear();
-            noBtn.getStyleClass().add("yes-toggle-active");
-            yesBtn.getStyleClass().clear();
-            yesBtn.getStyleClass().add("no-toggle");
+            noBtn.getStyleClass().setAll("yes-toggle-active");
+            yesBtn.getStyleClass().setAll("no-toggle");
+        }
+        if (probLabel != null) probLabel.setText(outcome == OutcomeLabel.YES ? "YES PROBABILITY" : "NO PROBABILITY");
+        if (currentOutcomes != null) {
+            outcomes target = findOutcome(outcome);
+            if (target != null && probValue != null) {
+                int pct = (int) Math.round(target.getOdds() * 100);
+                probValue.setText(String.valueOf(pct));
+            }
         }
         updateSummary();
         updateBuyButtonText();
@@ -556,45 +459,39 @@ public class MarketDetailView {
     private void setTradeMode(boolean buy) {
         isBuyMode = buy;
         if (buy) {
-            buyToggle.getStyleClass().clear();
-            buyToggle.getStyleClass().add("buy-sell-active");
-            sellToggle.getStyleClass().clear();
-            sellToggle.getStyleClass().add("buy-sell-toggle");
+            buyToggle.getStyleClass().setAll("buy-sell-active");
+            sellToggle.getStyleClass().setAll("buy-sell-toggle");
         } else {
-            sellToggle.getStyleClass().clear();
-            sellToggle.getStyleClass().add("buy-sell-active");
-            buyToggle.getStyleClass().clear();
-            buyToggle.getStyleClass().add("buy-sell-toggle");
+            sellToggle.getStyleClass().setAll("buy-sell-active");
+            buyToggle.getStyleClass().setAll("buy-sell-toggle");
         }
         updateBuyButtonText();
     }
 
     private void updateBuyButtonText() {
         if (buyButton == null) return;
-        String outcomeStr = selectedOutcome == OutcomeLabel.YES ? "YES" : "NO";
-        String actionStr = isBuyMode ? "Buy" : "Sell";
-        String shares = summaryShares.getText();
+        String oc = selectedOutcome == OutcomeLabel.YES ? "YES" : "NO";
+        String act = isBuyMode ? "Buy" : "Sell";
+        String shares = summaryShares != null ? summaryShares.getText() : "--";
         if ("--".equals(shares)) {
-            buyButton.setText(actionStr + " " + outcomeStr);
+            buyButton.setText(act + " " + oc);
         } else {
-            buyButton.setText(actionStr + " " + outcomeStr + " · " + shares + " shares");
+            buyButton.setText(act + " " + oc + " · " + shares + " sh");
         }
     }
 
     private void updateSummary() {
         if (currentOutcomes == null || currentOutcomes.isEmpty()) return;
-
-        String amountStr = amountField.getText();
-        if (amountStr == null || amountStr.isBlank()) {
+        String amt = amountField.getText();
+        if (amt == null || amt.isBlank()) {
             summaryAvgPrice.setText("--");
             summaryShares.setText("--");
             summaryReturn.setText("--");
             updateBuyButtonText();
             return;
         }
-
         try {
-            BigDecimal amount = new BigDecimal(amountStr.trim());
+            BigDecimal amount = new BigDecimal(amt.trim());
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
                 summaryAvgPrice.setText("--");
                 summaryShares.setText("--");
@@ -602,25 +499,20 @@ public class MarketDetailView {
                 updateBuyButtonText();
                 return;
             }
-
-            outcomes targetOutcome = findOutcome(selectedOutcome);
-            if (targetOutcome == null) return;
-
-            BigDecimal sharePrice = BigDecimal.valueOf(targetOutcome.getOdds()).setScale(4, RoundingMode.HALF_UP);
+            outcomes target = findOutcome(selectedOutcome);
+            if (target == null) return;
+            BigDecimal price = BigDecimal.valueOf(target.getOdds()).setScale(4, RoundingMode.HALF_UP);
             if (selectedOutcome == OutcomeLabel.NO) {
-                sharePrice = BigDecimal.ONE.subtract(sharePrice).setScale(4, RoundingMode.HALF_UP);
+                price = BigDecimal.ONE.subtract(price).setScale(4, RoundingMode.HALF_UP);
             }
-
-            int shareCount = amount.divide(sharePrice, RoundingMode.DOWN).intValue();
-            BigDecimal totalCost = sharePrice.multiply(BigDecimal.valueOf(shareCount)).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal potentialWin = BigDecimal.valueOf(shareCount).subtract(totalCost).setScale(2, RoundingMode.HALF_UP);
-            double returnPct = totalCost.compareTo(BigDecimal.ZERO) > 0
-                ? potentialWin.divide(totalCost, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue()
-                : 0;
-
-            summaryAvgPrice.setText(sharePrice.multiply(BigDecimal.valueOf(100)).setScale(1, RoundingMode.HALF_UP).toPlainString() + "¢");
-            summaryShares.setText(String.format("%,.2f", (double) shareCount));
-            summaryReturn.setText("+" + potentialWin.toPlainString() + " (" + String.format("%.1f", returnPct) + "%)");
+            int sc = amount.divide(price, RoundingMode.DOWN).intValue();
+            BigDecimal cost = price.multiply(BigDecimal.valueOf(sc)).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal win = BigDecimal.valueOf(sc).subtract(cost).setScale(2, RoundingMode.HALF_UP);
+            double pct = cost.compareTo(BigDecimal.ZERO) > 0
+                ? win.divide(cost, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue() : 0;
+            summaryAvgPrice.setText(price.multiply(BigDecimal.valueOf(100)).setScale(1, RoundingMode.HALF_UP).toPlainString() + "¢");
+            summaryShares.setText(String.format("%,d", sc));
+            summaryReturn.setText("+" + win.toPlainString() + " (" + String.format("%.1f", pct) + "%)");
             updateBuyButtonText();
         } catch (NumberFormatException e) {
             summaryAvgPrice.setText("--");
@@ -632,305 +524,232 @@ public class MarketDetailView {
 
     private void executeTrade() {
         if (currentUserId == null || currentEventId == null || onPlaceBet == null) return;
-        String amountStr = amountField.getText();
-        if (amountStr == null || amountStr.isBlank()) return;
+        String amt = amountField.getText();
+        if (amt == null || amt.isBlank()) return;
         try {
-            BigDecimal amount = new BigDecimal(amountStr.trim());
+            BigDecimal amount = new BigDecimal(amt.trim());
             if (amount.compareTo(BigDecimal.ZERO) > 0) {
                 onPlaceBet.accept(new BetRequest(currentUserId, currentEventId, selectedOutcome, amount, true));
                 amountField.clear();
                 updateSummary();
             }
         } catch (NumberFormatException | ArithmeticException ex) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Bet failed");
-            alert.setHeaderText(null);
-            alert.setContentText(ex.getMessage());
-            alert.showAndWait();
+            Alert al = new Alert(Alert.AlertType.ERROR);
+            al.setTitle("Bet failed");
+            al.setHeaderText(null);
+            al.setContentText(ex.getMessage());
+            al.showAndWait();
         }
     }
 
-    private Button createQuickAmount(String text) {
-        Button btn = new Button(text);
-        btn.getStyleClass().add("quick-amount-btn");
-        btn.setFont(Font.font("Inter", 11));
-        return btn;
-    }
+    private HBox buildBottom() {
+        HBox row = new HBox(16);
+        row.setAlignment(Pos.TOP_LEFT);
 
-    private HBox createSummaryRow(String label, Label value) {
-        return createSummaryRow(label, value, false);
-    }
+        VBox left = new VBox(16);
+        HBox.setHgrow(left, Priority.ALWAYS);
+        left.getChildren().addAll(buildAbout(), buildTopHolders());
 
-    private HBox createSummaryRow(String label, Label value, boolean highlight) {
-        HBox row = new HBox(0);
-        Label lbl = new Label(label);
-        lbl.getStyleClass().add("summary-label");
-        lbl.setFont(Font.font("Inter", 12));
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        if (highlight) {
-            value.getStyleClass().add("summary-value-highlight");
-        } else {
-            value.getStyleClass().add("summary-value");
-        }
-        value.setFont(Font.font("Inter", 12));
-        row.getChildren().addAll(lbl, spacer, value);
+        VBox right = buildOrderBook();
+        right.setMinWidth(320);
+        right.setPrefWidth(340);
+        right.setMaxWidth(360);
+
+        row.getChildren().addAll(left, right);
         return row;
     }
 
-    private HBox createBottomSection() {
-        HBox bottomSection = new HBox(16);
-
-        HBox leftBottom = new HBox(16);
-        leftBottom.getStyleClass().add("left-column");
-        HBox.setHgrow(leftBottom, Priority.ALWAYS);
-
-        VBox aboutSection = createAboutSection();
-        HBox.setHgrow(aboutSection, Priority.ALWAYS);
-
-        topHoldersSection = createTopHoldersSection();
-        HBox.setHgrow(topHoldersSection, Priority.ALWAYS);
-
-        leftBottom.getChildren().addAll(aboutSection, topHoldersSection);
-
-        orderBookPanel = createOrderBook();
-        orderBookPanel.getStyleClass().add("right-column");
-
-        bottomSection.getChildren().addAll(leftBottom, orderBookPanel);
-        return bottomSection;
-    }
-
-    private VBox createAboutSection() {
-        VBox aboutBox = new VBox(12);
-        aboutBox.getStyleClass().add("info-card");
-        aboutBox.setPadding(new Insets(16, 16, 16, 16));
-
-        Label title = new Label("ABOUT THIS MARKET");
-        title.getStyleClass().add("info-card-title");
-        title.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-
+    private VBox buildAbout() {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("info-card");
+        card.setPadding(new Insets(16));
+        Label t = new Label("ABOUT THIS MARKET");
+        t.getStyleClass().add("info-card-title");
         aboutDescription = new Label("");
         aboutDescription.getStyleClass().add("info-card-text");
         aboutDescription.setFont(Font.font("Inter", 13));
         aboutDescription.setWrapText(true);
-
-        aboutBox.getChildren().addAll(title, aboutDescription);
-        return aboutBox;
+        card.getChildren().addAll(t, aboutDescription);
+        return card;
     }
 
-    private VBox createTopHoldersSection() {
-        VBox holdersBox = new VBox(12);
-        holdersBox.getStyleClass().add("info-card");
-        holdersBox.setPadding(new Insets(16, 16, 16, 16));
-
-        Label title = new Label("TOP HOLDERS");
-        title.getStyleClass().add("info-card-title");
-        title.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-
-        holdersList = new VBox(10);
-
-        holdersBox.getChildren().addAll(title, holdersList);
-        return holdersBox;
+    private VBox buildTopHolders() {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("info-card");
+        card.setPadding(new Insets(16));
+        Label t = new Label("TOP HOLDERS");
+        t.getStyleClass().add("info-card-title");
+        holdersList = new VBox(8);
+        card.getChildren().addAll(t, holdersList);
+        return card;
     }
 
     private void loadTopHolders() {
         if (holdersList == null || currentEventId == null) return;
         holdersList.getChildren().clear();
-
         try {
-            betsDao betsDao = new betsDao();
-            usersDao usersDao = new usersDao();
-            List<bets> allBets = betsDao.getAll();
-
-            Map<Integer, Map<String, BigDecimal>> userHoldings = new HashMap<>();
-
-            for (bets bet : allBets) {
-                outcomes outcome = null;
+            betsDao bd = new betsDao();
+            usersDao ud = new usersDao();
+            List<bets> all = bd.getAll();
+            Map<Integer, Map<String, BigDecimal>> agg = new HashMap<>();
+            for (bets bet : all) {
+                outcomes o = null;
                 if (currentOutcomes != null) {
-                    for (outcomes o : currentOutcomes) {
-                        if (o.getId().intValue() == bet.getOutcome_id()) {
-                            outcome = o;
-                            break;
-                        }
+                    for (outcomes oc : currentOutcomes) {
+                        if (oc.getId().intValue() == bet.getOutcome_id()) { o = oc; break; }
                     }
                 }
-                if (outcome == null) continue;
-
-                String label = outcome.getLabel();
-                userHoldings.putIfAbsent(bet.getUser_id(), new HashMap<>());
-                Map<String, BigDecimal> holdings = userHoldings.get(bet.getUser_id());
-                holdings.put(label, holdings.getOrDefault(label, BigDecimal.ZERO).add(BigDecimal.valueOf(bet.getAmount())));
+                if (o == null) continue;
+                agg.putIfAbsent(bet.getUser_id(), new HashMap<>());
+                Map<String, BigDecimal> per = agg.get(bet.getUser_id());
+                per.put(o.getLabel(), per.getOrDefault(o.getLabel(), BigDecimal.ZERO).add(BigDecimal.valueOf(bet.getAmount())));
             }
-
-            List<HolderInfo> topHolders = new ArrayList<>();
-            for (Map.Entry<Integer, Map<String, BigDecimal>> entry : userHoldings.entrySet()) {
-                int userId = entry.getKey();
-                for (Map.Entry<String, BigDecimal> holding : entry.getValue().entrySet()) {
-                    topHolders.add(new HolderInfo(userId, holding.getKey(), holding.getValue()));
+            List<HolderInfo> sorted = new ArrayList<>();
+            for (Map.Entry<Integer, Map<String, BigDecimal>> e : agg.entrySet()) {
+                for (Map.Entry<String, BigDecimal> h : e.getValue().entrySet()) {
+                    sorted.add(new HolderInfo(e.getKey(), h.getKey(), h.getValue()));
                 }
             }
-
-            topHolders.sort(Comparator.comparing(HolderInfo::amount).reversed());
-
-            int count = Math.min(3, topHolders.size());
-            for (int i = 0; i < count; i++) {
-                HolderInfo h = topHolders.get(i);
-                users user = usersDao.findById((long) h.userId());
-                String displayName = user != null ? user.getUsername() : "User " + h.userId();
-                if (displayName.length() > 12) {
-                    displayName = displayName.substring(0, 8) + "...";
-                }
-                holdersList.getChildren().add(createHolderRow(displayName, h.label(), "$" + h.amount().setScale(0, RoundingMode.HALF_UP).toPlainString()));
+            sorted.sort(Comparator.comparing(HolderInfo::amount).reversed());
+            int max = Math.min(4, sorted.size());
+            for (int i = 0; i < max; i++) {
+                HolderInfo h = sorted.get(i);
+                users u = ud.findById((long) h.userId());
+                String name = u != null ? u.getUsername() : "user" + h.userId();
+                if (name.length() > 14) name = name.substring(0, 12) + "…";
+                holdersList.getChildren().add(holderRow(name, h.label(),
+                    "$" + h.amount().setScale(0, RoundingMode.HALF_UP).toPlainString()));
             }
-
-            if (count == 0) {
-                Label noHolders = new Label("No holders yet");
-                noHolders.getStyleClass().add("holder-amount");
-                noHolders.setFont(Font.font("Inter", 12));
-                holdersList.getChildren().add(noHolders);
+            if (max == 0) {
+                Label empty = new Label("No holders yet");
+                empty.getStyleClass().add("empty-state");
+                holdersList.getChildren().add(empty);
             }
-        } catch (SQLException e) {
-            Label errorLabel = new Label("Error loading holders");
-            errorLabel.getStyleClass().add("holder-amount");
-            errorLabel.setFont(Font.font("Inter", 12));
-            holdersList.getChildren().add(errorLabel);
+        } catch (SQLException ex) {
+            Label err = new Label("Error loading holders");
+            err.getStyleClass().add("empty-state");
+            holdersList.getChildren().add(err);
         }
     }
 
     private record HolderInfo(int userId, String label, BigDecimal amount) {}
 
-    private HBox createHolderRow(String address, String position, String amount) {
+    private HBox holderRow(String name, String position, String amt) {
         HBox row = new HBox(10);
         row.setAlignment(Pos.CENTER_LEFT);
-
-        Region avatar = new Region();
-        avatar.getStyleClass().add("holder-avatar");
-        avatar.setPrefSize(24, 24);
-
-        Label addrLabel = new Label(address);
-        addrLabel.getStyleClass().add("holder-address");
-        addrLabel.setFont(Font.font("Inter", 13));
-
-        Label posLabel = new Label(position);
-        if (position.equals("YES")) {
-            posLabel.getStyleClass().add("holder-yes-badge");
-        } else {
-            posLabel.getStyleClass().add("holder-no-badge");
-        }
-        posLabel.setFont(Font.font("Inter", FontWeight.BOLD, 10));
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Label amountLabel = new Label(amount);
-        amountLabel.getStyleClass().add("holder-amount");
-        amountLabel.setFont(Font.font("Inter", 13));
-
-        row.getChildren().addAll(avatar, addrLabel, posLabel, spacer, amountLabel);
+        Region av = new Region();
+        av.getStyleClass().add("holder-avatar");
+        av.setPrefSize(24, 24);
+        av.setMinSize(24, 24);
+        av.setMaxSize(24, 24);
+        Label addr = new Label(name);
+        addr.getStyleClass().add("holder-address");
+        addr.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        Label pos = new Label(position);
+        pos.getStyleClass().add("YES".equalsIgnoreCase(position) ? "holder-yes-badge" : "holder-no-badge");
+        pos.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 10));
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
+        Label am = new Label(amt);
+        am.getStyleClass().add("holder-amount");
+        am.setFont(Font.font("JetBrains Mono", FontWeight.MEDIUM, 12));
+        row.getChildren().addAll(av, addr, pos, sp, am);
         return row;
     }
 
-    private VBox createOrderBook() {
-        VBox orderBook = new VBox(8);
-        orderBook.getStyleClass().add("orderbook-panel");
-        orderBook.setPadding(new Insets(16, 16, 16, 16));
+    private VBox buildOrderBook() {
+        VBox ob = new VBox(10);
+        ob.getStyleClass().add("orderbook-panel");
+        ob.setPadding(new Insets(16));
 
-        HBox obHeader = new HBox(0);
-        Label obTitle = new Label("ORDER BOOK");
-        obTitle.getStyleClass().add("orderbook-title");
-        obTitle.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label t = new Label("ORDER BOOK");
+        t.getStyleClass().add("orderbook-title");
+        Region sp = new Region();
+        HBox.setHgrow(sp, Priority.ALWAYS);
         orderBookSpread = new Label("");
         orderBookSpread.getStyleClass().add("spread-label");
-        orderBookSpread.setFont(Font.font("Inter", 11));
-        obHeader.getChildren().addAll(obTitle, spacer, orderBookSpread);
+        orderBookSpread.setFont(Font.font("JetBrains Mono", 11));
+        header.getChildren().addAll(t, sp, orderBookSpread);
 
         orderBookGrid = new GridPane();
-        orderBookGrid.getStyleClass().add("orderbook-grid");
         orderBookGrid.setVgap(4);
 
-        Label priceHeader = new Label("Price");
-        priceHeader.getStyleClass().add("ob-col-label");
-        Label sharesHeader = new Label("Shares");
-        sharesHeader.getStyleClass().add("ob-col-label");
-        sharesHeader.setAlignment(Pos.CENTER_RIGHT);
-        Label totalHeader = new Label("Total");
-        totalHeader.getStyleClass().add("ob-col-label");
-        totalHeader.setAlignment(Pos.CENTER_RIGHT);
+        Label ph = new Label("Price");
+        ph.getStyleClass().add("ob-col-label");
+        Label sh = new Label("Shares");
+        sh.getStyleClass().add("ob-col-label");
+        sh.setAlignment(Pos.CENTER_RIGHT);
+        Label th = new Label("Total");
+        th.getStyleClass().add("ob-col-label");
+        th.setAlignment(Pos.CENTER_RIGHT);
+        orderBookGrid.addRow(0, ph, sh, th);
 
-        orderBookGrid.addRow(0, priceHeader, sharesHeader, totalHeader);
-
-        ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(33.33);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(33.33);
-        ColumnConstraints col3 = new ColumnConstraints();
-        col3.setPercentWidth(33.33);
-        orderBookGrid.getColumnConstraints().addAll(col1, col2, col3);
+        ColumnConstraints c1 = new ColumnConstraints();
+        c1.setPercentWidth(34);
+        ColumnConstraints c2 = new ColumnConstraints();
+        c2.setPercentWidth(33);
+        c2.setHalignment(HPos.RIGHT);
+        ColumnConstraints c3 = new ColumnConstraints();
+        c3.setPercentWidth(33);
+        c3.setHalignment(HPos.RIGHT);
+        orderBookGrid.getColumnConstraints().addAll(c1, c2, c3);
 
         orderBookMidPrice = new Label("");
         orderBookMidPrice.getStyleClass().add("mid-price");
-        orderBookMidPrice.setFont(Font.font("Inter", FontWeight.BOLD, 13));
+        orderBookMidPrice.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 13));
 
-        orderBook.getChildren().addAll(obHeader, orderBookGrid);
-        return orderBook;
+        ob.getChildren().addAll(header, orderBookGrid);
+        return ob;
     }
 
     private void loadOrderBook() {
         if (orderBookGrid == null || currentOutcomes == null) return;
-
-        orderBookGrid.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) > 0);
-
-        outcomes yesOutcome = findOutcome(OutcomeLabel.YES);
-        outcomes noOutcome = findOutcome(OutcomeLabel.NO);
-
-        if (yesOutcome == null || noOutcome == null) return;
-
-        double yesOdds = yesOutcome.getOdds();
-        double noOdds = noOutcome.getOdds();
-
-        double yesPrice = yesOdds;
-        double noPrice = noOdds;
-
-        double spread = Math.abs(yesPrice + noPrice - 1.0) * 100;
-
+        orderBookGrid.getChildren().removeIf(n -> GridPane.getRowIndex(n) != null && GridPane.getRowIndex(n) > 0);
+        outcomes y = findOutcome(OutcomeLabel.YES);
+        outcomes n = findOutcome(OutcomeLabel.NO);
+        if (y == null || n == null) return;
+        double yp = y.getOdds(), np = n.getOdds();
+        double spread = Math.abs(yp + np - 1.0) * 100;
         orderBookSpread.setText("SPREAD " + String.format("%.1f", spread) + "¢");
-
-        int row = 1;
-
-        Label p1 = new Label(String.format("%.1f¢", noPrice * 100));
-        p1.getStyleClass().add("ob-ask-price");
-        Label s1 = new Label("--");
-        s1.getStyleClass().add("ob-ask-shares");
-        s1.setAlignment(Pos.CENTER_RIGHT);
-        Label t1 = new Label("--");
-        t1.getStyleClass().add("ob-ask-total");
-        t1.setAlignment(Pos.CENTER_RIGHT);
-        orderBookGrid.addRow(row++, p1, s1, t1);
-
-        orderBookMidPrice.setText(String.format("%.1f¢", yesPrice * 100));
+        int r = 1;
+        for (int i = 3; i >= 1; i--) {
+            double price = np * 100 + i * 0.3;
+            Label p = new Label(String.format("%.1f¢", price));
+            p.getStyleClass().add("ob-ask-price");
+            p.setFont(Font.font("JetBrains Mono", 11));
+            Label s = new Label(String.format("%,d", 100 * i));
+            s.getStyleClass().add("ob-ask-shares");
+            s.setFont(Font.font("JetBrains Mono", 11));
+            Label t = new Label(String.format("$%,d", (int)(price * i * 100 / 100)));
+            t.getStyleClass().add("ob-ask-total");
+            t.setFont(Font.font("JetBrains Mono", 11));
+            orderBookGrid.addRow(r++, p, s, t);
+        }
+        orderBookMidPrice.setText(String.format("%.1f¢", yp * 100));
         GridPane.setHalignment(orderBookMidPrice, HPos.CENTER);
-        orderBookGrid.add(orderBookMidPrice, 0, row, 3, 1);
-        row++;
-
-        Label p2 = new Label(String.format("%.1f¢", yesPrice * 100));
-        p2.getStyleClass().add("ob-bid-price");
-        Label s2 = new Label("--");
-        s2.getStyleClass().add("ob-bid-shares");
-        s2.setAlignment(Pos.CENTER_RIGHT);
-        Label t2 = new Label("--");
-        t2.getStyleClass().add("ob-bid-total");
-        t2.setAlignment(Pos.CENTER_RIGHT);
-        orderBookGrid.addRow(row++, p2, s2, t2);
+        orderBookGrid.add(orderBookMidPrice, 0, r, 3, 1);
+        r++;
+        for (int i = 1; i <= 3; i++) {
+            double price = yp * 100 - i * 0.3;
+            Label p = new Label(String.format("%.1f¢", price));
+            p.getStyleClass().add("ob-bid-price");
+            p.setFont(Font.font("JetBrains Mono", 11));
+            Label s = new Label(String.format("%,d", 120 * i));
+            s.getStyleClass().add("ob-bid-shares");
+            s.setFont(Font.font("JetBrains Mono", 11));
+            Label t = new Label(String.format("$%,d", (int)(price * i * 120 / 100)));
+            t.getStyleClass().add("ob-bid-total");
+            t.setFont(Font.font("JetBrains Mono", 11));
+            orderBookGrid.addRow(r++, p, s, t);
+        }
     }
 
     private outcomes findOutcome(OutcomeLabel label) {
         if (currentOutcomes == null) return null;
         for (outcomes o : currentOutcomes) {
-            if (label.name().equalsIgnoreCase(o.getLabel())) {
-                return o;
-            }
+            if (label.name().equalsIgnoreCase(o.getLabel())) return o;
         }
         return null;
     }
@@ -945,48 +764,51 @@ public class MarketDetailView {
         this.currentEventId = event.getId();
         this.currentOutcomes = outcomes;
 
-        if (headerQuestion != null) {
-            headerQuestion.setText(event.getTitle());
-        }
-
+        if (headerQuestion != null) headerQuestion.setText(event.getTitle());
         if (aboutDescription != null) {
-            aboutDescription.setText(event.getDescription() != null ? event.getDescription() : "No description available.");
+            aboutDescription.setText(event.getDescription() != null && !event.getDescription().isBlank()
+                ? event.getDescription() : "No description available.");
         }
-
-        if (volumeLabel != null) {
-            volumeLabel.setText("Status: " + event.getStatus());
-        }
-
-        if (endsLabel != null && event.getCreatedAt() != null) {
-            endsLabel.setText("Created: " + event.getCreatedAt());
-        }
-
+        if (volumeLabel != null) volumeLabel.setText("Status: " + (event.getStatus() != null ? event.getStatus() : "OPEN"));
+        if (endsLabel != null && event.getCreatedAt() != null) endsLabel.setText("Created " + event.getCreatedAt());
         if (liveText != null) {
-            liveText.setText("OPEN".equals(event.getStatus()) ? "LIVE" : event.getStatus());
+            String s = event.getStatus();
+            liveText.setText("OPEN".equalsIgnoreCase(s) ? "LIVE" : (s != null ? s : "LIVE"));
         }
+        if (headerIconLabel != null) headerIconLabel.setText(headerEmoji(event));
 
-        outcomes yesOutcome = findOutcome(OutcomeLabel.YES);
-        outcomes noOutcome = findOutcome(OutcomeLabel.NO);
-
-        if (yesOutcome != null) {
-            int yesPct = (int) Math.round(yesOutcome.getOdds() * 100);
-            if (probValue != null) probValue.setText(String.valueOf(yesPct));
-            if (yesBtn != null) yesBtn.setText("Yes " + yesPct + "¢");
+        outcomes y = findOutcome(OutcomeLabel.YES);
+        outcomes n = findOutcome(OutcomeLabel.NO);
+        if (y != null) {
+            int yp = (int) Math.round(y.getOdds() * 100);
+            if (probValue != null && selectedOutcome == OutcomeLabel.YES) probValue.setText(String.valueOf(yp));
+            if (yesBtn != null) yesBtn.setText("Yes " + yp + "¢");
+            Label ypl = (Label) root.lookup("#yesProbLabel");
+            if (ypl != null) ypl.setText(yp + "%");
         }
-
-        if (noOutcome != null) {
-            int noPct = (int) Math.round(noOutcome.getOdds() * 100);
-            if (noBtn != null) noBtn.setText("No " + noPct + "¢");
-        }
-
-        if (probLabel != null) {
-            probLabel.setText(selectedOutcome == OutcomeLabel.YES ? "YES probability" : "NO probability");
+        if (n != null) {
+            int np = (int) Math.round(n.getOdds() * 100);
+            if (probValue != null && selectedOutcome == OutcomeLabel.NO) probValue.setText(String.valueOf(np));
+            if (noBtn != null) noBtn.setText("No " + np + "¢");
+            Label npl = (Label) root.lookup("#noProbLabel");
+            if (npl != null) npl.setText(np + "%");
         }
 
         loadOrderBook();
         loadTopHolders();
         updateSummary();
         updateBuyButtonText();
+    }
+
+    private String headerEmoji(events e) {
+        String t = e.getTitle() != null ? e.getTitle().toLowerCase() : "";
+        if (t.contains("ai") || t.contains("gpt") || t.contains("claude")) return "🤖";
+        if (t.contains("mars") || t.contains("rocket") || t.contains("spacex")) return "🚀";
+        if (t.contains("psg") || t.contains("foot") || t.contains("champion")) return "⚽";
+        if (t.contains("f1") || t.contains("grand prix")) return "🏎️";
+        if (t.contains("crypto") || t.contains("bitcoin")) return "🪙";
+        if (t.contains("alien") || t.contains("ufo")) return "👽";
+        return "✨";
     }
 
     public void setOnBack(Runnable onBack) {
@@ -1018,9 +840,9 @@ public class MarketDetailView {
     }
 
     public void setBalance(double balance) {
-        if (balanceValue != null) {
-            balanceValue.setText(String.format("%.2f", balance));
-        }
+        String s = String.format("%.2f", balance);
+        if (sidebarBalance != null) sidebarBalance.setText(s);
+        if (topbarBalance != null) topbarBalance.setText(s);
     }
 
     public void setCurrentUserId(Long userId) {

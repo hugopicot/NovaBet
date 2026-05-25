@@ -51,6 +51,21 @@ public class OneTimeOfferController {
     private Timeline countdown;
     private int secondsLeft;
     private double currentAmount;
+    private Runnable onClose;
+    private Runnable onPlayInCasino;
+
+    public void setAmount(double amount) {
+        this.currentAmount = amount;
+        showOtoModal();
+    }
+
+    public void setOnClose(Runnable onClose) {
+        this.onClose = onClose;
+    }
+
+    public void setOnPlayInCasino(Runnable onPlayInCasino) {
+        this.onPlayInCasino = onPlayInCasino;
+    }
 
     @FXML
     public void initialize() {
@@ -124,6 +139,9 @@ public class OneTimeOfferController {
             Parent wheelRoot = loader.load();
             WheelController wheelCtrl = loader.getController();
             wheelCtrl.setStake(currentAmount);
+            if (onPlayInCasino != null) {
+                wheelCtrl.setOnPlayInCasino(onPlayInCasino);
+            }
 
             Scene scene = spinBtn.getScene();
             scene.setRoot(wheelRoot);
@@ -135,6 +153,11 @@ public class OneTimeOfferController {
 
     @FXML
     public void onDeclineClicked(MouseEvent event) {
+        stopCountdown();
+        if (onClose != null) {
+            onClose.run();
+            return;
+        }
         hideOtoModal();
         withdrawError.setText("Retrait effectué : " + formatAmount(currentAmount) + " $");
     }
@@ -150,6 +173,11 @@ public class OneTimeOfferController {
             updateTimerLabel();
             if (secondsLeft <= 0) {
                 Platform.runLater(() -> {
+                    stopCountdown();
+                    if (onClose != null) {
+                        onClose.run();
+                        return;
+                    }
                     hideOtoModal();
                     withdrawError.setText("Offre expirée — retrait simple effectué.");
                 });
