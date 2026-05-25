@@ -1,0 +1,6 @@
+db.url=jdbc:mysql://localhost:3306/novabet?serverTimezone=UTC
+db.user=root
+db.password=
+
+stripe.secret_key=sk_test_REMPLACE_MOI
+stripe.return_url=https://example.com/novabet-return

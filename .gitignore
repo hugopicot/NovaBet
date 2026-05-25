@@ -27,8 +27,11 @@ buildNumber.properties
 # Configuration (Credentials)
 config.properties
 src/main/resources/config.properties
+!src/main/resources/config.properties.example
 
 .claude/
 
 # Local backups (never commit, never push)
 _backups/
+
+Polymarket ESEO/
