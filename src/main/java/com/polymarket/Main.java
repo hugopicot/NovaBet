@@ -298,14 +298,17 @@ public class Main extends Application {
 
     private void openCasinoLobby() {
         try {
-            Parent lobby = FXMLLoader.load(
+            FXMLLoader loader = new FXMLLoader(
                 getClass().getResource("/com/polymarket/casino/lobby/CasinoLobbyView.fxml")
             );
-            Stage lobbyStage = new Stage();
-            lobbyStage.setTitle("NovaBet · Casino Lobby");
-            lobbyStage.setScene(new Scene(lobby, 1200, 800));
-            lobbyStage.initOwner(primaryStage);
-            lobbyStage.show();
+            Parent lobby = loader.load();
+            com.polymarket.casino.lobby.CasinoLobbyController controller = loader.getController();
+            if (currentUserId != null) controller.setCurrentUserId(currentUserId);
+            controller.setOnBack(() -> {
+                loadMarkets();
+                primaryStage.setScene(marketsScene);
+            });
+            primaryStage.setScene(createScene(lobby));
         } catch (Exception e) {
             Alert err = new Alert(Alert.AlertType.ERROR);
             err.setHeaderText("Impossible d'ouvrir le casino");
