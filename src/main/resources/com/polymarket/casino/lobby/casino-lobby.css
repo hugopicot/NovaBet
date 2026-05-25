@@ -1,0 +1,282 @@
+* {
+    -bg-0: #1c1f26;
+    -bg-1: #262932;
+    -bg-2: #2d3039;
+    -bg-3: #393d48;
+
+    -fg-0: #f7f7f8;
+    -fg-1: #dadadd;
+    -fg-2: #9a9ca3;
+    -fg-3: #7e8088;
+
+    -gold:       #e0ac2e;
+    -gold-2:     #c68a2e;
+    -gold-light: #f1cc4a;
+    -gold-soft-bg:     rgba(224, 172, 46, 0.12);
+    -gold-soft-border: rgba(224, 172, 46, 0.30);
+    -gold-glow:        rgba(224, 172, 46, 0.45);
+
+    -neon:   #d847a9;
+    -neon-2: #b85adf;
+
+    -casino-bg:   #1c0f2e;
+    -casino-bg-2: #2a1f3a;
+}
+
+.casino-shell {
+    -fx-background-color: radial-gradient(center 30% 0%, radius 80%,
+                                          #2a1f3a 0%,
+                                          #19132a 60%,
+                                          #110a1c 100%);
+    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+    -fx-min-width: 1100;
+    -fx-min-height: 700;
+}
+
+.topbar {
+    -fx-background-color: #20142e;
+    -fx-padding: 14 24 14 24;
+    -fx-border-color: transparent transparent -gold-soft-border transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.logo-square {
+    -fx-background-color: linear-gradient(to bottom right, -gold, -neon);
+    -fx-min-width: 22;
+    -fx-min-height: 22;
+    -fx-max-width: 22;
+    -fx-max-height: 22;
+    -fx-background-radius: 5;
+}
+
+.brand-bet, .brand-vault, .brand-suffix {
+    -fx-font-family: "Instrument Serif", "Georgia", serif;
+    -fx-font-size: 18px;
+}
+
+.brand-bet     { -fx-text-fill: -gold; }
+.brand-vault   { -fx-text-fill: -fg-0; }
+.brand-suffix  { -fx-text-fill: -gold; }
+
+.chip {
+    -fx-background-color: rgba(0, 0, 0, 0.30);
+    -fx-text-fill: -fg-2;
+    -fx-font-size: 12px;
+    -fx-padding: 6 12 6 12;
+    -fx-background-radius: 999;
+    -fx-cursor: hand;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+}
+
+.chip:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.50);
+    -fx-text-fill: -fg-0;
+}
+
+.balance-pill {
+    -fx-background-color: -gold-soft-bg;
+    -fx-padding: 6 12 6 8;
+    -fx-background-radius: 999;
+    -fx-border-color: -gold;
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+}
+
+.balance-coin {
+    -fx-background-color: linear-gradient(to bottom right, -gold-light, -gold-2);
+    -fx-min-width: 18;
+    -fx-min-height: 18;
+    -fx-max-width: 18;
+    -fx-max-height: 18;
+    -fx-background-radius: 50%;
+    -fx-alignment: center;
+    -fx-text-fill: #2a2014;
+    -fx-font-weight: 900;
+    -fx-font-size: 10px;
+}
+
+.balance-amount {
+    -fx-text-fill: -gold;
+    -fx-font-family: "JetBrains Mono", "Consolas", monospace;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.balance-tag {
+    -fx-text-fill: -gold;
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+}
+
+.hero-wrap {
+    -fx-padding: 24 24 0 24;
+}
+
+.hero-ribbon {
+    -fx-background-color: linear-gradient(135deg, #3a2549, #2a1735);
+    -fx-padding: 20 22 20 22;
+    -fx-background-radius: 14;
+    -fx-border-color: -gold-soft-border;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+}
+
+.hero-tag {
+    -fx-text-fill: -neon;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.hero-title {
+    -fx-text-fill: -fg-0;
+    -fx-font-family: "Instrument Serif", "Georgia", serif;
+    -fx-font-size: 26px;
+}
+
+.hero-subtitle {
+    -fx-text-fill: -fg-2;
+    -fx-font-size: 12px;
+}
+
+.wager-progress {
+    -fx-pref-height: 6;
+    -fx-padding: 6 0 0 0;
+}
+
+.wager-progress > .bar {
+    -fx-background-color: linear-gradient(to right, -gold, -neon);
+    -fx-background-radius: 3;
+    -fx-padding: 3;
+}
+
+.wager-progress > .track {
+    -fx-background-color: rgba(0, 0, 0, 0.40);
+    -fx-background-radius: 3;
+}
+
+.btn-gold {
+    -fx-background-color: linear-gradient(to bottom, -gold, -gold-2);
+    -fx-text-fill: #2a2014;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-padding: 12 22 12 22;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, -gold-glow, 18, 0, 0, 3);
+}
+
+.btn-gold:hover {
+    -fx-translate-y: -1;
+    -fx-effect: dropshadow(gaussian, -gold-glow, 24, 0, 0, 4);
+}
+
+.btn-gold:disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
+    -fx-effect: null;
+}
+
+.cat-row {
+    -fx-padding: 18 24 12 24;
+}
+
+.cat-pill {
+    -fx-background-color: rgba(0, 0, 0, 0.30);
+    -fx-text-fill: -fg-1;
+    -fx-font-size: 12px;
+    -fx-padding: 6 14 6 14;
+    -fx-background-radius: 999;
+    -fx-border-color: -gold-soft-border;
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+}
+
+.cat-pill:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.50);
+}
+
+.cat-pill.active {
+    -fx-background-color: -gold;
+    -fx-text-fill: #2a2014;
+    -fx-border-color: -gold;
+    -fx-font-weight: 600;
+}
+
+.games-grid {
+    -fx-padding: 4 24 24 24;
+}
+
+.casino-card {
+    -fx-background-color: linear-gradient(135deg, #3a2549, #221833);
+    -fx-background-radius: 14;
+    -fx-border-color: -gold-soft-border;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-min-width: 320;
+    -fx-pref-height: 200;
+}
+
+.casino-card.featured {
+    -fx-border-color: -gold;
+    -fx-effect: dropshadow(gaussian, -gold-glow, 18, 0, 0, 0);
+}
+
+.casino-card:hover {
+    -fx-translate-y: -2;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 24, 0, 0, 8);
+}
+
+.card-art {
+    -fx-alignment: center;
+    -fx-padding: 30 0 30 0;
+}
+
+.card-emoji {
+    -fx-font-size: 64px;
+}
+
+.card-tag {
+    -fx-background-color: rgba(0, 0, 0, 0.50);
+    -fx-text-fill: -gold;
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 4;
+    -fx-border-color: -gold-soft-border;
+    -fx-border-radius: 4;
+    -fx-border-width: 1;
+}
+
+.card-tag.featured {
+    -fx-background-color: -gold;
+    -fx-text-fill: #2a2014;
+    -fx-border-color: -gold;
+}
+
+.card-footer {
+    -fx-padding: 10 14 12 14;
+    -fx-background-color: rgba(0, 0, 0, 0.30);
+    -fx-border-color: -gold-soft-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.card-name {
+    -fx-text-fill: -fg-0;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+.card-meta {
+    -fx-text-fill: -fg-3;
+    -fx-font-size: 10px;
+}
+
+.card-meta-gold {
+    -fx-text-fill: -gold;
+    -fx-font-family: "JetBrains Mono", "Consolas", monospace;
+    -fx-font-size: 10px;
+}

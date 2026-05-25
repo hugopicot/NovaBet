@@ -35,6 +35,7 @@ public class MarketsListView {
     private Runnable onLogout;
     private Consumer<Long> onMarketClick;
     private Runnable onCreateMarket;
+    private Runnable onCasino;
     private Consumer<BetRequest> onPlaceBet;
     private Long currentUserId;
 
@@ -224,11 +225,20 @@ public class MarketsListView {
         createMarketNav.setOnMouseClicked(e -> {
             if (onCreateMarket != null) onCreateMarket.run();
         });
+
+        HBox casinoNav = createNavItem("★ Casino", false);
+        casinoNav.getStyleClass().add("nav-item-casino");
+        casinoNav.setCursor(javafx.scene.Cursor.HAND);
+        casinoNav.setOnMouseClicked(e -> {
+            if (onCasino != null) onCasino.run();
+        });
+
         navItems.getChildren().addAll(
             createNavItem("Markets", true),
             createNavItem("Portfolio", false),
             createMarketNav,
-            createNavItem("History", false)
+            createNavItem("History", false),
+            casinoNav
         );
 
         topSection.getChildren().addAll(logoBox, navItems);
@@ -460,5 +470,9 @@ public class MarketsListView {
 
     public void setOnCreateMarket(Runnable onCreateMarket) {
         this.onCreateMarket = onCreateMarket;
+    }
+
+    public void setOnCasino(Runnable onCasino) {
+        this.onCasino = onCasino;
     }
 }
