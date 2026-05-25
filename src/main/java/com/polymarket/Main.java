@@ -24,6 +24,7 @@ import com.polymarket.domain.service.WalletService;
 import com.polymarket.domain.service.WalletServiceImpl;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -133,6 +134,7 @@ public class Main extends Application {
             loadPortfolio();
             primaryStage.setScene(portfolioScene);
         });
+        marketsView.setOnCasino(this::openCasinoLobby);
 
         detailView.setOnMarketsClick(() -> {
             loadMarkets();
@@ -434,6 +436,27 @@ public class Main extends Application {
             );
         } catch (Exception e) {
             System.err.println("Failed to load fonts: " + e.getMessage());
+        }
+    }
+
+    private void openCasinoLobby() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/com/polymarket/casino/lobby/CasinoLobbyView.fxml")
+            );
+            Parent lobby = loader.load();
+            com.polymarket.casino.lobby.CasinoLobbyController controller = loader.getController();
+            if (currentUserId != null) controller.setCurrentUserId(currentUserId);
+            controller.setOnBack(() -> {
+                loadMarkets();
+                primaryStage.setScene(marketsScene);
+            });
+            primaryStage.setScene(createScene(lobby));
+        } catch (Exception e) {
+            Alert err = new Alert(Alert.AlertType.ERROR);
+            err.setHeaderText("Impossible d'ouvrir le casino");
+            err.setContentText(e.getMessage());
+            err.showAndWait();
         }
     }
 

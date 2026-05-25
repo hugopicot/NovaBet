@@ -137,6 +137,19 @@
     -fx-background-color: #1a1f2e;
 }
 
+.nav-item-casino .nav-text {
+    -fx-text-fill: #e0ac2e;
+    -fx-font-weight: 700;
+}
+
+.nav-item-casino .nav-icon {
+    -fx-background-color: #e0ac2e;
+}
+
+.nav-item-casino:hover {
+    -fx-background-color: rgba(224, 172, 46, 0.10);
+}
+
 .nav-icon {
     -fx-background-color: #484f58;
     -fx-background-radius: 3;

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.polymarket.casino.lobby.CasinoLobbyController"
+      stylesheets="@casino-lobby.css"
+      styleClass="casino-shell">
+
+    <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="14">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Region styleClass="logo-square"/>
+            <Label text="NovaBet" styleClass="brand"/>
+        </HBox>
+
+        <Button fx:id="backBtn" text="← Retour aux marchés" styleClass="chip" onAction="#onBackClicked"/>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <Button fx:id="cashoutBtn" text="Cashout" styleClass="btn-gold" onAction="#onCashoutClicked" disable="true"/>
+
+        <HBox styleClass="balance-pill" alignment="CENTER" spacing="8">
+            <Label text="N" styleClass="balance-coin"/>
+            <Label fx:id="balanceLabel" text="0" styleClass="balance-amount"/>
+            <Label text="CRÉDIT CASINO" styleClass="balance-tag"/>
+        </HBox>
+    </HBox>
+
+    <HBox styleClass="cat-row" spacing="8">
+        <Button fx:id="filterAll"   text="Tous"  styleClass="cat-pill,active" onAction="#onFilterAll"/>
+        <Button fx:id="filterSlots" text="Slots" styleClass="cat-pill"        onAction="#onFilterSlots"/>
+        <Button fx:id="filterCrash" text="Crash" styleClass="cat-pill"        onAction="#onFilterCrash"/>
+    </HBox>
+
+    <GridPane fx:id="gamesGrid" styleClass="games-grid" hgap="14" vgap="14"/>
+
+</VBox>
