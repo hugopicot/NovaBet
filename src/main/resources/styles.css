@@ -565,8 +565,7 @@
 }
 
 .left-column {
-    -fx-pref-width: 400;
-    -fx-max-width: 400;
+    -fx-pref-width: 480;
 }
 
 .right-column {
@@ -808,6 +807,30 @@
 
 .mid-price {
     -fx-text-fill: #ffffff;
+}
+
+.detail-category {
+    -fx-text-fill: #484f58;
+}
+
+.chart-fill {
+    -fx-fill: linear-gradient(to bottom, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.0));
+}
+
+.orderbook-grid {
+    -fx-padding: 0;
+}
+
+.ob-ask-row {
+    -fx-background-color: rgba(239, 68, 68, 0.06);
+    -fx-background-radius: 4;
+    -fx-padding: 2 0;
+}
+
+.ob-bid-row {
+    -fx-background-color: rgba(34, 197, 94, 0.06);
+    -fx-background-radius: 4;
+    -fx-padding: 2 0;
 }
 
 /* Create Market View Styles */
