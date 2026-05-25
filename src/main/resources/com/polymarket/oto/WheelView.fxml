@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.polymarket.oto.WheelController"
+           stylesheets="@oto.css"
+           styleClass="wheel-shell">
+
+    <VBox alignment="CENTER" spacing="18" styleClass="wheel-content">
+
+        <Label text="Tourne pour multiplier" styleClass="wheel-h1"/>
+        <Label fx:id="wheelSubtitle" text="Un spin gratuit sur tes 746 $ · sélectionne le multiplicateur"
+               styleClass="wheel-subtitle"/>
+
+        <!-- Container roue (la roue est créée dynamiquement par le controller) -->
+        <StackPane fx:id="wheelContainer" styleClass="wheel-wrap"
+                   prefWidth="320" prefHeight="320" maxWidth="320" maxHeight="320"/>
+
+        <!-- Stats : Mise → Atterri sur → Crédits casino -->
+        <HBox alignment="CENTER" spacing="28" styleClass="wheel-stats">
+            <VBox alignment="CENTER">
+                <Label text="MISE" styleClass="stat-label"/>
+                <Label fx:id="stakeLabel" text="746 $" styleClass="stat-value"/>
+            </VBox>
+            <Label text="→" styleClass="stat-arrow"/>
+            <VBox alignment="CENTER">
+                <Label text="ATTERRI SUR" styleClass="stat-label-gold"/>
+                <Label fx:id="landedLabel" text="—" styleClass="stat-value-gold-big"/>
+            </VBox>
+            <Label text="→" styleClass="stat-arrow"/>
+            <VBox alignment="CENTER">
+                <Label text="CRÉDITS CASINO" styleClass="stat-label"/>
+                <Label fx:id="creditsLabel" text="—" styleClass="stat-value-gold"/>
+            </VBox>
+        </HBox>
+
+        <Button fx:id="playInCasinoBtn" text="Jouer avec — au casino →"
+                styleClass="btn-gold" onAction="#onPlayInCasinoClicked"
+                visible="false" managed="false"/>
+
+        <Label fx:id="footerNote"
+               text="Mise de 1× requise pour convertir les crédits en $NVB retirables"
+               styleClass="wheel-footer-note"
+               visible="false" managed="false"/>
+    </VBox>
+</StackPane>

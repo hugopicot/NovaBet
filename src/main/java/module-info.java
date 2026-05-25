@@ -8,6 +8,8 @@ module com.polymarket {
     opens com.polymarket to javafx.fxml;
     opens com.polymarket.ui to javafx.fxml;
     opens com.polymarket.ui.auth to javafx.fxml;
+    opens com.polymarket.oto to javafx.fxml;
+    exports com.polymarket.oto;
     exports com.polymarket;
     exports com.polymarket.model;
     exports com.polymarket.dao;
