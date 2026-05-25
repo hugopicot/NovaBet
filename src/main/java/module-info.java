@@ -11,10 +11,9 @@ module com.polymarket {
     opens com.polymarket.ui to javafx.fxml;
     opens com.polymarket.ui.auth to javafx.fxml;
     opens com.polymarket.oto to javafx.fxml;
-    opens com.novabet to javafx.fxml;
-    opens com.novabet.app.controllers to javafx.fxml;
-    exports com.polymarket.oto;
+    opens com.polymarket.app.controllers to javafx.fxml;
     opens com.polymarket.casino.lobby to javafx.fxml;
+    exports com.polymarket.oto;
     exports com.polymarket.casino.lobby;
     exports com.polymarket;
     exports com.polymarket.model;
@@ -27,10 +26,8 @@ module com.polymarket {
     exports com.polymarket.domain.dto;
     exports com.polymarket.ui;
     exports com.polymarket.ui.auth;
-    exports com.novabet;
-    exports com.novabet.app.controllers;
-    exports com.novabet.app.services;
-    exports com.novabet.infrastructure.db;
-    exports com.novabet.infrastructure.stripe;
+    exports com.polymarket.app.controllers;
+    exports com.polymarket.app.services;
+    exports com.polymarket.infrastructure;
     opens com.polymarket.domain.service to javafx.base;
 }

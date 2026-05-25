@@ -1,13 +1,18 @@
 package com.polymarket.ui;
 
+import com.polymarket.dao.betsDao;
+import com.polymarket.dao.usersDao;
 import com.polymarket.domain.dto.BetRequest;
 import com.polymarket.domain.dto.OutcomeLabel;
+import com.polymarket.model.bets;
 import com.polymarket.model.events;
 import com.polymarket.model.outcomes;
+import com.polymarket.model.users;
 
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -20,13 +25,17 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Polygon;
-import javafx.scene.shape.Polyline;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class MarketDetailView {
@@ -43,8 +52,36 @@ public class MarketDetailView {
     private Long currentUserId;
     private Long currentEventId;
     private List<outcomes> currentOutcomes;
+    private events currentEvent;
     private Label balanceValue;
     private TextField amountField;
+
+    private Label headerQuestion;
+    private Label probValue;
+    private Label probPercent;
+    private Label probLabel;
+    private Label volumeLabel;
+    private Label endsLabel;
+    private Label liveText;
+    private Label aboutDescription;
+    private VBox holdersList;
+    private GridPane orderBookGrid;
+    private Label orderBookMidPrice;
+    private Label orderBookSpread;
+    private VBox topHoldersSection;
+    private VBox orderBookPanel;
+
+    private Button yesBtn;
+    private Button noBtn;
+    private Button buyToggle;
+    private Button sellToggle;
+    private Label summaryAvgPrice;
+    private Label summaryShares;
+    private Label summaryReturn;
+    private Button buyButton;
+
+    private OutcomeLabel selectedOutcome = OutcomeLabel.YES;
+    private boolean isBuyMode = true;
 
     public MarketDetailView() {
         root = new BorderPane();
@@ -150,7 +187,7 @@ public class MarketDetailView {
         balanceLabel.setFont(Font.font("Inter", 10));
         HBox balanceValueBox = new HBox(6);
         balanceValueBox.setAlignment(Pos.CENTER_LEFT);
-        balanceValue = new Label("12,480.50");
+        balanceValue = new Label("0.00");
         balanceValue.getStyleClass().add("balance-value");
         balanceValue.setFont(Font.font("Inter", FontWeight.BOLD, 18));
         Label balanceCurrency = new Label("$NVB");
@@ -277,7 +314,7 @@ public class MarketDetailView {
         Region balanceIcon = new Region();
         balanceIcon.getStyleClass().add("balance-icon");
         balanceIcon.setPrefSize(20, 20);
-        Label balanceValue = new Label("12,480.50");
+        Label balanceValue = new Label("0.00");
         balanceValue.getStyleClass().add("header-balance-value");
         balanceValue.setFont(Font.font("Inter", 14));
         Label balanceCurrency = new Label("$NVB");
@@ -323,7 +360,7 @@ public class MarketDetailView {
         VBox headerWrapper = new VBox(8);
         headerWrapper.setPadding(new Insets(8, 0, 0, 0));
 
-        Label categoryLabel = new Label("Markets · Tech / AI");
+        Label categoryLabel = new Label("Markets");
         categoryLabel.getStyleClass().add("detail-category");
         categoryLabel.setFont(Font.font("Inter", 12));
 
@@ -333,24 +370,22 @@ public class MarketDetailView {
         StackPane iconContainer = new StackPane();
         iconContainer.getStyleClass().add("market-icon-container");
         iconContainer.setPrefSize(56, 56);
-        Label iconLabel = new Label("🤖");
+        Label iconLabel = new Label("\uD83C\uDFB2");
         iconLabel.setFont(Font.font(28));
         iconContainer.getChildren().add(iconLabel);
 
         VBox infoBox = new VBox(6);
-        Label question = new Label("Will OpenAI release GPT-6 before December 2026?");
-        question.getStyleClass().add("detail-question");
-        question.setFont(Font.font("Inter", FontWeight.BOLD, 20));
+        headerQuestion = new Label("");
+        headerQuestion.getStyleClass().add("detail-question");
+        headerQuestion.setFont(Font.font("Inter", FontWeight.BOLD, 20));
+        headerQuestion.setWrapText(true);
 
         HBox metaRow = new HBox(16);
         metaRow.setAlignment(Pos.CENTER_LEFT);
-        Label volumeLabel = new Label("Volume $4.21M");
+        volumeLabel = new Label("");
         volumeLabel.getStyleClass().add("meta-label");
         volumeLabel.setFont(Font.font("Inter", 13));
-        Label liquidityLabel = new Label("Liquidity $890K");
-        liquidityLabel.getStyleClass().add("meta-label");
-        liquidityLabel.setFont(Font.font("Inter", 13));
-        Label endsLabel = new Label("Ends Dec 31, 2026");
+        endsLabel = new Label("");
         endsLabel.getStyleClass().add("meta-label");
         endsLabel.setFont(Font.font("Inter", 13));
 
@@ -360,35 +395,32 @@ public class MarketDetailView {
         Region liveDot = new Region();
         liveDot.getStyleClass().add("live-dot");
         liveDot.setPrefSize(6, 6);
-        Label liveText = new Label("LIVE");
+        liveText = new Label("LIVE");
         liveText.getStyleClass().add("live-text");
         liveText.setFont(Font.font("Inter", FontWeight.BOLD, 10));
         liveBadge.getChildren().addAll(liveDot, liveText);
 
-        metaRow.getChildren().addAll(volumeLabel, liquidityLabel, endsLabel, liveBadge);
-        infoBox.getChildren().addAll(question, metaRow);
+        metaRow.getChildren().addAll(volumeLabel, endsLabel, liveBadge);
+        infoBox.getChildren().addAll(headerQuestion, metaRow);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         VBox probabilityBox = new VBox(4);
         probabilityBox.setAlignment(Pos.TOP_RIGHT);
-        Label probLabel = new Label("YES probability");
+        probLabel = new Label("YES probability");
         probLabel.getStyleClass().add("prob-label");
         probLabel.setFont(Font.font("Inter", 12));
-        Label probValue = new Label("67");
+        probValue = new Label("--");
         probValue.getStyleClass().add("prob-value");
         probValue.setFont(Font.font("Inter", FontWeight.BOLD, 42));
-        Label probPercent = new Label("%");
+        probPercent = new Label("%");
         probPercent.getStyleClass().add("prob-percent");
         probPercent.setFont(Font.font("Inter", FontWeight.BOLD, 20));
         HBox probRow = new HBox(2);
         probRow.setAlignment(Pos.TOP_RIGHT);
         probRow.getChildren().addAll(probValue, probPercent);
-        Label probChange = new Label("+4.2 · 24h");
-        probChange.getStyleClass().add("prob-change");
-        probChange.setFont(Font.font("Inter", 12));
-        probabilityBox.getChildren().addAll(probLabel, probRow, probChange);
+        probabilityBox.getChildren().addAll(probLabel, probRow);
 
         header.getChildren().addAll(iconContainer, infoBox, spacer, probabilityBox, createActionButtons());
         headerWrapper.getChildren().addAll(categoryLabel, header);
@@ -421,119 +453,229 @@ public class MarketDetailView {
     private HBox createMiddleSection() {
         HBox middleSection = new HBox(16);
 
-        VBox chartSection = createChartSection();
-        chartSection.getStyleClass().add("left-column");
-        HBox.setHgrow(chartSection, Priority.ALWAYS);
-
         VBox tradePanel = createTradePanel();
         tradePanel.getStyleClass().add("right-column");
 
-        middleSection.getChildren().addAll(chartSection, tradePanel);
+        middleSection.getChildren().addAll(tradePanel);
         return middleSection;
     }
 
-    private VBox createChartSection() {
-        VBox chartSection = new VBox(12);
-        chartSection.getStyleClass().add("chart-section");
-        chartSection.setPadding(new Insets(16, 16, 16, 16));
+    private VBox createTradePanel() {
+        VBox panel = new VBox(14);
+        panel.getStyleClass().add("trade-panel");
+        panel.setPadding(new Insets(16, 16, 16, 16));
 
-        HBox chartHeader = new HBox(0);
-        Label chartTitle = new Label("Price history · YES");
-        chartTitle.getStyleClass().add("chart-title");
-        chartTitle.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        HBox yesNoToggle = new HBox(0);
+        yesNoToggle.getStyleClass().add("yes-no-toggle");
+        yesBtn = new Button("Yes --¢");
+        yesBtn.getStyleClass().add("yes-toggle-active");
+        yesBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        yesBtn.setOnAction(e -> selectOutcome(OutcomeLabel.YES));
+        noBtn = new Button("No --¢");
+        noBtn.getStyleClass().add("no-toggle");
+        noBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
+        noBtn.setOnAction(e -> selectOutcome(OutcomeLabel.NO));
+        yesNoToggle.getChildren().addAll(yesBtn, noBtn);
 
+        HBox buySellRow = new HBox(8);
+        buySellRow.setAlignment(Pos.CENTER_LEFT);
+        buyToggle = new Button("Buy");
+        buyToggle.getStyleClass().add("buy-sell-active");
+        buyToggle.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        buyToggle.setOnAction(e -> setTradeMode(true));
+        sellToggle = new Button("Sell");
+        sellToggle.getStyleClass().add("buy-sell-toggle");
+        sellToggle.setFont(Font.font("Inter", 12));
+        sellToggle.setOnAction(e -> setTradeMode(false));
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
+        buySellRow.getChildren().addAll(buyToggle, sellToggle, spacer);
 
-        HBox timeButtons = new HBox(6);
-        timeButtons.getChildren().addAll(
-            createTimeButton("1H"),
-            createTimeButton("24H"),
-            createTimeButton("7D", true),
-            createTimeButton("1M"),
-            createTimeButton("ALL")
+        Label amountLabel = new Label("AMOUNT ($NVB)");
+        amountLabel.getStyleClass().add("amount-label");
+        amountLabel.setFont(Font.font("Inter", 11));
+
+        HBox amountInputBox = new HBox(0);
+        amountInputBox.getStyleClass().add("amount-input-box");
+        amountField = new TextField("");
+        amountField.setPromptText("0.00");
+        amountField.getStyleClass().add("amount-field");
+        amountField.setFont(Font.font("Inter", 14));
+        Label currencyLabel = new Label("$NVB");
+        currencyLabel.getStyleClass().add("currency-label");
+        currencyLabel.setFont(Font.font("Inter", 12));
+        amountInputBox.getChildren().addAll(amountField, currencyLabel);
+
+        amountField.textProperty().addListener((obs, old, newVal) -> updateSummary());
+
+        HBox quickAmounts = new HBox(6);
+        Button q25 = createQuickAmount("$25");
+        q25.setOnAction(e -> amountField.setText("25"));
+        Button q100 = createQuickAmount("$100");
+        q100.setOnAction(e -> amountField.setText("100"));
+        Button q500 = createQuickAmount("$500");
+        q500.setOnAction(e -> amountField.setText("500"));
+        Button qMax = createQuickAmount("MAX");
+        qMax.setOnAction(e -> amountField.setText("10000"));
+        quickAmounts.getChildren().addAll(q25, q100, q500, qMax);
+
+        VBox summaryBox = new VBox(8);
+        summaryBox.setPadding(new Insets(4, 0, 0, 0));
+        summaryBox.getChildren().addAll(
+            createSummaryRow("Avg price", summaryAvgPrice = new Label("--")),
+            createSummaryRow("Shares", summaryShares = new Label("--")),
+            createSummaryRow("Potential return", summaryReturn = new Label("--"), true)
         );
 
-        chartHeader.getChildren().addAll(chartTitle, spacer, timeButtons);
+        buyButton = new Button("Buy YES");
+        buyButton.getStyleClass().add("buy-button");
+        buyButton.setFont(Font.font("Inter", FontWeight.BOLD, 14));
+        buyButton.setOnAction(e -> executeTrade());
 
-        StackPane chartArea = new StackPane();
-        chartArea.getStyleClass().add("chart-area");
-        chartArea.setPrefHeight(220);
-
-        double[] points = {
-            0, 200,
-            50, 180,
-            100, 190,
-            150, 150,
-            200, 160,
-            250, 120,
-            300, 130,
-            350, 90,
-            400, 100,
-            450, 70,
-            500, 80,
-            550, 50,
-            600, 60,
-            650, 30,
-            700, 20
-        };
-
-        Polygon fillPolygon = new Polygon();
-        fillPolygon.getStyleClass().add("chart-fill");
-        for (int i = 0; i < points.length; i += 2) {
-            fillPolygon.getPoints().addAll(points[i], points[i + 1]);
-        }
-        fillPolygon.getPoints().addAll(points[points.length - 2], 220.0);
-        fillPolygon.getPoints().addAll(points[0], 220.0);
-
-        Polyline chartLine = createChartLine();
-        chartArea.getChildren().addAll(fillPolygon, chartLine);
-
-        chartSection.getChildren().addAll(chartHeader, chartArea);
-        return chartSection;
+        panel.getChildren().addAll(yesNoToggle, buySellRow, amountLabel, amountInputBox, quickAmounts, summaryBox, buyButton);
+        return panel;
     }
 
-    private Polyline createChartLine() {
-        Polyline line = new Polyline();
-        line.getStyleClass().add("chart-polyline");
-
-        double[] points = {
-            0, 200,
-            50, 180,
-            100, 190,
-            150, 150,
-            200, 160,
-            250, 120,
-            300, 130,
-            350, 90,
-            400, 100,
-            450, 70,
-            500, 80,
-            550, 50,
-            600, 60,
-            650, 30,
-            700, 20
-        };
-
-        for (double p : points) {
-            line.getPoints().add(p);
-        }
-        return line;
-    }
-
-    private Button createTimeButton(String text) {
-        return createTimeButton(text, false);
-    }
-
-    private Button createTimeButton(String text, boolean active) {
-        Button btn = new Button(text);
-        if (active) {
-            btn.getStyleClass().add("time-btn-active");
+    private void selectOutcome(OutcomeLabel outcome) {
+        selectedOutcome = outcome;
+        if (outcome == OutcomeLabel.YES) {
+            yesBtn.getStyleClass().clear();
+            yesBtn.getStyleClass().add("yes-toggle-active");
+            noBtn.getStyleClass().clear();
+            noBtn.getStyleClass().add("no-toggle");
         } else {
-            btn.getStyleClass().add("time-btn");
+            noBtn.getStyleClass().clear();
+            noBtn.getStyleClass().add("yes-toggle-active");
+            yesBtn.getStyleClass().clear();
+            yesBtn.getStyleClass().add("no-toggle");
         }
+        updateSummary();
+        updateBuyButtonText();
+    }
+
+    private void setTradeMode(boolean buy) {
+        isBuyMode = buy;
+        if (buy) {
+            buyToggle.getStyleClass().clear();
+            buyToggle.getStyleClass().add("buy-sell-active");
+            sellToggle.getStyleClass().clear();
+            sellToggle.getStyleClass().add("buy-sell-toggle");
+        } else {
+            sellToggle.getStyleClass().clear();
+            sellToggle.getStyleClass().add("buy-sell-active");
+            buyToggle.getStyleClass().clear();
+            buyToggle.getStyleClass().add("buy-sell-toggle");
+        }
+        updateBuyButtonText();
+    }
+
+    private void updateBuyButtonText() {
+        if (buyButton == null) return;
+        String outcomeStr = selectedOutcome == OutcomeLabel.YES ? "YES" : "NO";
+        String actionStr = isBuyMode ? "Buy" : "Sell";
+        String shares = summaryShares.getText();
+        if ("--".equals(shares)) {
+            buyButton.setText(actionStr + " " + outcomeStr);
+        } else {
+            buyButton.setText(actionStr + " " + outcomeStr + " · " + shares + " shares");
+        }
+    }
+
+    private void updateSummary() {
+        if (currentOutcomes == null || currentOutcomes.isEmpty()) return;
+
+        String amountStr = amountField.getText();
+        if (amountStr == null || amountStr.isBlank()) {
+            summaryAvgPrice.setText("--");
+            summaryShares.setText("--");
+            summaryReturn.setText("--");
+            updateBuyButtonText();
+            return;
+        }
+
+        try {
+            BigDecimal amount = new BigDecimal(amountStr.trim());
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                summaryAvgPrice.setText("--");
+                summaryShares.setText("--");
+                summaryReturn.setText("--");
+                updateBuyButtonText();
+                return;
+            }
+
+            outcomes targetOutcome = findOutcome(selectedOutcome);
+            if (targetOutcome == null) return;
+
+            BigDecimal sharePrice = BigDecimal.valueOf(targetOutcome.getOdds()).setScale(4, RoundingMode.HALF_UP);
+            if (selectedOutcome == OutcomeLabel.NO) {
+                sharePrice = BigDecimal.ONE.subtract(sharePrice).setScale(4, RoundingMode.HALF_UP);
+            }
+
+            int shareCount = amount.divide(sharePrice, RoundingMode.DOWN).intValue();
+            BigDecimal totalCost = sharePrice.multiply(BigDecimal.valueOf(shareCount)).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal potentialWin = BigDecimal.valueOf(shareCount).subtract(totalCost).setScale(2, RoundingMode.HALF_UP);
+            double returnPct = totalCost.compareTo(BigDecimal.ZERO) > 0
+                ? potentialWin.divide(totalCost, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue()
+                : 0;
+
+            summaryAvgPrice.setText(sharePrice.multiply(BigDecimal.valueOf(100)).setScale(1, RoundingMode.HALF_UP).toPlainString() + "¢");
+            summaryShares.setText(String.format("%,.2f", (double) shareCount));
+            summaryReturn.setText("+" + potentialWin.toPlainString() + " (" + String.format("%.1f", returnPct) + "%)");
+            updateBuyButtonText();
+        } catch (NumberFormatException e) {
+            summaryAvgPrice.setText("--");
+            summaryShares.setText("--");
+            summaryReturn.setText("--");
+            updateBuyButtonText();
+        }
+    }
+
+    private void executeTrade() {
+        if (currentUserId == null || currentEventId == null || onPlaceBet == null) return;
+        String amountStr = amountField.getText();
+        if (amountStr == null || amountStr.isBlank()) return;
+        try {
+            BigDecimal amount = new BigDecimal(amountStr.trim());
+            if (amount.compareTo(BigDecimal.ZERO) > 0) {
+                onPlaceBet.accept(new BetRequest(currentUserId, currentEventId, selectedOutcome, amount, true));
+                amountField.clear();
+                updateSummary();
+            }
+        } catch (NumberFormatException | ArithmeticException ex) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Bet failed");
+            alert.setHeaderText(null);
+            alert.setContentText(ex.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    private Button createQuickAmount(String text) {
+        Button btn = new Button(text);
+        btn.getStyleClass().add("quick-amount-btn");
         btn.setFont(Font.font("Inter", 11));
         return btn;
+    }
+
+    private HBox createSummaryRow(String label, Label value) {
+        return createSummaryRow(label, value, false);
+    }
+
+    private HBox createSummaryRow(String label, Label value, boolean highlight) {
+        HBox row = new HBox(0);
+        Label lbl = new Label(label);
+        lbl.getStyleClass().add("summary-label");
+        lbl.setFont(Font.font("Inter", 12));
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        if (highlight) {
+            value.getStyleClass().add("summary-value-highlight");
+        } else {
+            value.getStyleClass().add("summary-value");
+        }
+        value.setFont(Font.font("Inter", 12));
+        row.getChildren().addAll(lbl, spacer, value);
+        return row;
     }
 
     private HBox createBottomSection() {
@@ -546,15 +688,15 @@ public class MarketDetailView {
         VBox aboutSection = createAboutSection();
         HBox.setHgrow(aboutSection, Priority.ALWAYS);
 
-        VBox topHoldersSection = createTopHoldersSection();
+        topHoldersSection = createTopHoldersSection();
         HBox.setHgrow(topHoldersSection, Priority.ALWAYS);
 
         leftBottom.getChildren().addAll(aboutSection, topHoldersSection);
 
-        VBox orderBook = createOrderBook();
-        orderBook.getStyleClass().add("right-column");
+        orderBookPanel = createOrderBook();
+        orderBookPanel.getStyleClass().add("right-column");
 
-        bottomSection.getChildren().addAll(leftBottom, orderBook);
+        bottomSection.getChildren().addAll(leftBottom, orderBookPanel);
         return bottomSection;
     }
 
@@ -567,12 +709,12 @@ public class MarketDetailView {
         title.getStyleClass().add("info-card-title");
         title.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
 
-        Label description = new Label("Resolves YES if OpenAI publicly releases a model branded as GPT-6 (general-availability or paid tier) before 2026-12-31 23:59 UTC. Resolves based on official OpenAI announcement.");
-        description.getStyleClass().add("info-card-text");
-        description.setFont(Font.font("Inter", 13));
-        description.setWrapText(true);
+        aboutDescription = new Label("");
+        aboutDescription.getStyleClass().add("info-card-text");
+        aboutDescription.setFont(Font.font("Inter", 13));
+        aboutDescription.setWrapText(true);
 
-        aboutBox.getChildren().addAll(title, description);
+        aboutBox.getChildren().addAll(title, aboutDescription);
         return aboutBox;
     }
 
@@ -585,16 +727,77 @@ public class MarketDetailView {
         title.getStyleClass().add("info-card-title");
         title.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
 
-        VBox holdersList = new VBox(10);
-        holdersList.getChildren().addAll(
-            createHolderRow("0xf3a...21c", "YES", "$142K"),
-            createHolderRow("0x88e...092", "YES", "$98K"),
-            createHolderRow("whale.eth", "NO", "$67K")
-        );
+        holdersList = new VBox(10);
 
         holdersBox.getChildren().addAll(title, holdersList);
         return holdersBox;
     }
+
+    private void loadTopHolders() {
+        if (holdersList == null || currentEventId == null) return;
+        holdersList.getChildren().clear();
+
+        try {
+            betsDao betsDao = new betsDao();
+            usersDao usersDao = new usersDao();
+            List<bets> allBets = betsDao.getAll();
+
+            Map<Integer, Map<String, BigDecimal>> userHoldings = new HashMap<>();
+
+            for (bets bet : allBets) {
+                outcomes outcome = null;
+                if (currentOutcomes != null) {
+                    for (outcomes o : currentOutcomes) {
+                        if (o.getId().intValue() == bet.getOutcome_id()) {
+                            outcome = o;
+                            break;
+                        }
+                    }
+                }
+                if (outcome == null) continue;
+
+                String label = outcome.getLabel();
+                userHoldings.putIfAbsent(bet.getUser_id(), new HashMap<>());
+                Map<String, BigDecimal> holdings = userHoldings.get(bet.getUser_id());
+                holdings.put(label, holdings.getOrDefault(label, BigDecimal.ZERO).add(BigDecimal.valueOf(bet.getAmount())));
+            }
+
+            List<HolderInfo> topHolders = new ArrayList<>();
+            for (Map.Entry<Integer, Map<String, BigDecimal>> entry : userHoldings.entrySet()) {
+                int userId = entry.getKey();
+                for (Map.Entry<String, BigDecimal> holding : entry.getValue().entrySet()) {
+                    topHolders.add(new HolderInfo(userId, holding.getKey(), holding.getValue()));
+                }
+            }
+
+            topHolders.sort(Comparator.comparing(HolderInfo::amount).reversed());
+
+            int count = Math.min(3, topHolders.size());
+            for (int i = 0; i < count; i++) {
+                HolderInfo h = topHolders.get(i);
+                users user = usersDao.findById((long) h.userId());
+                String displayName = user != null ? user.getUsername() : "User " + h.userId();
+                if (displayName.length() > 12) {
+                    displayName = displayName.substring(0, 8) + "...";
+                }
+                holdersList.getChildren().add(createHolderRow(displayName, h.label(), "$" + h.amount().setScale(0, RoundingMode.HALF_UP).toPlainString()));
+            }
+
+            if (count == 0) {
+                Label noHolders = new Label("No holders yet");
+                noHolders.getStyleClass().add("holder-amount");
+                noHolders.setFont(Font.font("Inter", 12));
+                holdersList.getChildren().add(noHolders);
+            }
+        } catch (SQLException e) {
+            Label errorLabel = new Label("Error loading holders");
+            errorLabel.getStyleClass().add("holder-amount");
+            errorLabel.setFont(Font.font("Inter", 12));
+            holdersList.getChildren().add(errorLabel);
+        }
+    }
+
+    private record HolderInfo(int userId, String label, BigDecimal amount) {}
 
     private HBox createHolderRow(String address, String position, String amount) {
         HBox row = new HBox(10);
@@ -627,103 +830,6 @@ public class MarketDetailView {
         return row;
     }
 
-    private VBox createTradePanel() {
-        VBox panel = new VBox(14);
-        panel.getStyleClass().add("trade-panel");
-        panel.setPadding(new Insets(16, 16, 16, 16));
-
-        HBox yesNoToggle = new HBox(0);
-        yesNoToggle.getStyleClass().add("yes-no-toggle");
-        Button yesBtn = new Button("Yes 67¢");
-        yesBtn.getStyleClass().add("yes-toggle-active");
-        yesBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
-        Button noBtn = new Button("No 33¢");
-        noBtn.getStyleClass().add("no-toggle");
-        noBtn.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
-        yesNoToggle.getChildren().addAll(yesBtn, noBtn);
-
-        HBox buySellRow = new HBox(8);
-        buySellRow.setAlignment(Pos.CENTER_LEFT);
-        Button buyToggle = new Button("Buy");
-        buyToggle.getStyleClass().add("buy-sell-active");
-        buyToggle.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-        Button sellToggle = new Button("Sell");
-        sellToggle.getStyleClass().add("buy-sell-toggle");
-        sellToggle.setFont(Font.font("Inter", 12));
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        Button limitBtn = new Button("Limit");
-        limitBtn.getStyleClass().add("limit-btn");
-        limitBtn.setFont(Font.font("Inter", 11));
-        buySellRow.getChildren().addAll(buyToggle, sellToggle, spacer, limitBtn);
-
-        Label amountLabel = new Label("AMOUNT ($PMC)");
-        amountLabel.getStyleClass().add("amount-label");
-        amountLabel.setFont(Font.font("Inter", 11));
-
-        HBox amountInputBox = new HBox(0);
-        amountInputBox.getStyleClass().add("amount-input-box");
-        TextField amountField = new TextField("500.00");
-        amountField.getStyleClass().add("amount-field");
-        amountField.setFont(Font.font("Inter", 14));
-        Label currencyLabel = new Label("$PMC");
-        currencyLabel.getStyleClass().add("currency-label");
-        currencyLabel.setFont(Font.font("Inter", 12));
-        amountInputBox.getChildren().addAll(amountField, currencyLabel);
-
-        HBox quickAmounts = new HBox(6);
-        quickAmounts.getChildren().addAll(
-            createQuickAmount("$25"),
-            createQuickAmount("$100"),
-            createQuickAmount("$500"),
-            createQuickAmount("MAX")
-        );
-
-        VBox summaryBox = new VBox(8);
-        summaryBox.setPadding(new Insets(4, 0, 0, 0));
-        summaryBox.getChildren().addAll(
-            createSummaryRow("Avg price", "67.0¢"),
-            createSummaryRow("Shares", "746.27"),
-            createSummaryRow("Potential return", "+$246.27 (49.2%)", true)
-        );
-
-        Button buyButton = new Button("Buy YES · 746.27 shares");
-        buyButton.getStyleClass().add("buy-button");
-        buyButton.setFont(Font.font("Inter", FontWeight.BOLD, 14));
-
-        panel.getChildren().addAll(yesNoToggle, buySellRow, amountLabel, amountInputBox, quickAmounts, summaryBox, buyButton);
-        return panel;
-    }
-
-    private Button createQuickAmount(String text) {
-        Button btn = new Button(text);
-        btn.getStyleClass().add("quick-amount-btn");
-        btn.setFont(Font.font("Inter", 11));
-        return btn;
-    }
-
-    private HBox createSummaryRow(String label, String value) {
-        return createSummaryRow(label, value, false);
-    }
-
-    private HBox createSummaryRow(String label, String value, boolean highlight) {
-        HBox row = new HBox(0);
-        Label lbl = new Label(label);
-        lbl.getStyleClass().add("summary-label");
-        lbl.setFont(Font.font("Inter", 12));
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        Label val = new Label(value);
-        if (highlight) {
-            val.getStyleClass().add("summary-value-highlight");
-        } else {
-            val.getStyleClass().add("summary-value");
-        }
-        val.setFont(Font.font("Inter", 12));
-        row.getChildren().addAll(lbl, spacer, val);
-        return row;
-    }
-
     private VBox createOrderBook() {
         VBox orderBook = new VBox(8);
         orderBook.getStyleClass().add("orderbook-panel");
@@ -735,14 +841,14 @@ public class MarketDetailView {
         obTitle.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        Label spreadLabel = new Label("SPREAD 1.0¢");
-        spreadLabel.getStyleClass().add("spread-label");
-        spreadLabel.setFont(Font.font("Inter", 11));
-        obHeader.getChildren().addAll(obTitle, spacer, spreadLabel);
+        orderBookSpread = new Label("");
+        orderBookSpread.getStyleClass().add("spread-label");
+        orderBookSpread.setFont(Font.font("Inter", 11));
+        obHeader.getChildren().addAll(obTitle, spacer, orderBookSpread);
 
-        GridPane grid = new GridPane();
-        grid.getStyleClass().add("orderbook-grid");
-        grid.setVgap(4);
+        orderBookGrid = new GridPane();
+        orderBookGrid.getStyleClass().add("orderbook-grid");
+        orderBookGrid.setVgap(4);
 
         Label priceHeader = new Label("Price");
         priceHeader.getStyleClass().add("ob-col-label");
@@ -753,53 +859,7 @@ public class MarketDetailView {
         totalHeader.getStyleClass().add("ob-col-label");
         totalHeader.setAlignment(Pos.CENTER_RIGHT);
 
-        grid.addRow(0, priceHeader, sharesHeader, totalHeader);
-
-        String[][] asks = {
-            {"69.0¢", "420", "$290"},
-            {"68.5¢", "1.2K", "$822"},
-            {"68.0¢", "3.4K", "$2.3K"},
-            {"67.5¢", "850", "$574"}
-        };
-
-        for (int i = 0; i < asks.length; i++) {
-            HBox row = new HBox();
-            row.getStyleClass().add("ob-ask-row");
-            Label p = new Label(asks[i][0]);
-            p.getStyleClass().add("ob-ask-price");
-            Label s = new Label(asks[i][1]);
-            s.getStyleClass().add("ob-ask-shares");
-            s.setAlignment(Pos.CENTER_RIGHT);
-            Label t = new Label(asks[i][2]);
-            t.getStyleClass().add("ob-ask-total");
-            t.setAlignment(Pos.CENTER_RIGHT);
-            grid.addRow(i + 1, p, s, t);
-        }
-
-        Label midLabel = new Label("67.0¢");
-        midLabel.getStyleClass().add("mid-price");
-        midLabel.setFont(Font.font("Inter", FontWeight.BOLD, 13));
-        GridPane.setHalignment(midLabel, HPos.CENTER);
-        grid.add(midLabel, 0, asks.length + 1, 3, 1);
-
-        String[][] bids = {
-            {"66.5¢", "2.1K", "$1.4K"},
-            {"66.0¢", "4.5K", "$2.9K"}
-        };
-
-        for (int i = 0; i < bids.length; i++) {
-            HBox row = new HBox();
-            row.getStyleClass().add("ob-bid-row");
-            Label p = new Label(bids[i][0]);
-            p.getStyleClass().add("ob-bid-price");
-            Label s = new Label(bids[i][1]);
-            s.getStyleClass().add("ob-bid-shares");
-            s.setAlignment(Pos.CENTER_RIGHT);
-            Label t = new Label(bids[i][2]);
-            t.getStyleClass().add("ob-bid-total");
-            t.setAlignment(Pos.CENTER_RIGHT);
-            grid.addRow(i + asks.length + 2, p, s, t);
-        }
+        orderBookGrid.addRow(0, priceHeader, sharesHeader, totalHeader);
 
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPercentWidth(33.33);
@@ -807,10 +867,72 @@ public class MarketDetailView {
         col2.setPercentWidth(33.33);
         ColumnConstraints col3 = new ColumnConstraints();
         col3.setPercentWidth(33.33);
-        grid.getColumnConstraints().addAll(col1, col2, col3);
+        orderBookGrid.getColumnConstraints().addAll(col1, col2, col3);
 
-        orderBook.getChildren().addAll(obHeader, grid);
+        orderBookMidPrice = new Label("");
+        orderBookMidPrice.getStyleClass().add("mid-price");
+        orderBookMidPrice.setFont(Font.font("Inter", FontWeight.BOLD, 13));
+
+        orderBook.getChildren().addAll(obHeader, orderBookGrid);
         return orderBook;
+    }
+
+    private void loadOrderBook() {
+        if (orderBookGrid == null || currentOutcomes == null) return;
+
+        orderBookGrid.getChildren().removeIf(node -> GridPane.getRowIndex(node) != null && GridPane.getRowIndex(node) > 0);
+
+        outcomes yesOutcome = findOutcome(OutcomeLabel.YES);
+        outcomes noOutcome = findOutcome(OutcomeLabel.NO);
+
+        if (yesOutcome == null || noOutcome == null) return;
+
+        double yesOdds = yesOutcome.getOdds();
+        double noOdds = noOutcome.getOdds();
+
+        double yesPrice = yesOdds;
+        double noPrice = noOdds;
+
+        double spread = Math.abs(yesPrice + noPrice - 1.0) * 100;
+
+        orderBookSpread.setText("SPREAD " + String.format("%.1f", spread) + "¢");
+
+        int row = 1;
+
+        Label p1 = new Label(String.format("%.1f¢", noPrice * 100));
+        p1.getStyleClass().add("ob-ask-price");
+        Label s1 = new Label("--");
+        s1.getStyleClass().add("ob-ask-shares");
+        s1.setAlignment(Pos.CENTER_RIGHT);
+        Label t1 = new Label("--");
+        t1.getStyleClass().add("ob-ask-total");
+        t1.setAlignment(Pos.CENTER_RIGHT);
+        orderBookGrid.addRow(row++, p1, s1, t1);
+
+        orderBookMidPrice.setText(String.format("%.1f¢", yesPrice * 100));
+        GridPane.setHalignment(orderBookMidPrice, HPos.CENTER);
+        orderBookGrid.add(orderBookMidPrice, 0, row, 3, 1);
+        row++;
+
+        Label p2 = new Label(String.format("%.1f¢", yesPrice * 100));
+        p2.getStyleClass().add("ob-bid-price");
+        Label s2 = new Label("--");
+        s2.getStyleClass().add("ob-bid-shares");
+        s2.setAlignment(Pos.CENTER_RIGHT);
+        Label t2 = new Label("--");
+        t2.getStyleClass().add("ob-bid-total");
+        t2.setAlignment(Pos.CENTER_RIGHT);
+        orderBookGrid.addRow(row++, p2, s2, t2);
+    }
+
+    private outcomes findOutcome(OutcomeLabel label) {
+        if (currentOutcomes == null) return null;
+        for (outcomes o : currentOutcomes) {
+            if (label.name().equalsIgnoreCase(o.getLabel())) {
+                return o;
+            }
+        }
+        return null;
     }
 
     public BorderPane getView() {
@@ -819,23 +941,52 @@ public class MarketDetailView {
 
     public void setEventData(events event, List<outcomes> outcomes) {
         if (event == null) return;
+        this.currentEvent = event;
         this.currentEventId = event.getId();
         this.currentOutcomes = outcomes;
-    }
 
-    private void placeBet(OutcomeLabel outcome) {
-        if (currentUserId == null || currentEventId == null || onPlaceBet == null) return;
-        String amountStr = amountField.getText();
-        if (amountStr == null || amountStr.isBlank()) return;
-        try {
-            BigDecimal amount = new BigDecimal(amountStr.trim());
-            if (amount.compareTo(BigDecimal.ZERO) > 0) {
-                onPlaceBet.accept(new BetRequest(currentUserId, currentEventId, outcome, amount, false));
-                amountField.clear();
-            }
-        } catch (NumberFormatException | ArithmeticException ex) {
-            System.err.println("Invalid bet amount: " + amountStr);
+        if (headerQuestion != null) {
+            headerQuestion.setText(event.getTitle());
         }
+
+        if (aboutDescription != null) {
+            aboutDescription.setText(event.getDescription() != null ? event.getDescription() : "No description available.");
+        }
+
+        if (volumeLabel != null) {
+            volumeLabel.setText("Status: " + event.getStatus());
+        }
+
+        if (endsLabel != null && event.getCreatedAt() != null) {
+            endsLabel.setText("Created: " + event.getCreatedAt());
+        }
+
+        if (liveText != null) {
+            liveText.setText("OPEN".equals(event.getStatus()) ? "LIVE" : event.getStatus());
+        }
+
+        outcomes yesOutcome = findOutcome(OutcomeLabel.YES);
+        outcomes noOutcome = findOutcome(OutcomeLabel.NO);
+
+        if (yesOutcome != null) {
+            int yesPct = (int) Math.round(yesOutcome.getOdds() * 100);
+            if (probValue != null) probValue.setText(String.valueOf(yesPct));
+            if (yesBtn != null) yesBtn.setText("Yes " + yesPct + "¢");
+        }
+
+        if (noOutcome != null) {
+            int noPct = (int) Math.round(noOutcome.getOdds() * 100);
+            if (noBtn != null) noBtn.setText("No " + noPct + "¢");
+        }
+
+        if (probLabel != null) {
+            probLabel.setText(selectedOutcome == OutcomeLabel.YES ? "YES probability" : "NO probability");
+        }
+
+        loadOrderBook();
+        loadTopHolders();
+        updateSummary();
+        updateBuyButtonText();
     }
 
     public void setOnBack(Runnable onBack) {

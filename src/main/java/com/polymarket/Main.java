@@ -505,7 +505,7 @@ public class Main extends Application {
     private void loadFonts() {
         try {
             Font.loadFont(
-                "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/instrumentserif/InstrumentSerif-Regular.ttf",
+                getClass().getResourceAsStream("/com/polymarket/fonts/InstrumentSerif-Regular.ttf"),
                 12
             );
             Font.loadFont(

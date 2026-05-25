@@ -1,6 +1,6 @@
-package com.novabet.app.services;
+package com.polymarket.app.services;
 
-import com.novabet.infrastructure.db.DatabaseManager;
+import com.polymarket.util.DatabaseConnection;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.Connection;
@@ -14,7 +14,7 @@ public class UserService {
         String hash = BCrypt.hashpw(password, BCrypt.gensalt());
 
         String sql = "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)";
-        try (Connection conn = DatabaseManager.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             String username = email.split("@")[0];
@@ -39,7 +39,7 @@ public class UserService {
 
     public long loginUser(String email, String password) throws SQLException {
         String sql = "SELECT id, password_hash FROM users WHERE email = ?";
-        try (Connection conn = DatabaseManager.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, email);
@@ -54,7 +54,7 @@ public class UserService {
 
     public void setKycSession(long userId, String stripeSessionId) throws SQLException {
         String sql = "UPDATE users SET stripe_verification_session_id = ?, kyc_status = 'processing' WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, stripeSessionId);
             stmt.setLong(2, userId);
@@ -64,7 +64,7 @@ public class UserService {
 
     public void setKycStatus(long userId, String kycStatus) throws SQLException {
         String sql = "UPDATE users SET kyc_status = ? WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, kycStatus);
             stmt.setLong(2, userId);
@@ -74,7 +74,7 @@ public class UserService {
 
     public String getKycStatus(long userId) throws SQLException {
         String sql = "SELECT kyc_status FROM users WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
+        try (Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, userId);
             ResultSet rs = stmt.executeQuery();

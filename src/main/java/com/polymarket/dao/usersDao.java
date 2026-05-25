@@ -15,59 +15,59 @@ import java.util.List;
             connection = DatabaseConnection.getConnection();
         }
 
-        // Récupérer tous les utilisateurs
-        public List<users> getAll() {
-            List<users> list = new ArrayList<>();
-            String sql = "SELECT * FROM users";
+    private users mapUser(ResultSet rs) throws SQLException {
+        users user = new users(
+                rs.getLong("id"),
+                rs.getString("username"),
+                rs.getString("email"),
+                rs.getString("password_hash"),
+                rs.getString("created_at")
+        );
+        try { user.setStripeVerificationSessionId(rs.getString("stripe_verification_session_id")); } catch (SQLException ignored) {}
+        try { user.setKycStatus(rs.getString("kyc_status")); } catch (SQLException ignored) {}
+        return user;
+    }
 
-            try {
-                Statement stmt = connection.createStatement();
-                ResultSet rs = stmt.executeQuery(sql);
+    // Récupérer tous les utilisateurs
+    public List<users> getAll() {
+        List<users> list = new ArrayList<>();
+        String sql = "SELECT * FROM users";
 
-                while (rs.next()) {
-                    users user = new users(
-                            rs.getLong("id"),
-                            rs.getString("username"),
-                            rs.getString("email"),
-                            rs.getString("password_hash"),
-                            rs.getString("created_at")
-                    );
-                    list.add(user);
-                }
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
 
-            } catch (SQLException e) {
-                e.printStackTrace();
+            while (rs.next()) {
+                list.add(mapUser(rs));
             }
 
-            return list;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        // Récupérer un utilisateur par son ID
-        public users findById(Long id) {
-            String sql = "SELECT * FROM users WHERE id = ?";
+        return list;
+    }
 
-            try {
-                PreparedStatement ps = connection.prepareStatement(sql);
-                ps.setLong(1, id);
+    // Récupérer un utilisateur par son ID
+    public users findById(Long id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
 
-                ResultSet rs = ps.executeQuery();
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setLong(1, id);
 
-                if (rs.next()) {
-                    return new users(
-                            rs.getLong("id"),
-                            rs.getString("username"),
-                            rs.getString("email"),
-                            rs.getString("password_hash"),
-                            rs.getString("created_at")
-                    );
-                }
+            ResultSet rs = ps.executeQuery();
 
-            } catch (SQLException e) {
-                e.printStackTrace();
+            if (rs.next()) {
+                return mapUser(rs);
             }
 
-            return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
+        return null;
+    }
 
         // Ajouter un nouvel utilisateur
         public void add(users user) {
@@ -132,13 +132,7 @@ import java.util.List;
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return new users(
-                        rs.getLong("id"),
-                        rs.getString("username"),
-                        rs.getString("email"),
-                        rs.getString("password_hash"),
-                        rs.getString("created_at")
-                );
+                return mapUser(rs);
             }
 
         } catch (SQLException e) {
@@ -146,5 +140,42 @@ import java.util.List;
         }
 
         return null;
+    }
+
+    public void setKycSession(Long userId, String stripeSessionId) {
+        String sql = "UPDATE users SET stripe_verification_session_id = ?, kyc_status = 'processing' WHERE id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, stripeSessionId);
+            ps.setLong(2, userId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setKycStatus(Long userId, String kycStatus) {
+        String sql = "UPDATE users SET kyc_status = ? WHERE id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, kycStatus);
+            ps.setLong(2, userId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getKycStatus(Long userId) {
+        String sql = "SELECT kyc_status FROM users WHERE id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setLong(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getString("kyc_status");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "pending";
     }
 }
