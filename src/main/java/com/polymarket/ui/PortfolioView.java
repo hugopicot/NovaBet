@@ -34,6 +34,7 @@ public class PortfolioView {
     private Runnable onHistoryClick;
     private Runnable onWalletClick;
     private Consumer<Long> onMarketClick;
+    private Runnable onCasinoClick;
     private Long currentUserId;
 
     private final ObservableList<bets> betList = FXCollections.observableArrayList();
@@ -63,7 +64,7 @@ public class PortfolioView {
                 () -> { if (onCreateMarketClick != null) onCreateMarketClick.run(); },
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
-                null
+                () -> { if (onCasinoClick != null) onCasinoClick.run(); }
             )
         );
         sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
@@ -335,5 +336,9 @@ public class PortfolioView {
 
     public void setOnWalletClick(Runnable onWalletClick) {
         this.onWalletClick = onWalletClick;
+    }
+
+    public void setOnCasinoClick(Runnable onCasinoClick) {
+        this.onCasinoClick = onCasinoClick;
     }
 }

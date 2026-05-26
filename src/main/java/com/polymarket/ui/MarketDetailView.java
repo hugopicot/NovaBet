@@ -47,6 +47,7 @@ public class MarketDetailView {
     private Runnable onPortfolioClick;
     private Runnable onWalletClick;
     private Runnable onHistoryClick;
+    private Runnable onCasinoClick;
     private Runnable onEditMarket;
     private Runnable onDeleteMarket;
     private Consumer<BetRequest> onPlaceBet;
@@ -101,7 +102,7 @@ public class MarketDetailView {
                 null,
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
-                null
+                () -> { if (onCasinoClick != null) onCasinoClick.run(); }
             )
         );
         sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
@@ -837,6 +838,10 @@ public class MarketDetailView {
 
     public void setOnHistoryClick(Runnable onHistoryClick) {
         this.onHistoryClick = onHistoryClick;
+    }
+
+    public void setOnCasinoClick(Runnable onCasinoClick) {
+        this.onCasinoClick = onCasinoClick;
     }
 
     public void setBalance(double balance) {

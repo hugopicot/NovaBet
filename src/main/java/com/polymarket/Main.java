@@ -142,6 +142,13 @@ public class Main extends Application {
             primaryStage.setScene(portfolioScene);
         });
         marketsView.setOnCasino(this::openCasinoLobby);
+        detailView.setOnCasinoClick(this::openCasinoLobby);
+        updateView.setOnCasinoClick(this::openCasinoLobby);
+        deleteView.setOnCasinoClick(this::openCasinoLobby);
+        createView.setOnCasinoClick(this::openCasinoLobby);
+        portfolioView.setOnCasinoClick(this::openCasinoLobby);
+        historyView.setOnCasinoClick(this::openCasinoLobby);
+        walletView.setOnCasinoClick(this::openCasinoLobby);
 
         detailView.setOnMarketsClick(() -> {
             loadMarkets();
