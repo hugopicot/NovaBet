@@ -15,7 +15,20 @@ public class outcomesDao {
         connection = DatabaseConnection.getConnection();
     }
 
-    // Récupérer tous les outcomes
+    public outcomesDao(Connection connection) {
+        this.connection = connection;
+    }
+
+    private outcomes mapRow(ResultSet rs) throws SQLException {
+        return new outcomes(
+                rs.getLong("id"),
+                rs.getLong("event_id"),
+                rs.getString("label"),
+                rs.getDouble("odds"),
+                rs.getString("polymarket_token_id")
+        );
+    }
+
     public List<outcomes> getAll() {
         List<outcomes> list = new ArrayList<>();
         String sql = "SELECT * FROM outcomes";
@@ -25,13 +38,7 @@ public class outcomesDao {
             ResultSet rs = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                outcomes outcome = new outcomes(
-                        rs.getLong("id"),
-                        rs.getLong("event_id"),
-                        rs.getString("label"),
-                        rs.getDouble("odds")
-                );
-                list.add(outcome);
+                list.add(mapRow(rs));
             }
 
         } catch (SQLException e) {
@@ -41,7 +48,6 @@ public class outcomesDao {
         return list;
     }
 
-    // Récupérer un outcome par son ID
     public outcomes findById(Long id) {
         String sql = "SELECT * FROM outcomes WHERE id = ?";
 
@@ -52,12 +58,7 @@ public class outcomesDao {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return new outcomes(
-                        rs.getLong("id"),
-                        rs.getLong("event_id"),
-                        rs.getString("label"),
-                        rs.getDouble("odds")
-                );
+                return mapRow(rs);
             }
 
         } catch (SQLException e) {
@@ -67,33 +68,58 @@ public class outcomesDao {
         return null;
     }
 
-    // Ajouter un nouvel outcome
+    public outcomes findByPolymarketTokenId(String tokenId) {
+        String sql = "SELECT * FROM outcomes WHERE polymarket_token_id = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, tokenId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapRow(rs);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     public void add(outcomes outcome) {
-        String sql = "INSERT INTO outcomes (event_id, label, odds) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO outcomes (event_id, label, odds, polymarket_token_id) VALUES (?, ?, ?, ?)";
 
         try {
-            PreparedStatement ps = connection.prepareStatement(sql);
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, outcome.getEventId());
             ps.setString(2, outcome.getLabel());
             ps.setDouble(3, outcome.getOdds());
+            ps.setString(4, outcome.getPolymarketTokenId());
 
             ps.executeUpdate();
+
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                outcome.setId(rs.getLong(1));
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    // Modifier un outcome
     public void update(outcomes outcome) {
-        String sql = "UPDATE outcomes SET event_id = ?, label = ?, odds = ? WHERE id = ?";
+        String sql = "UPDATE outcomes SET event_id = ?, label = ?, odds = ?, polymarket_token_id = ? WHERE id = ?";
 
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setLong(1, outcome.getEventId());
             ps.setString(2, outcome.getLabel());
             ps.setDouble(3, outcome.getOdds());
-            ps.setLong(4, outcome.getId());
+            ps.setString(4, outcome.getPolymarketTokenId());
+            ps.setLong(5, outcome.getId());
 
             ps.executeUpdate();
 
@@ -102,7 +128,21 @@ public class outcomesDao {
         }
     }
 
-    // Supprimer un outcome
+    public void updateOdds(Long id, double odds) {
+        String sql = "UPDATE outcomes SET odds = ? WHERE id = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setDouble(1, odds);
+            ps.setLong(2, id);
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void delete(Long id) {
         String sql = "DELETE FROM outcomes WHERE id = ?";
 
@@ -117,7 +157,6 @@ public class outcomesDao {
         }
     }
 
-    // Récupérer les outcomes par event_id
     public List<outcomes> findByEventId(Long eventId) {
         List<outcomes> list = new ArrayList<>();
         String sql = "SELECT * FROM outcomes WHERE event_id = ?";
@@ -129,13 +168,7 @@ public class outcomesDao {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                outcomes outcome = new outcomes(
-                        rs.getLong("id"),
-                        rs.getLong("event_id"),
-                        rs.getString("label"),
-                        rs.getDouble("odds")
-                );
-                list.add(outcome);
+                list.add(mapRow(rs));
             }
 
         } catch (SQLException e) {

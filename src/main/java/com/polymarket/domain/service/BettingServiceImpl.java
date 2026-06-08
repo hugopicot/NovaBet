@@ -72,8 +72,8 @@ public class BettingServiceImpl implements BettingService {
         bets bet = new bets(
             (int) request.userId(),
             outcome.getId().intValue(),
-            totalCost.intValue(),
-            potentialWin.intValue()
+            totalCost.doubleValue(),
+            potentialWin.doubleValue()
         );
         betDao.add(bet);
 

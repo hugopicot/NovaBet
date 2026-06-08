@@ -15,7 +15,26 @@ public class eventsDao {
         connection = DatabaseConnection.getConnection();
     }
 
-    // Récupérer tous les events
+    public eventsDao(Connection connection) {
+        this.connection = connection;
+    }
+
+    private events mapRow(ResultSet rs) throws SQLException {
+        return new events(
+                rs.getLong("id"),
+                rs.getString("title"),
+                rs.getString("description"),
+                rs.getString("status"),
+                rs.getString("resolution"),
+                rs.getString("created_at"),
+                rs.getString("polymarket_id"),
+                rs.getString("polymarket_condition_id"),
+                rs.getString("source"),
+                rs.getString("end_date"),
+                rs.getString("image_url")
+        );
+    }
+
     public List<events> getAll() {
         List<events> list = new ArrayList<>();
         String sql = "SELECT * FROM events";
@@ -25,15 +44,7 @@ public class eventsDao {
             ResultSet rs = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                events event = new events(
-                        rs.getLong("id"),
-                        rs.getString("title"),
-                        rs.getString("description"),
-                        rs.getString("status"),
-                        rs.getString("resolution"),
-                        rs.getString("created_at")
-                );
-                list.add(event);
+                list.add(mapRow(rs));
             }
 
         } catch (SQLException e) {
@@ -43,7 +54,6 @@ public class eventsDao {
         return list;
     }
 
-    // Récupérer un event par ID
     public events findById(Long id) {
         String sql = "SELECT * FROM events WHERE id = ?";
 
@@ -54,14 +64,7 @@ public class eventsDao {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return new events(
-                        rs.getLong("id"),
-                        rs.getString("title"),
-                        rs.getString("description"),
-                        rs.getString("status"),
-                        rs.getString("resolution"),
-                        rs.getString("created_at")
-                );
+                return mapRow(rs);
             }
 
         } catch (SQLException e) {
@@ -71,10 +74,69 @@ public class eventsDao {
         return null;
     }
 
-    // Ajouter un event
+    public events findByPolymarketId(String polymarketId) {
+        String sql = "SELECT * FROM events WHERE polymarket_id = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, polymarketId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapRow(rs);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public List<events> findOpenBySource(String source) {
+        List<events> list = new ArrayList<>();
+        String sql = "SELECT * FROM events WHERE source = ? AND status = 'OPEN'";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, source);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<events> findClosedUnresolved() {
+        List<events> list = new ArrayList<>();
+        String sql = "SELECT * FROM events WHERE status = 'OPEN' AND source = 'POLYMARKET' AND polymarket_id IS NOT NULL";
+
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
     public void add(events event) {
 
-        String sql = "INSERT INTO events (title, description, status, resolution, created_at) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO events (title, description, status, resolution, created_at, polymarket_id, polymarket_condition_id, source, end_date, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -83,6 +145,11 @@ public class eventsDao {
             ps.setString(3, event.getStatus());
             ps.setString(4, event.getResolution());
             ps.setString(5, event.getCreatedAt());
+            ps.setString(6, event.getPolymarketId());
+            ps.setString(7, event.getPolymarketConditionId());
+            ps.setString(8, event.getSource());
+            ps.setString(9, event.getEndDate());
+            ps.setString(10, event.getImageUrl());
 
             ps.executeUpdate();
 
@@ -96,9 +163,8 @@ public class eventsDao {
         }
     }
 
-    // Modifier un event
     public void update(events event) {
-        String sql = "UPDATE events SET title = ?, description = ?, status = ?, resolution = ?, created_at = ? WHERE id = ?";
+        String sql = "UPDATE events SET title = ?, description = ?, status = ?, resolution = ?, created_at = ?, polymarket_id = ?, polymarket_condition_id = ?, source = ?, end_date = ?, image_url = ? WHERE id = ?";
 
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
@@ -107,7 +173,12 @@ public class eventsDao {
             ps.setString(3, event.getStatus());
             ps.setString(4, event.getResolution());
             ps.setString(5, event.getCreatedAt());
-            ps.setLong(6, event.getId());
+            ps.setString(6, event.getPolymarketId());
+            ps.setString(7, event.getPolymarketConditionId());
+            ps.setString(8, event.getSource());
+            ps.setString(9, event.getEndDate());
+            ps.setString(10, event.getImageUrl());
+            ps.setLong(11, event.getId());
 
             ps.executeUpdate();
 
@@ -116,7 +187,6 @@ public class eventsDao {
         }
     }
 
-    // Supprimer un event
     public void delete(Long id) {
         String sql = "DELETE FROM events WHERE id = ?";
 

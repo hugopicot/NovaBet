@@ -214,11 +214,13 @@ public class MarketDetailView {
         actions.setPadding(new Insets(0, 0, 0, 16));
 
         Button edit = new Button("Edit");
+        edit.setId("editMarketBtn");
         edit.getStyleClass().add("action-btn-edit");
         edit.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
         edit.setOnAction(e -> { if (onEditMarket != null) onEditMarket.run(); });
 
         Button del = new Button("Delete");
+        del.setId("deleteMarketBtn");
         del.getStyleClass().add("action-btn-delete");
         del.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
         del.setOnAction(e -> { if (onDeleteMarket != null) onDeleteMarket.run(); });
@@ -799,6 +801,12 @@ public class MarketDetailView {
         loadTopHolders();
         updateSummary();
         updateBuyButtonText();
+
+        boolean isPolymarket = "POLYMARKET".equals(event.getSource());
+        Button editBtn = (Button) root.lookup("#editMarketBtn");
+        Button deleteBtn = (Button) root.lookup("#deleteMarketBtn");
+        if (editBtn != null) editBtn.setVisible(!isPolymarket);
+        if (deleteBtn != null) deleteBtn.setVisible(!isPolymarket);
     }
 
     private String headerEmoji(events e) {
