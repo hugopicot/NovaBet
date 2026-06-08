@@ -529,10 +529,27 @@ public class Main extends Application {
                 loadMarkets();
                 primaryStage.setScene(marketsScene);
             });
+            controller.setOnLaunchCrashGame(() -> openCrashGame());
             primaryStage.setScene(createScene(lobby));
         } catch (Exception e) {
             Alert err = new Alert(Alert.AlertType.ERROR);
             err.setHeaderText("Impossible d'ouvrir le casino");
+            err.setContentText(e.getMessage());
+            err.showAndWait();
+        }
+    }
+
+    private void openCrashGame() {
+        try {
+            com.polymarket.casino.crash.CrashGameView crashView =
+                    new com.polymarket.casino.crash.CrashGameView(
+                            currentUserId != null ? currentUserId : 1L,
+                            this::openCasinoLobby
+                    );
+            primaryStage.setScene(createScene(crashView.getView()));
+        } catch (Exception e) {
+            Alert err = new Alert(Alert.AlertType.ERROR);
+            err.setHeaderText("Impossible d'ouvrir Crash Roquette");
             err.setContentText(e.getMessage());
             err.showAndWait();
         }

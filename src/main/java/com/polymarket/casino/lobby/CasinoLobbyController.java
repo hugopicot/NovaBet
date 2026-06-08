@@ -33,6 +33,7 @@ public class CasinoLobbyController {
 
     private long currentUserId = 1L;
     private Runnable onBack;
+    private Runnable onLaunchCrashGame;
 
     @FXML private Label balanceLabel;
     @FXML private Button cashoutBtn;
@@ -73,6 +74,10 @@ public class CasinoLobbyController {
 
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
+    }
+
+    public void setOnLaunchCrashGame(Runnable onLaunchCrashGame) {
+        this.onLaunchCrashGame = onLaunchCrashGame;
     }
 
     private void refreshBalance() {
@@ -141,14 +146,16 @@ public class CasinoLobbyController {
     }
 
     private void onGameClicked(Game game) {
-        Alert info = new Alert(Alert.AlertType.INFORMATION);
-        info.setHeaderText(game.getName());
-        info.setContentText(
-                game.getType() == GameType.SLOT
-                        ? "Slot machine en cours de développement."
-                        : "Crash game en cours de développement."
-        );
-        info.showAndWait();
+        if (game.getType() == GameType.CRASH) {
+            if (onLaunchCrashGame != null) {
+                onLaunchCrashGame.run();
+            }
+        } else {
+            Alert info = new Alert(Alert.AlertType.INFORMATION);
+            info.setHeaderText(game.getName());
+            info.setContentText("Slot machine en cours de développement.");
+            info.showAndWait();
+        }
     }
 
     @FXML
