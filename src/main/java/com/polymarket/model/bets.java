@@ -4,7 +4,7 @@ public class bets {
     private int id;
     private int user_id;
     private int outcome_id;
-    private double amount;
+private double amount;
     private double potential_win;
     private Double payout;
     private String settledAt;
@@ -39,7 +39,7 @@ public class bets {
         return outcome_id;
     }
 
-    public double getAmount() {
+public double getAmount() {
         return amount;
     }
 

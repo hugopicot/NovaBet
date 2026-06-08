@@ -10,11 +10,15 @@ import com.polymarket.model.Game;
 import com.polymarket.model.GameType;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -33,6 +37,7 @@ public class CasinoLobbyController {
 
     private long currentUserId = 1L;
     private Runnable onBack;
+    private Runnable onLaunchCrashGame;
 
     @FXML private Label balanceLabel;
     @FXML private Button cashoutBtn;
@@ -73,6 +78,10 @@ public class CasinoLobbyController {
 
     public void setOnBack(Runnable onBack) {
         this.onBack = onBack;
+    }
+
+    public void setOnLaunchCrashGame(Runnable onLaunchCrashGame) {
+        this.onLaunchCrashGame = onLaunchCrashGame;
     }
 
     private void refreshBalance() {
@@ -141,14 +150,29 @@ public class CasinoLobbyController {
     }
 
     private void onGameClicked(Game game) {
-        Alert info = new Alert(Alert.AlertType.INFORMATION);
-        info.setHeaderText(game.getName());
-        info.setContentText(
-                game.getType() == GameType.SLOT
-                        ? "Slot machine en cours de développement."
-                        : "Crash game en cours de développement."
-        );
-        info.showAndWait();
+        if (game.getType() == GameType.CRASH) {
+            if (onLaunchCrashGame != null) {
+                onLaunchCrashGame.run();
+            }
+        } else if (game.getType() == GameType.SLOT) {
+            openSlotMachine(game);
+        }
+    }
+
+    private void openSlotMachine(Game game) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/com/polymarket/casino/slots/LuckyNovaView.fxml")
+            );
+            Parent slotRoot = loader.load();
+
+            Stage stage = new Stage();
+            stage.setTitle(game.getName());
+            stage.setScene(new Scene(slotRoot, 400, 300));
+            stage.show();
+        } catch (Exception e) {
+            showError("Erreur", "Impossible d'ouvrir la machine à sous: " + e.getMessage());
+        }
     }
 
     @FXML

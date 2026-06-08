@@ -51,7 +51,7 @@ public class OneTimeOfferController {
     private Timeline countdown;
     private int secondsLeft;
     private double currentAmount;
-    private Runnable onClose;
+private Runnable onClose;
     private Runnable onPlayInCasino;
 
     public void setAmount(double amount) {
@@ -139,7 +139,7 @@ public class OneTimeOfferController {
             Parent wheelRoot = loader.load();
             WheelController wheelCtrl = loader.getController();
             wheelCtrl.setStake(currentAmount);
-            if (onPlayInCasino != null) {
+if (onPlayInCasino != null) {
                 wheelCtrl.setOnPlayInCasino(onPlayInCasino);
             }
 
@@ -153,7 +153,7 @@ public class OneTimeOfferController {
 
     @FXML
     public void onDeclineClicked(MouseEvent event) {
-        stopCountdown();
+stopCountdown();
         if (onClose != null) {
             onClose.run();
             return;
@@ -173,7 +173,7 @@ public class OneTimeOfferController {
             updateTimerLabel();
             if (secondsLeft <= 0) {
                 Platform.runLater(() -> {
-                    stopCountdown();
+stopCountdown();
                     if (onClose != null) {
                         onClose.run();
                         return;

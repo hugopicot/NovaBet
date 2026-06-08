@@ -13,15 +13,6 @@ public class events {
     private String endDate;
     private String imageUrl;
 
-    public events(Long id, String title, String description, String status, String resolution, String createdAt) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.status = status;
-        this.resolution = resolution;
-        this.createdAt = createdAt;
-    }
-
     public events(Long id, String title, String description, String status, String resolution, String createdAt,
                   String polymarketId, String polymarketConditionId, String source, String endDate, String imageUrl) {
         this.id = id;

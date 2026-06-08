@@ -59,7 +59,7 @@ public class WheelController {
     private double currentStake = 746;
     private boolean spinning = false;
     private boolean spun = false;
-    private Runnable onPlayInCasino;
+private Runnable onPlayInCasino;
 
     public void setOnPlayInCasino(Runnable onPlayInCasino) {
         this.onPlayInCasino = onPlayInCasino;
@@ -196,7 +196,7 @@ public class WheelController {
 
     @FXML
     private void onPlayInCasinoClicked() {
-        if (onPlayInCasino != null) {
+if (onPlayInCasino != null) {
             onPlayInCasino.run();
             return;
         }

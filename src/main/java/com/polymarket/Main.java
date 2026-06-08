@@ -70,7 +70,7 @@ public class Main extends Application {
     private WalletService walletService;
     private walletsDao walletDao;
     private WalletView walletView;
-    private PolymarketSyncService polymarketSyncService;
+private PolymarketSyncService polymarketSyncService;
 
     @Override
     public void start(Stage primaryStage) {
@@ -88,8 +88,7 @@ public class Main extends Application {
             walletService = new WalletServiceImpl(walletDao, new transactionsDao());
             walletView = new WalletView();
             historyView = new HistoryView();
-
-            PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
+PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
             PolymarketGammaClient gammaClient = new PolymarketGammaClient(polymarketHttp);
             PolymarketClobClient clobClient = new PolymarketClobClient(polymarketHttp);
             PolymarketResolutionService resolutionService = new PolymarketResolutionService(
@@ -135,7 +134,7 @@ public class Main extends Application {
                 refreshBalance();
             }
             loadMarkets();
-            if (polymarketSyncService != null) {
+if (polymarketSyncService != null) {
                 polymarketSyncService.start();
             }
             primaryStage.setScene(marketsScene);
@@ -498,7 +497,7 @@ public class Main extends Application {
 
     private void handleWithdraw(double amount) {
         if (walletService == null || currentUserId == null) return;
-        openOneTimeOffer(amount);
+openOneTimeOffer(amount);
     }
 
     private void openOneTimeOffer(double amount) {
@@ -576,6 +575,7 @@ public class Main extends Application {
                 loadMarkets();
                 primaryStage.setScene(marketsScene);
             });
+            controller.setOnLaunchCrashGame(() -> openCrashGame());
             primaryStage.setScene(createScene(lobby));
         } catch (Exception e) {
             Alert err = new Alert(Alert.AlertType.ERROR);
@@ -593,6 +593,22 @@ public class Main extends Application {
     public void stop() {
         if (polymarketSyncService != null) {
             polymarketSyncService.stop();
+        }
+    }
+
+    private void openCrashGame() {
+        try {
+            com.polymarket.casino.crash.CrashGameView crashView =
+                    new com.polymarket.casino.crash.CrashGameView(
+                            currentUserId != null ? currentUserId : 1L,
+                            this::openCasinoLobby
+                    );
+            primaryStage.setScene(createScene(crashView.getView()));
+        } catch (Exception e) {
+            Alert err = new Alert(Alert.AlertType.ERROR);
+            err.setHeaderText("Impossible d'ouvrir Crash Roquette");
+            err.setContentText(e.getMessage());
+            err.showAndWait();
         }
     }
 }

@@ -5,14 +5,7 @@ public class outcomes {
     private Long eventId;
     private String label;
     private double odds;
-    private String polymarketTokenId;
-
-    public outcomes(Long id, Long eventId, String label, double odds) {
-        this.id = id;
-        this.eventId = eventId;
-        this.label = label;
-        this.odds = odds;
-    }
+private String polymarketTokenId;
 
     public outcomes(Long id, Long eventId, String label, double odds, String polymarketTokenId) {
         this.id = id;
@@ -63,7 +56,7 @@ public class outcomes {
         this.odds = odds;
     }
 
-    public String getPolymarketTokenId() {
+public String getPolymarketTokenId() {
         return polymarketTokenId;
     }
 

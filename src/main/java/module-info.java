@@ -15,8 +15,12 @@ module com.polymarket {
     opens com.polymarket.oto to javafx.fxml;
     opens com.polymarket.app.controllers to javafx.fxml;
     opens com.polymarket.casino.lobby to javafx.fxml;
+    opens com.polymarket.casino.slots to javafx.fxml;
     exports com.polymarket.oto;
     exports com.polymarket.casino.lobby;
+    exports com.polymarket.casino.slots;
+    exports com.polymarket.casino.crash;
+    opens com.polymarket.casino.crash to javafx.graphics;
     exports com.polymarket;
     exports com.polymarket.model;
     exports com.polymarket.dao;

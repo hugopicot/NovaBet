@@ -142,7 +142,7 @@ import java.util.List;
         return null;
     }
 
-    public users findByUsername(String username) {
+public users findByUsername(String username) {
         String sql = "SELECT * FROM users WHERE username = ?";
 
         try {
