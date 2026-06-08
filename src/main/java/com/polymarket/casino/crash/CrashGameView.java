@@ -61,8 +61,8 @@ public class CrashGameView {
         backBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #888; -fx-cursor: hand; -fx-font-size: 13;");
         backBtn.setOnAction(e -> { stopTicker(); if (onBack != null) onBack.run(); });
 
-        Label title = new Label("🚀 Crash Roquette");
-        title.setStyle("-fx-text-fill: #f0c040; -fx-font-size: 18; -fx-font-weight: bold;");
+        Label brand = new Label("NovaBet");
+        brand.setStyle("-fx-text-fill: #f0c040; -fx-font-size: 16; -fx-font-weight: bold;");
 
         balanceLabel = new Label();
         balanceLabel.setStyle("-fx-text-fill: #aaa; -fx-font-size: 13;");
@@ -70,7 +70,7 @@ public class CrashGameView {
         balanceLabel.setMaxWidth(Double.MAX_VALUE);
         balanceLabel.setAlignment(Pos.CENTER_RIGHT);
 
-        topBar.getChildren().addAll(backBtn, title, balanceLabel);
+        topBar.getChildren().addAll(backBtn, brand, balanceLabel);
         root.setTop(topBar);
 
         // --- CENTER : MULTIPLIER DISPLAY ---
