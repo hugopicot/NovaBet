@@ -5,12 +5,21 @@ public class outcomes {
     private Long eventId;
     private String label;
     private double odds;
+    private String polymarketTokenId;
 
     public outcomes(Long id, Long eventId, String label, double odds) {
         this.id = id;
         this.eventId = eventId;
         this.label = label;
         this.odds = odds;
+    }
+
+    public outcomes(Long id, Long eventId, String label, double odds, String polymarketTokenId) {
+        this.id = id;
+        this.eventId = eventId;
+        this.label = label;
+        this.odds = odds;
+        this.polymarketTokenId = polymarketTokenId;
     }
 
     public outcomes(Long eventId, String label, double odds) {
@@ -52,6 +61,14 @@ public class outcomes {
 
     public void setOdds(double odds) {
         this.odds = odds;
+    }
+
+    public String getPolymarketTokenId() {
+        return polymarketTokenId;
+    }
+
+    public void setPolymarketTokenId(String polymarketTokenId) {
+        this.polymarketTokenId = polymarketTokenId;
     }
 
     @Override

@@ -271,7 +271,7 @@ public class PortfolioView {
         Label badge = new Label(label);
         badge.getStyleClass().add(isYes ? "holder-yes-badge" : "holder-no-badge");
         badge.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 10));
-        Label bet$ = new Label(String.format("Bet · %d $NVB", bet.getAmount()));
+        Label bet$ = new Label(String.format("Bet · %.2f $NVB", bet.getAmount()));
         bet$.getStyleClass().add("footer-label");
         bet$.setFont(Font.font("JetBrains Mono", 11));
         badges.getChildren().addAll(badge, bet$);
@@ -282,7 +282,7 @@ public class PortfolioView {
         winBox.setAlignment(Pos.TOP_RIGHT);
         Label wl = new Label("POTENTIAL");
         wl.getStyleClass().add("label-uppercase");
-        Label wv = new Label(String.format("%d", bet.getPotential_win()));
+        Label wv = new Label(String.format("%.2f", bet.getPotential_win()));
         wv.setStyle("-fx-text-fill: -yes;");
         wv.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 18));
         winBox.getChildren().addAll(wl, wv);

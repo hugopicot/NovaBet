@@ -4,18 +4,20 @@ public class bets {
     private int id;
     private int user_id;
     private int outcome_id;
-    private int amount;
-    private int potential_win;
+    private double amount;
+    private double potential_win;
+    private Double payout;
+    private String settledAt;
 
-    public bets (int id, int user_id, int outcome_id, int amount, int potential_win){
-        this.id=id;
-        this.user_id=user_id;
-        this.outcome_id=outcome_id;
-        this.amount=amount;
-        this.potential_win=potential_win;
+    public bets(int id, int user_id, int outcome_id, double amount, double potential_win) {
+        this.id = id;
+        this.user_id = user_id;
+        this.outcome_id = outcome_id;
+        this.amount = amount;
+        this.potential_win = potential_win;
     }
 
-    public bets(int user_id, int outcome_id, int amount, int potential_win) {
+    public bets(int user_id, int outcome_id, double amount, double potential_win) {
         this.user_id = user_id;
         this.outcome_id = outcome_id;
         this.amount = amount;
@@ -37,12 +39,20 @@ public class bets {
         return outcome_id;
     }
 
-    public int getAmount() {
+    public double getAmount() {
         return amount;
     }
 
-    public int getPotential_win() {
+    public double getPotential_win() {
         return potential_win;
+    }
+
+    public Double getPayout() {
+        return payout;
+    }
+
+    public String getSettledAt() {
+        return settledAt;
     }
 
     public void setId(int id) {
@@ -57,12 +67,20 @@ public class bets {
         this.outcome_id = outcome_id;
     }
 
-    public void setAmount(int amount) {
+    public void setAmount(double amount) {
         this.amount = amount;
     }
 
-    public void setPotential_win(int potential_win) {
+    public void setPotential_win(double potential_win) {
         this.potential_win = potential_win;
+    }
+
+    public void setPayout(Double payout) {
+        this.payout = payout;
+    }
+
+    public void setSettledAt(String settledAt) {
+        this.settledAt = settledAt;
     }
 
     @Override
@@ -73,6 +91,7 @@ public class bets {
                 ", outcome_id=" + outcome_id +
                 ", amount=" + amount +
                 ", potential_win=" + potential_win +
+                ", payout=" + payout +
                 '}';
     }
 }

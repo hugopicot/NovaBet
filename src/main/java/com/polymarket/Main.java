@@ -23,6 +23,11 @@ import com.polymarket.ui.WalletView;
 import com.polymarket.ui.auth.AuthModule;
 import com.polymarket.domain.service.WalletService;
 import com.polymarket.domain.service.WalletServiceImpl;
+import com.polymarket.domain.service.PolymarketSyncService;
+import com.polymarket.domain.service.PolymarketResolutionService;
+import com.polymarket.infrastructure.polymarket.PolymarketHttpClient;
+import com.polymarket.infrastructure.polymarket.PolymarketGammaClient;
+import com.polymarket.infrastructure.polymarket.PolymarketClobClient;
 import com.polymarket.oto.OneTimeOfferController;
 
 import javafx.application.Application;
@@ -65,6 +70,7 @@ public class Main extends Application {
     private WalletService walletService;
     private walletsDao walletDao;
     private WalletView walletView;
+    private PolymarketSyncService polymarketSyncService;
 
     @Override
     public void start(Stage primaryStage) {
@@ -82,6 +88,16 @@ public class Main extends Application {
             walletService = new WalletServiceImpl(walletDao, new transactionsDao());
             walletView = new WalletView();
             historyView = new HistoryView();
+
+            PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
+            PolymarketGammaClient gammaClient = new PolymarketGammaClient(polymarketHttp);
+            PolymarketClobClient clobClient = new PolymarketClobClient(polymarketHttp);
+            PolymarketResolutionService resolutionService = new PolymarketResolutionService(
+                eventDao, outcomeDao, new betsDao(), walletDao, new transactionsDao()
+            );
+            polymarketSyncService = new PolymarketSyncService(
+                gammaClient, clobClient, eventDao, outcomeDao, resolutionService
+            );
         } catch (Exception e) {
             System.err.println("Failed to connect to database: " + e.getMessage());
             e.printStackTrace();
@@ -119,6 +135,9 @@ public class Main extends Application {
                 refreshBalance();
             }
             loadMarkets();
+            if (polymarketSyncService != null) {
+                polymarketSyncService.start();
+            }
             primaryStage.setScene(marketsScene);
         });
         authModule.start();
@@ -568,5 +587,12 @@ public class Main extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    @Override
+    public void stop() {
+        if (polymarketSyncService != null) {
+            polymarketSyncService.stop();
+        }
     }
 }

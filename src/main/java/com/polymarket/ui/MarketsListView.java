@@ -223,13 +223,28 @@ public class MarketsListView {
         emoji.setFont(Font.font("Segoe UI Emoji", 18));
         icon.getChildren().add(emoji);
 
+        VBox titleBox = new VBox(2);
+        HBox.setHgrow(titleBox, Priority.ALWAYS);
+
         Label question = new Label(event.getTitle() != null ? event.getTitle() : "");
         question.getStyleClass().add("market-question");
         question.setFont(Font.font("Inter", FontWeight.MEDIUM, 13));
         question.setWrapText(true);
-        HBox.setHgrow(question, Priority.ALWAYS);
 
-        top.getChildren().addAll(icon, question);
+        if ("POLYMARKET".equals(event.getSource())) {
+            HBox sourceRow = new HBox(4);
+            sourceRow.setAlignment(Pos.CENTER_LEFT);
+            Label badge = new Label("POLYMARKET");
+            badge.getStyleClass().add("filter-btn-active");
+            badge.setFont(Font.font("Inter", FontWeight.BOLD, 8));
+            badge.setPadding(new Insets(1, 4, 1, 4));
+            sourceRow.getChildren().add(badge);
+            titleBox.getChildren().addAll(question, sourceRow);
+        } else {
+            titleBox.getChildren().add(question);
+        }
+
+        top.getChildren().addAll(icon, titleBox);
 
         double yesProb = getYesProbability(os);
         double noProb = 100.0 - yesProb;

@@ -1,0 +1,21 @@
+ALTER TABLE events
+    ADD COLUMN polymarket_id VARCHAR(50) DEFAULT NULL,
+    ADD COLUMN polymarket_condition_id VARCHAR(100) DEFAULT NULL,
+    ADD COLUMN source VARCHAR(20) DEFAULT 'INTERNAL',
+    ADD COLUMN end_date DATETIME DEFAULT NULL,
+    ADD COLUMN image_url VARCHAR(500) DEFAULT NULL;
+
+ALTER TABLE outcomes
+    ADD COLUMN polymarket_token_id VARCHAR(100) DEFAULT NULL;
+
+ALTER TABLE bets
+    ADD COLUMN payout DECIMAL(10,2) DEFAULT NULL,
+    ADD COLUMN settled_at TIMESTAMP NULL DEFAULT NULL;
+
+CREATE TABLE polymarket_sync_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sync_type VARCHAR(20) NOT NULL,
+    last_sync_at TIMESTAMP NOT NULL,
+    markets_processed INT DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'SUCCESS'
+);

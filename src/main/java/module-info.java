@@ -6,6 +6,8 @@ module com.polymarket {
     requires jbcrypt;
     requires stripe.java;
     requires java.desktop;
+    requires java.net.http;
+    requires com.google.gson;
 
     opens com.polymarket to javafx.fxml;
     opens com.polymarket.ui to javafx.fxml;
@@ -29,5 +31,8 @@ module com.polymarket {
     exports com.polymarket.app.controllers;
     exports com.polymarket.app.services;
     exports com.polymarket.infrastructure;
+    exports com.polymarket.infrastructure.polymarket;
+    exports com.polymarket.infrastructure.polymarket.model;
     opens com.polymarket.domain.service to javafx.base;
+    opens com.polymarket.infrastructure.polymarket.model to com.google.gson;
 }
