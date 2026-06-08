@@ -24,13 +24,9 @@ public class PolymarketClobClient {
     }
 
     public List<PolymarketPrice> getPrices(List<String> tokenIds, List<String> sides) {
-        Map<String, String> params = new LinkedHashMap<>();
-        for (int i = 0; i < tokenIds.size(); i++) {
-            params.put("token_ids", tokenIds.get(i));
-            if (i < sides.size()) {
-                params.put("sides", sides.get(i));
-            }
-        }
-        return httpClient.getAndParseList(BASE_URL + "/prices", params, PolymarketPrice.class);
+        Map<String, List<String>> params = new java.util.LinkedHashMap<>();
+        params.put("token_ids", tokenIds);
+        params.put("sides", sides);
+        return httpClient.getAndParseListMultiValueParams(BASE_URL + "/prices", params, PolymarketPrice.class);
     }
 }

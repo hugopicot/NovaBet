@@ -36,6 +36,11 @@ public class PolymarketHttpClient {
         return executeWithRetry(url);
     }
 
+    public String getMultiValueParams(String baseUrl, Map<String, List<String>> params) {
+        String url = buildUrlMultiValue(baseUrl, params);
+        return executeWithRetry(url);
+    }
+
     public <T> T getAndParse(String baseUrl, Map<String, String> params, Class<T> type) {
         String json = get(baseUrl, params);
         if (json == null) {
@@ -46,6 +51,15 @@ public class PolymarketHttpClient {
 
     public <T> List<T> getAndParseList(String baseUrl, Map<String, String> params, Class<T> elementType) {
         String json = get(baseUrl, params);
+        if (json == null) {
+            return List.of();
+        }
+        var type = TypeToken.getParameterized(List.class, elementType).getType();
+        return gson.fromJson(json, type);
+    }
+
+    public <T> List<T> getAndParseListMultiValueParams(String baseUrl, Map<String, List<String>> params, Class<T> elementType) {
+        String json = getMultiValueParams(baseUrl, params);
         if (json == null) {
             return List.of();
         }
@@ -117,5 +131,29 @@ public class PolymarketHttpClient {
 
     public Gson getGson() {
         return gson;
+    }
+
+    public String buildUrlMultiValue(String baseUrl, Map<String, List<String>> params) {
+        if (params == null || params.isEmpty()) {
+            return baseUrl;
+        }
+        StringBuilder sb = new StringBuilder(baseUrl);
+        sb.append("?");
+        boolean first = true;
+        for (Map.Entry<String, List<String>> entry : params.entrySet()) {
+            if (entry.getValue() == null || entry.getValue().isEmpty()) {
+                continue;
+            }
+            for (String value : entry.getValue()) {
+                if (!first) {
+                    sb.append("&");
+                }
+                sb.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
+                sb.append("=");
+                sb.append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+                first = false;
+            }
+        }
+        return sb.toString();
     }
 }
