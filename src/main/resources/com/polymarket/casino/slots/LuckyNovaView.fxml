@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?><?import javafx.scene.control.*?>
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.polymarket.casino.slots.LuckyNovaController" alignment="CENTER" spacing="20">
+<Label text="Lucky Nova"/>
+<HBox alignment="CENTER" spacing="15"><Label fx:id="reel1" text="🍒"/><Label fx:id="reel2" text="🍋"/><Label fx:id="reel3" text="⭐"/></HBox>
+<Button text="SPIN" onAction="#spin"/><Label fx:id="resultLabel"/>
+</VBox>
