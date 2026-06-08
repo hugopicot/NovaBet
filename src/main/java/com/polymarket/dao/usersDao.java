@@ -142,6 +142,26 @@ import java.util.List;
         return null;
     }
 
+    public users findByUsername(String username) {
+        String sql = "SELECT * FROM users WHERE username = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, username);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapUser(rs);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     public void setKycSession(Long userId, String stripeSessionId) {
         String sql = "UPDATE users SET stripe_verification_session_id = ?, kyc_status = 'processing' WHERE id = ?";
         try {
