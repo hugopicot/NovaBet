@@ -15,6 +15,14 @@ public class walletsDao {
         connection = DatabaseConnection.getConnection();
     }
 
+    private double safeGetCasinoBalance(ResultSet rs) {
+        try {
+            return rs.getDouble("casino_balance");
+        } catch (SQLException e) {
+            return 0.0;
+        }
+    }
+
     // Récupérer tous les wallets
     public List<wallets> getAll() {
         List<wallets> list = new ArrayList<>();
@@ -29,7 +37,8 @@ public class walletsDao {
                         rs.getLong("id"),
                         rs.getLong("user_id"),
                         rs.getDouble("real_balance"),
-                        rs.getDouble("virtual_balance")
+                        rs.getDouble("virtual_balance"),
+                        safeGetCasinoBalance(rs)
                 );
                 list.add(wallet);
             }
@@ -56,7 +65,8 @@ public class walletsDao {
                         rs.getLong("id"),
                         rs.getLong("user_id"),
                         rs.getDouble("real_balance"),
-                        rs.getDouble("virtual_balance")
+                        rs.getDouble("virtual_balance"),
+                        safeGetCasinoBalance(rs)
                 );
             }
 
@@ -69,13 +79,14 @@ public class walletsDao {
 
     // Ajouter un nouveau wallet
     public void add(wallets wallet) {
-        String sql = "INSERT INTO wallets (user_id, real_balance, virtual_balance) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO wallets (user_id, real_balance, virtual_balance, casino_balance) VALUES (?, ?, ?, ?)";
 
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setLong(1, wallet.getUserId());
             ps.setDouble(2, wallet.getRealBalance());
             ps.setDouble(3, wallet.getVirtualBalance());
+            ps.setDouble(4, wallet.getCasinoBalance());
 
             ps.executeUpdate();
 
@@ -86,14 +97,15 @@ public class walletsDao {
 
     // Modifier un wallet
     public void update(wallets wallet) {
-        String sql = "UPDATE wallets SET user_id = ?, real_balance = ?, virtual_balance = ? WHERE id = ?";
+        String sql = "UPDATE wallets SET user_id = ?, real_balance = ?, virtual_balance = ?, casino_balance = ? WHERE id = ?";
 
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setLong(1, wallet.getUserId());
             ps.setDouble(2, wallet.getRealBalance());
             ps.setDouble(3, wallet.getVirtualBalance());
-            ps.setLong(4, wallet.getId());
+            ps.setDouble(4, wallet.getCasinoBalance());
+            ps.setLong(5, wallet.getId());
 
             ps.executeUpdate();
 
@@ -132,7 +144,8 @@ public class walletsDao {
                         rs.getLong("id"),
                         rs.getLong("user_id"),
                         rs.getDouble("real_balance"),
-                        rs.getDouble("virtual_balance")
+                        rs.getDouble("virtual_balance"),
+                        safeGetCasinoBalance(rs)
                 );
             }
 

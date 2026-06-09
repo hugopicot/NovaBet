@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 
 public class PolymarketResolutionService {
@@ -61,6 +62,25 @@ public class PolymarketResolutionService {
         List<outcomes> eventOutcomes = outcomeDao.findByEventId(eventId);
         List<bets> unsettledBets = betDao.findUnsettledByEventId(eventId);
 
+        double totalPayout = 0.0;
+        for (bets bet : unsettledBets) {
+            outcomes betOutcome = findOutcomeById(eventOutcomes, bet.getOutcome_id());
+            if (betOutcome == null) {
+                continue;
+            }
+
+            if (betOutcome.getLabel().equalsIgnoreCase(winningLabel)) {
+                double sharePrice = betOutcome.getOdds();
+                if (sharePrice <= 0) {
+                    sharePrice = 0.01;
+                }
+                totalPayout += bet.getAmount() / sharePrice;
+            }
+        }
+
+        double commissionRate = 0.01 + ThreadLocalRandom.current().nextDouble(0.02);
+        double commission = totalPayout * commissionRate;
+
         for (bets bet : unsettledBets) {
             outcomes betOutcome = findOutcomeById(eventOutcomes, bet.getOutcome_id());
             if (betOutcome == null) {
@@ -79,20 +99,27 @@ public class PolymarketResolutionService {
             }
 
             if (payout > 0) {
+                double adjustedPayout = payout * (1.0 - commissionRate);
                 wallets wallet = walletDao.findByUserId((long) bet.getUser_id());
                 if (wallet != null) {
-                    wallet.setVirtualBalance(wallet.getVirtualBalance() + payout);
+                    wallet.setVirtualBalance(wallet.getVirtualBalance() + adjustedPayout);
                     walletDao.update(wallet);
                 }
-                recordTransaction(bet.getUser_id(), "BET_WON", payout);
+                recordTransaction(bet.getUser_id(), "BET_WON", adjustedPayout);
+                betDao.settleBet(bet.getId(), adjustedPayout);
             } else {
                 recordTransaction(bet.getUser_id(), "BET_LOST", 0.0);
+                betDao.settleBet(bet.getId(), 0.0);
             }
-
-            betDao.settleBet(bet.getId(), payout);
         }
 
-        LOGGER.info("Settled market " + event.getTitle() + " -> " + winningLabel + " (" + unsettledBets.size() + " bets)");
+        if (commission > 0) {
+            recordCommissionTransaction(commission, commissionRate);
+        }
+
+        LOGGER.info("Settled market " + event.getTitle() + " -> " + winningLabel
+                + " (" + unsettledBets.size() + " bets, commission: "
+                + String.format("%.2f%%", commissionRate * 100) + ")");
     }
 
     private outcomes findOutcomeById(List<outcomes> outcomes, int outcomeId) {
@@ -113,6 +140,22 @@ public class PolymarketResolutionService {
             transactionDao.add(new transactions(userId, type, amount, createdAt, marketName));
         } catch (Exception e) {
             LOGGER.warning("Failed to record transaction: " + e.getMessage());
+        }
+    }
+
+    private void recordCommissionTransaction(double commission, double rate) {
+        String createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String marketName = eventTitle != null ? eventTitle : "Unknown market";
+        try {
+            transactionDao.add(new transactions(
+                    0L,
+                    "COMMISSION",
+                    commission,
+                    createdAt,
+                    marketName + " (" + String.format("%.2f", rate * 100) + "%)"
+            ));
+        } catch (Exception e) {
+            LOGGER.warning("Failed to record commission transaction: " + e.getMessage());
         }
     }
 }

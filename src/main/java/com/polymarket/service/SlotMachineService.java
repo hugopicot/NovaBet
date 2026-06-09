@@ -33,17 +33,28 @@ public class SlotMachineService {
         if (wallet == null) return null;
 
         double virtualBalance = wallet.getVirtualBalance();
+        double casinoBalance = wallet.getCasinoBalance();
         double realBalance = wallet.getRealBalance();
 
-        if (virtualBalance + realBalance < betAmount) {
+        if (virtualBalance + casinoBalance + realBalance < betAmount) {
             return null;
         }
 
-        if (virtualBalance >= betAmount) {
-            wallet.setVirtualBalance(virtualBalance - betAmount);
-        } else {
-            double remaining = betAmount - virtualBalance;
-            wallet.setVirtualBalance(0);
+        double remaining = betAmount;
+        // Debit casino_balance first (non-withdrawable credits)
+        if (casinoBalance > 0) {
+            double fromCasino = Math.min(casinoBalance, remaining);
+            wallet.setCasinoBalance(casinoBalance - fromCasino);
+            remaining -= fromCasino;
+        }
+        // Then virtual_balance
+        if (remaining > 0 && virtualBalance > 0) {
+            double fromVirtual = Math.min(virtualBalance, remaining);
+            wallet.setVirtualBalance(virtualBalance - fromVirtual);
+            remaining -= fromVirtual;
+        }
+        // Finally real_balance
+        if (remaining > 0) {
             wallet.setRealBalance(realBalance - remaining);
         }
         walletDAO.update(wallet);

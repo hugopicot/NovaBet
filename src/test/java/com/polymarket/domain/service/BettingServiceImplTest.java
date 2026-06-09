@@ -52,18 +52,18 @@ class BettingServiceImplTest {
     }
 
     private void seedData() {
-        events openEvent = new events(1L, "Will it rain tomorrow?", "Weather prediction", "OPEN", null, "2026-05-10T00:00:00Z");
+        events openEvent = new events(1L, "Will it rain tomorrow?", "Weather prediction", "OPEN", null, "2026-05-10T00:00:00Z", null, null, null, null, null);
         eventDao.events.add(openEvent);
 
-        events resolvedEvent = new events(2L, "Past election", "Already resolved", "RESOLVED", "YES", "2026-05-10T00:00:00Z");
+        events resolvedEvent = new events(2L, "Past election", "Already resolved", "RESOLVED", "YES", "2026-05-10T00:00:00Z", null, null, null, null, null);
         eventDao.events.add(resolvedEvent);
 
-        outcomes yesOutcome = new outcomes(1L, 1L, "YES", 0.60);
-        outcomes noOutcome = new outcomes(2L, 1L, "NO", 0.40);
+        outcomes yesOutcome = new outcomes(1L, 1L, "YES", 0.60, null);
+        outcomes noOutcome = new outcomes(2L, 1L, "NO", 0.40, null);
         outcomeDao.outcomes.add(yesOutcome);
         outcomeDao.outcomes.add(noOutcome);
 
-        outcomes yesOutcomeResolved = new outcomes(3L, 2L, "YES", 0.80);
+        outcomes yesOutcomeResolved = new outcomes(3L, 2L, "YES", 0.80, null);
         outcomeDao.outcomes.add(yesOutcomeResolved);
 
         wallets wallet = new wallets(1L, 1L, 100.00, 50.00);

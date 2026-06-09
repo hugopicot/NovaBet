@@ -68,7 +68,8 @@ public class MarketsListView {
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
-                () -> { if (onCasino != null) onCasino.run(); }
+                () -> { if (onCasino != null) onCasino.run(); },
+                () -> { if (onLogout != null) onLogout.run(); }
             )
         );
         sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
@@ -247,9 +248,10 @@ public class MarketsListView {
             HBox sourceRow = new HBox(4);
             sourceRow.setAlignment(Pos.CENTER_LEFT);
             Label badge = new Label("POLYMARKET");
-            badge.getStyleClass().add("filter-btn-active");
+            badge.getStyleClass().add("polymarket-badge");
             badge.setFont(Font.font("Inter", FontWeight.BOLD, 8));
             badge.setPadding(new Insets(1, 4, 1, 4));
+            badge.setStyle("-fx-background-color: #F5F6F7; -fx-text-fill: #1A1C22; -fx-background-radius: 999;");
             sourceRow.getChildren().add(badge);
             titleBox.getChildren().addAll(question, sourceRow);
         } else {
@@ -261,36 +263,17 @@ public class MarketsListView {
         double yesProb = getYesProbability(os);
         double noProb = 100.0 - yesProb;
 
-        HBox probRow = new HBox();
+        HBox probRow = new HBox(8);
         probRow.setAlignment(Pos.CENTER_LEFT);
         Label yesPct = new Label(String.format("%.0f%%", yesProb));
         yesPct.getStyleClass().add("percent-yes");
         yesPct.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 11));
 
-        StackPane bar = new StackPane();
-        bar.getStyleClass().add("progress-bar-bg");
-        HBox.setHgrow(bar, Priority.ALWAYS);
-        bar.setMinHeight(4);
-        bar.setMaxHeight(4);
-        bar.setPrefHeight(4);
-        HBox fillWrap = new HBox();
-        fillWrap.setAlignment(Pos.CENTER_LEFT);
-        fillWrap.setMaxHeight(4);
-        Region fill = new Region();
-        fill.getStyleClass().add("progress-bar-yes");
-        fill.setMinHeight(4);
-        fill.setPrefHeight(4);
-        fill.setMaxHeight(4);
-        bar.widthProperty().addListener((o, ov, nv) -> fill.setPrefWidth(nv.doubleValue() * (yesProb / 100.0)));
-        fillWrap.getChildren().add(fill);
-        bar.getChildren().add(fillWrap);
-        bar.setPadding(new Insets(0, 10, 0, 10));
-
         Label noPct = new Label(String.format("%.0f%%", noProb));
         noPct.getStyleClass().add("percent-no");
         noPct.setFont(Font.font("JetBrains Mono", FontWeight.BOLD, 11));
 
-        probRow.getChildren().addAll(yesPct, bar, noPct);
+        probRow.getChildren().addAll(yesPct, noPct);
 
         HBox actions = new HBox(8);
         Button yesBtn = new Button(String.format("Yes · %.0f¢", yesProb));

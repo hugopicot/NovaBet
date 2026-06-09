@@ -87,9 +87,9 @@ public class CasinoLobbyController {
 
     private void refreshBalance() {
         WalletSnapshot wallet = walletRepo.findByUserId(currentUserId);
-        double virtual = wallet == null ? 0 : wallet.virtualBalance();
+        double totalCasino = wallet == null ? 0 : wallet.virtualBalance() + wallet.casinoBalance();
 
-        balanceLabel.setText(formatAmount(virtual));
+        balanceLabel.setText(formatAmount(totalCasino));
 
         boolean canCashout = wageringService.canCashout(currentUserId);
         cashoutBtn.setDisable(!canCashout);

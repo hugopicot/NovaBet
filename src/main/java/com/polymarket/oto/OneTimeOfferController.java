@@ -51,12 +51,17 @@ public class OneTimeOfferController {
     private Timeline countdown;
     private int secondsLeft;
     private double currentAmount;
-private Runnable onClose;
+    private long userId;
+    private Runnable onClose;
     private Runnable onPlayInCasino;
 
     public void setAmount(double amount) {
         this.currentAmount = amount;
         showOtoModal();
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
     }
 
     public void setOnClose(Runnable onClose) {
@@ -139,7 +144,8 @@ private Runnable onClose;
             Parent wheelRoot = loader.load();
             WheelController wheelCtrl = loader.getController();
             wheelCtrl.setStake(currentAmount);
-if (onPlayInCasino != null) {
+            wheelCtrl.setUserId(userId);
+            if (onPlayInCasino != null) {
                 wheelCtrl.setOnPlayInCasino(onPlayInCasino);
             }
 

@@ -36,6 +36,7 @@ public class WalletView {
     private Consumer<Double> onDeposit;
     private Consumer<Double> onWithdraw;
     private Runnable onCasinoClick;
+    private Runnable onLogout;
 
     private Label sidebarBalance;
     private Label topbarBalance;
@@ -61,7 +62,8 @@ public class WalletView {
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
                 null,
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
-                () -> { if (onCasinoClick != null) onCasinoClick.run(); }
+                () -> { if (onCasinoClick != null) onCasinoClick.run(); },
+                () -> { if (onLogout != null) onLogout.run(); }
             )
         );
         sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
@@ -368,6 +370,10 @@ public class WalletView {
 
     public void setOnCasinoClick(Runnable onCasinoClick) {
         this.onCasinoClick = onCasinoClick;
+    }
+
+    public void setOnLogout(Runnable onLogout) {
+        this.onLogout = onLogout;
     }
 
     public BorderPane getView() {

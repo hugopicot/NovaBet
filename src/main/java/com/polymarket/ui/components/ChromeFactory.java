@@ -108,6 +108,15 @@ public final class ChromeFactory {
         balance.getChildren().addAll(bLabel, bRow);
         bottom.getChildren().add(balance);
 
+        if (cb.logout != null) {
+            Button logoutBtn = new Button("← Logout");
+            logoutBtn.getStyleClass().add("btn-back-nav");
+            logoutBtn.setFont(Font.font("Inter", FontWeight.BOLD, 12));
+            logoutBtn.setMaxWidth(Double.MAX_VALUE);
+            logoutBtn.setOnAction(e -> cb.logout.run());
+            bottom.getChildren().add(logoutBtn);
+        }
+
         sidebar.getChildren().addAll(top, spacer, bottom);
         return sidebar;
     }
@@ -250,14 +259,16 @@ public final class ChromeFactory {
         public final Runnable wallet;
         public final Runnable history;
         public final Runnable casino;
+        public final Runnable logout;
 
         public NavCallbacks(Runnable markets, Runnable portfolio,
-                            Runnable wallet, Runnable history, Runnable casino) {
+                            Runnable wallet, Runnable history, Runnable casino, Runnable logout) {
             this.markets = markets;
             this.portfolio = portfolio;
             this.wallet = wallet;
             this.history = history;
             this.casino = casino;
+            this.logout = logout;
         }
     }
 }

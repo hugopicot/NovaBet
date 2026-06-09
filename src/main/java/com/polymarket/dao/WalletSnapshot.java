@@ -6,5 +6,5 @@ package com.polymarket.dao;
  *
  * Lecture seule (record). Pour modifier le wallet, passer par WalletRepository.
  */
-public record WalletSnapshot(long userId, double virtualBalance, double wageredAmount) {
+public record WalletSnapshot(long userId, double virtualBalance, double wageredAmount, double casinoBalance) {
 }

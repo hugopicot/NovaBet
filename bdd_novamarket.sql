@@ -162,6 +162,8 @@ CREATE TABLE IF NOT EXISTS `wallets` (
   `user_id` int DEFAULT NULL,
   `real_balance` decimal(10,2) DEFAULT '0.00',
   `virtual_balance` decimal(10,2) DEFAULT '0.00',
+  `casino_balance` decimal(10,2) DEFAULT '0.00',
+  `wagered_amount` decimal(10,2) DEFAULT '0.00',
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   KEY `user_id` (`user_id`)

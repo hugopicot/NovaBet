@@ -1,5 +1,6 @@
 package com.polymarket.oto;
 
+import com.polymarket.dao.WalletRepository;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.fxml.FXML;
@@ -18,6 +19,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
@@ -59,7 +61,19 @@ public class WheelController {
     private double currentStake = 746;
     private boolean spinning = false;
     private boolean spun = false;
-private Runnable onPlayInCasino;
+    private double currentCredits = 0;
+    private long userId;
+    private WalletRepository walletRepo;
+    private Runnable onPlayInCasino;
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+        try {
+            this.walletRepo = new WalletRepository();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void setOnPlayInCasino(Runnable onPlayInCasino) {
         this.onPlayInCasino = onPlayInCasino;
@@ -179,12 +193,12 @@ private Runnable onPlayInCasino;
     private void showResult(int multiplier) {
         spinning = false;
         spun = true;
-        double credits = currentStake * multiplier;
+        currentCredits = currentStake * multiplier;
 
         landedLabel.setText(multiplier + "×");
-        creditsLabel.setText(formatAmount(credits) + " $");
+        creditsLabel.setText(formatAmount(currentCredits) + " $");
 
-        playInCasinoBtn.setText("Jouer avec " + formatAmount(credits) + " $ au casino →");
+        playInCasinoBtn.setText("Jouer avec " + formatAmount(currentCredits) + " $ au casino →");
         playInCasinoBtn.setVisible(true);
         playInCasinoBtn.setManaged(true);
         footerNote.setVisible(true);
@@ -196,7 +210,14 @@ private Runnable onPlayInCasino;
 
     @FXML
     private void onPlayInCasinoClicked() {
-if (onPlayInCasino != null) {
+        if (currentCredits > 0 && walletRepo != null && userId > 0) {
+            try {
+                walletRepo.creditCasino(userId, currentCredits);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if (onPlayInCasino != null) {
             onPlayInCasino.run();
             return;
         }

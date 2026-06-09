@@ -137,11 +137,22 @@ public class CrashGameView {
         }
 
         WalletSnapshot w = walletRepo.findByUserId(userId);
-        if (w == null || w.virtualBalance() < bet) {
+        double totalCasino = w == null ? 0 : w.virtualBalance() + w.casinoBalance();
+        if (totalCasino < bet) {
             showError("Solde insuffisant"); return;
         }
 
-        try { walletRepo.debitVirtual(userId, bet); } catch (SQLException ex) { showError("Erreur BDD"); return; }
+        try {
+            double remaining = bet;
+            if (w.casinoBalance() > 0) {
+                double fromCasino = Math.min(w.casinoBalance(), remaining);
+                walletRepo.debitCasino(userId, fromCasino);
+                remaining -= fromCasino;
+            }
+            if (remaining > 0) {
+                walletRepo.debitVirtual(userId, remaining);
+            }
+        } catch (SQLException ex) { showError("Erreur BDD"); return; }
         currentBet = bet;
         logic = new CrashGameLogic();
         state = State.FLYING;
@@ -245,7 +256,7 @@ public class CrashGameView {
 
     private void refreshBalance() {
         WalletSnapshot w = walletRepo.findByUserId(userId);
-        double v = (w == null) ? 0 : w.virtualBalance();
+        double v = (w == null) ? 0 : w.virtualBalance() + w.casinoBalance();
         balanceLabel.setText("Crédits casino : " + AMT_FMT.format(v));
     }
 

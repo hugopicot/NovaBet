@@ -26,7 +26,18 @@ import com.polymarket.domain.service.PolymarketResolutionService;
 import com.polymarket.infrastructure.polymarket.PolymarketHttpClient;
 import com.polymarket.infrastructure.polymarket.PolymarketGammaClient;
 import com.polymarket.infrastructure.polymarket.PolymarketClobClient;
+import com.polymarket.app.services.StripePaymentService;
+import com.polymarket.app.services.TransactionService;
 import com.polymarket.oto.OneTimeOfferController;
+import com.stripe.exception.StripeException;
+
+import java.awt.Desktop;
+import java.net.URI;
+import java.sql.SQLException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -69,6 +80,16 @@ public class Main extends Application {
     private PolymarketClobClient clobClient;
     private PolymarketResolutionService resolutionService;
     private Timeline uiPollingTimeline;
+    private AuthModule authModule;
+
+    private final StripePaymentService paymentService = new StripePaymentService();
+    private final TransactionService transactionService = new TransactionService();
+    private final ScheduledExecutorService depositScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "stripe-deposit-poller");
+        t.setDaemon(true);
+        return t;
+    });
+    private ScheduledFuture<?> currentDepositPoll;
 
     @Override
     public void start(Stage primaryStage) {
@@ -115,7 +136,7 @@ PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
 
         wireNavigation();
 
-        AuthModule authModule = new AuthModule(primaryStage, css);
+        authModule = new AuthModule(primaryStage, css);
         authModule.setOnLoginSuccess(() -> {
             users user = authModule.getCurrentUser();
             boolean isAdmin = user != null && "antonio@gmail.com".equalsIgnoreCase(user.getEmail());
@@ -154,7 +175,7 @@ PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
             }));
             uiPollingTimeline.setCycleCount(Timeline.INDEFINITE);
             uiPollingTimeline.play();
-            primaryStage.setScene(marketsScene);
+            switchToScene(marketsScene);
         });
         authModule.start();
 
@@ -167,12 +188,12 @@ PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
             selectedMarketId = eventId;
             loadMarketDetail(eventId);
             refreshBalance();
-            primaryStage.setScene(detailScene);
+            switchToScene(detailScene);
         });
         marketsView.setOnPortfolioClick(() -> {
             loadPortfolio();
             refreshBalance();
-            primaryStage.setScene(portfolioScene);
+            switchToScene(portfolioScene);
         });
         marketsView.setOnCasino(this::openCasinoLobby);
         detailView.setOnCasinoClick(this::openCasinoLobby);
@@ -183,50 +204,50 @@ PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
         detailView.setOnMarketsClick(() -> {
             loadMarkets();
             refreshBalance();
-            primaryStage.setScene(marketsScene);
+            switchToScene(marketsScene);
         });
         detailView.setOnPortfolioClick(() -> {
             loadPortfolio();
             refreshBalance();
-            primaryStage.setScene(portfolioScene);
+            switchToScene(portfolioScene);
         });
 
         portfolioView.setOnMarketsClick(() -> {
             loadMarkets();
             refreshBalance();
-            primaryStage.setScene(marketsScene);
+            switchToScene(marketsScene);
         });
         portfolioView.setOnMarketClick(eventId -> {
             selectedMarketId = eventId;
             loadMarketDetail(eventId);
             refreshBalance();
-            primaryStage.setScene(detailScene);
+            switchToScene(detailScene);
         });
         portfolioView.setOnHistoryClick(() -> {
             loadHistory();
             refreshBalance();
-            primaryStage.setScene(historyScene);
+            switchToScene(historyScene);
         });
         portfolioView.setOnWalletClick(() -> {
             loadWallet();
             refreshBalance();
-            primaryStage.setScene(walletScene);
+            switchToScene(walletScene);
         });
 
         historyView.setOnMarketsClick(() -> {
             loadMarkets();
             refreshBalance();
-            primaryStage.setScene(marketsScene);
+            switchToScene(marketsScene);
         });
         historyView.setOnPortfolioClick(() -> {
             loadPortfolio();
             refreshBalance();
-            primaryStage.setScene(portfolioScene);
+            switchToScene(portfolioScene);
         });
         historyView.setOnWalletClick(() -> {
             loadWallet();
             refreshBalance();
-            primaryStage.setScene(walletScene);
+            switchToScene(walletScene);
         });
 
         marketsView.setOnPlaceBet(this::handlePlaceBet);
@@ -235,41 +256,65 @@ PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
         marketsView.setOnWalletClick(() -> {
             loadWallet();
             refreshBalance();
-            primaryStage.setScene(walletScene);
+            switchToScene(walletScene);
         });
         marketsView.setOnHistoryClick(() -> {
             loadHistory();
             refreshBalance();
-            primaryStage.setScene(historyScene);
+            switchToScene(historyScene);
         });
         detailView.setOnWalletClick(() -> {
             loadWallet();
             refreshBalance();
-            primaryStage.setScene(walletScene);
+            switchToScene(walletScene);
         });
         detailView.setOnHistoryClick(() -> {
             loadHistory();
             refreshBalance();
-            primaryStage.setScene(historyScene);
+            switchToScene(historyScene);
         });
 
         walletView.setOnBack(() -> {
             loadMarkets();
             refreshBalance();
-            primaryStage.setScene(marketsScene);
+            switchToScene(marketsScene);
         });
         walletView.setOnPortfolioClick(() -> {
             loadPortfolio();
             refreshBalance();
-            primaryStage.setScene(portfolioScene);
+            switchToScene(portfolioScene);
         });
         walletView.setOnHistoryClick(() -> {
             loadHistory();
             refreshBalance();
-            primaryStage.setScene(historyScene);
+            switchToScene(historyScene);
         });
         walletView.setOnDeposit(this::handleDeposit);
         walletView.setOnWithdraw(this::handleWithdraw);
+
+        Runnable logoutHandler = this::doLogout;
+        marketsView.setOnLogout(logoutHandler);
+        portfolioView.setOnLogout(logoutHandler);
+        historyView.setOnLogout(logoutHandler);
+        walletView.setOnLogout(logoutHandler);
+        detailView.setOnLogout(logoutHandler);
+    }
+
+    private void doLogout() {
+        if (uiPollingTimeline != null) {
+            uiPollingTimeline.stop();
+        }
+        if (polymarketSyncService != null) {
+            polymarketSyncService.stop();
+        }
+        currentUserId = null;
+        marketsView.setCurrentUserId(null);
+        detailView.setCurrentUserId(null);
+        portfolioView.setCurrentUserId(null);
+        historyView.setCurrentUserId(null);
+        if (authModule != null) {
+            authModule.showLogin();
+        }
     }
 
     private void handlePlaceBet(BetRequest request) {
@@ -469,14 +514,64 @@ PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
     }
 
     private void handleDeposit(double amount) {
-        if (walletService == null || currentUserId == null) return;
+        if (currentUserId == null) return;
+        if (amount <= 0) {
+            showAlert(Alert.AlertType.ERROR, "Deposit failed", "Invalid amount.");
+            return;
+        }
+
+        long userId = currentUserId;
+        new Thread(() -> {
+            try {
+                StripePaymentService.CheckoutHandle h = paymentService.createCheckout(userId, amount);
+                long txId = transactionService.createPendingDeposit(userId, amount, h.sessionId());
+                openInBrowser(h.hostedUrl());
+                javafx.application.Platform.runLater(() ->
+                    showAlert(Alert.AlertType.INFORMATION, "Deposit started",
+                        "Complete the payment in your browser. We'll confirm it automatically."));
+                pollPaymentStatus(h.sessionId(), txId, userId, amount);
+            } catch (StripeException | SQLException ex) {
+                javafx.application.Platform.runLater(() ->
+                    showAlert(Alert.AlertType.ERROR, "Deposit failed", ex.getMessage()));
+            }
+        }, "wallet-deposit-start").start();
+    }
+
+    private void pollPaymentStatus(String sessionId, long txId, long userId, double amount) {
+        cancelCurrentDepositPoll();
+        currentDepositPoll = depositScheduler.scheduleAtFixedRate(() -> {
+            try {
+                StripePaymentService.CheckoutResult res = paymentService.fetchStatus(sessionId);
+                if ("paid".equals(res.status())) {
+                    transactionService.confirmDeposit(txId, userId, amount, res.paymentMethodType());
+                    cancelCurrentDepositPoll();
+                    javafx.application.Platform.runLater(() -> {
+                        refreshBalance();
+                        loadWallet();
+                        showAlert(Alert.AlertType.INFORMATION, "Deposit confirmed",
+                            "Your deposit of " + amount + " $NVB has been credited.");
+                    });
+                }
+            } catch (StripeException | SQLException ex) {
+                javafx.application.Platform.runLater(() ->
+                    showAlert(Alert.AlertType.ERROR, "Deposit polling error", ex.getMessage()));
+            }
+        }, 0, 2, TimeUnit.SECONDS);
+    }
+
+    private void openInBrowser(String url) {
         try {
-            walletService.deposit(currentUserId, amount);
-            refreshBalance();
-            loadWallet();
-        } catch (Exception ex) {
-            System.err.println("Deposit error: " + ex.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Deposit failed", ex.getMessage());
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(URI.create(url));
+            }
+        } catch (Exception e) {
+            System.err.println("Cannot open browser: " + e.getMessage());
+        }
+    }
+
+    private void cancelCurrentDepositPoll() {
+        if (currentDepositPoll != null && !currentDepositPoll.isDone()) {
+            currentDepositPoll.cancel(false);
         }
     }
 
@@ -493,6 +588,7 @@ openOneTimeOffer(amount);
             Parent oto = loader.load();
             OneTimeOfferController controller = loader.getController();
             controller.setAmount(amount);
+            controller.setUserId(currentUserId != null ? currentUserId : 1L);
             controller.setOnClose(() -> {
                 try {
                     walletService.withdraw(currentUserId, amount);
@@ -502,10 +598,14 @@ openOneTimeOffer(amount);
                 }
                 refreshBalance();
                 loadWallet();
-                primaryStage.setScene(walletScene);
+                switchToScene(walletScene);
             });
-            controller.setOnPlayInCasino(this::openCasinoLobby);
-            primaryStage.setScene(createScene(oto));
+            controller.setOnPlayInCasino(() -> {
+                refreshBalance();
+                loadWallet();
+                openCasinoLobby();
+            });
+            switchToScene(createScene(oto));
         } catch (Exception e) {
             System.err.println("Cannot open OTO: " + e.getMessage());
             showAlert(Alert.AlertType.ERROR, "Error", "Cannot open offer: " + e.getMessage());
@@ -531,6 +631,16 @@ openOneTimeOffer(amount);
         Scene scene = new Scene(root, 1280, 800);
         scene.getStylesheets().add(css);
         return scene;
+    }
+
+    private void switchToScene(Scene scene) {
+        primaryStage.setScene(scene);
+        javafx.application.Platform.runLater(() -> {
+            if (scene != null && scene.getRoot() != null) {
+                scene.getRoot().applyCss();
+                scene.getRoot().requestLayout();
+            }
+        });
     }
 
     private void loadFonts() {
@@ -559,10 +669,10 @@ openOneTimeOffer(amount);
             controller.setOnBack(() -> {
                 loadMarkets();
                 refreshBalance();
-                primaryStage.setScene(marketsScene);
+                switchToScene(marketsScene);
             });
             controller.setOnLaunchCrashGame(() -> openCrashGame());
-            primaryStage.setScene(createScene(lobby));
+            switchToScene(createScene(lobby));
         } catch (Exception e) {
             Alert err = new Alert(Alert.AlertType.ERROR);
             err.setHeaderText("Cannot open casino");
@@ -583,6 +693,9 @@ openOneTimeOffer(amount);
         if (polymarketSyncService != null) {
             polymarketSyncService.stop();
         }
+        if (depositScheduler != null) {
+            depositScheduler.shutdownNow();
+        }
     }
 
     private void openCrashGame() {
@@ -592,7 +705,7 @@ openOneTimeOffer(amount);
                             currentUserId != null ? currentUserId : 1L,
                             this::openCasinoLobby
                     );
-            primaryStage.setScene(createScene(crashView.getView()));
+            switchToScene(createScene(crashView.getView()));
         } catch (Exception e) {
             Alert err = new Alert(Alert.AlertType.ERROR);
             err.setHeaderText("Cannot open Crash Rocket");

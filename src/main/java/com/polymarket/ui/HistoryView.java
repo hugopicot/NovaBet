@@ -30,6 +30,7 @@ public class HistoryView {
     private Runnable onPortfolioClick;
     private Runnable onWalletClick;
     private Runnable onCasinoClick;
+    private Runnable onLogout;
     private Long currentUserId;
 
     private TableView<transactions> transactionTable;
@@ -54,7 +55,8 @@ public class HistoryView {
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 null,
-                () -> { if (onCasinoClick != null) onCasinoClick.run(); }
+                () -> { if (onCasinoClick != null) onCasinoClick.run(); },
+                () -> { if (onLogout != null) onLogout.run(); }
             )
         );
         sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
@@ -251,5 +253,9 @@ public class HistoryView {
 
     public void setOnCasinoClick(Runnable onCasinoClick) {
         this.onCasinoClick = onCasinoClick;
+    }
+
+    public void setOnLogout(Runnable onLogout) {
+        this.onLogout = onLogout;
     }
 }

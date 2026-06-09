@@ -27,6 +27,7 @@ public class CreateMarketView {
     private Runnable onWalletClick;
     private Runnable onHistoryClick;
     private Runnable onCasinoClick;
+    private Runnable onLogout;
     private OnMarketCreatedCallback onMarketCreated;
 
     private TextField questionField;
@@ -57,7 +58,8 @@ public class CreateMarketView {
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
-                () -> { if (onCasinoClick != null) onCasinoClick.run(); }
+                () -> { if (onCasinoClick != null) onCasinoClick.run(); },
+                () -> { if (onLogout != null) onLogout.run(); }
             )
         );
         sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
@@ -293,6 +295,10 @@ public class CreateMarketView {
 
     public void setOnCasinoClick(Runnable onCasinoClick) {
         this.onCasinoClick = onCasinoClick;
+    }
+
+    public void setOnLogout(Runnable onLogout) {
+        this.onLogout = onLogout;
     }
 
     public void setOnMarketCreated(OnMarketCreatedCallback onMarketCreated) {

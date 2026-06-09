@@ -50,7 +50,7 @@ public class WageringService {
     }
 
     /**
-     * Enregistre une mise : débit du solde virtuel + incrément du compteur de wagering.
+     * Enregistre une mise : débit du solde casino puis virtuel + incrément du compteur de wagering.
      * Transaction atomique — soit les deux opérations passent, soit aucune.
      *
      * @throws WageringServiceException si montant ≤ 0, wallet introuvable,
@@ -64,15 +64,27 @@ public class WageringService {
         if (wallet == null) {
             throw new WageringServiceException("Wallet introuvable pour l'utilisateur " + userId);
         }
-        if (wallet.virtualBalance() < amount) {
-            throw new WageringServiceException("Credits casino insuffisants : solde=" + wallet.virtualBalance()
+        double totalCasino = wallet.virtualBalance() + wallet.casinoBalance();
+        if (totalCasino < amount) {
+            throw new WageringServiceException("Credits casino insuffisants : solde=" + totalCasino
                     + ", mise=" + amount);
         }
 
         try {
             connection.setAutoCommit(false);
-            int debited = walletRepository.debitVirtual(userId, amount);
-            if (debited != 1) throw new SQLException("Echec debit virtual_balance");
+            double remaining = amount;
+            // Débiter d'abord le casino_balance (crédits OTO non retirables)
+            if (wallet.casinoBalance() > 0) {
+                double fromCasino = Math.min(wallet.casinoBalance(), remaining);
+                int debitedCasino = walletRepository.debitCasino(userId, fromCasino);
+                if (debitedCasino != 1) throw new SQLException("Echec debit casino_balance");
+                remaining -= fromCasino;
+            }
+            // Puis débiter le virtual_balance
+            if (remaining > 0) {
+                int debited = walletRepository.debitVirtual(userId, remaining);
+                if (debited != 1) throw new SQLException("Echec debit virtual_balance");
+            }
             int incremented = walletRepository.incrementWagered(userId, amount);
             if (incremented != 1) throw new SQLException("Echec increment wagered_amount");
             connection.commit();

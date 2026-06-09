@@ -101,8 +101,8 @@ public class LuckyNovaController {
         try {
             var wallet = slotService.getWallet(userId);
             if (wallet != null) {
-                double virtual = wallet.getVirtualBalance();
-                balanceLabel.setText(String.format("%.2f", virtual));
+                double total = wallet.getVirtualBalance() + wallet.getCasinoBalance();
+                balanceLabel.setText(String.format("%.2f", total));
             }
         } catch (Exception e) {
             balanceLabel.setText("--");

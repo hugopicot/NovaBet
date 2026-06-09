@@ -27,7 +27,7 @@ public class WalletRepository {
     }
 
     public WalletSnapshot findByUserId(long userId) {
-        String sql = "SELECT user_id, virtual_balance, wagered_amount " +
+        String sql = "SELECT user_id, virtual_balance, wagered_amount, casino_balance " +
                 "FROM wallets WHERE user_id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, userId);
@@ -36,7 +36,8 @@ public class WalletRepository {
                     return new WalletSnapshot(
                             rs.getLong("user_id"),
                             rs.getDouble("virtual_balance"),
-                            rs.getDouble("wagered_amount")
+                            rs.getDouble("wagered_amount"),
+                            rs.getDouble("casino_balance")
                     );
                 }
             }
@@ -92,6 +93,26 @@ public class WalletRepository {
     /** Incrémente le compteur de wagering. */
     public int incrementWagered(long userId, double amount) throws SQLException {
         String sql = "UPDATE wallets SET wagered_amount = wagered_amount + ? WHERE user_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setDouble(1, amount);
+            ps.setLong(2, userId);
+            return ps.executeUpdate();
+        }
+    }
+
+    /** Crédite le solde casino (crédits OTO non retirables). */
+    public int creditCasino(long userId, double amount) throws SQLException {
+        String sql = "UPDATE wallets SET casino_balance = casino_balance + ? WHERE user_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setDouble(1, amount);
+            ps.setLong(2, userId);
+            return ps.executeUpdate();
+        }
+    }
+
+    /** Débite le solde casino. */
+    public int debitCasino(long userId, double amount) throws SQLException {
+        String sql = "UPDATE wallets SET casino_balance = casino_balance - ? WHERE user_id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setDouble(1, amount);
             ps.setLong(2, userId);

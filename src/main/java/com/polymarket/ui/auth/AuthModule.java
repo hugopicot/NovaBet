@@ -69,6 +69,15 @@ public class AuthModule {
         return currentUser;
     }
 
+    public void showLogin() {
+        if (onboardingController != null) {
+            onboardingController.showLoginOnly();
+        }
+        if (onboardingScene != null) {
+            primaryStage.setScene(onboardingScene);
+        }
+    }
+
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

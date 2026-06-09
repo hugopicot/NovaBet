@@ -52,6 +52,7 @@ public class MarketDetailView {
     private Runnable onWalletClick;
     private Runnable onHistoryClick;
     private Runnable onCasinoClick;
+    private Runnable onLogout;
     private Consumer<BetRequest> onPlaceBet;
     private Consumer<String> onAdminSettle;
     private boolean isAdmin = false;
@@ -107,7 +108,8 @@ public class MarketDetailView {
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
-                () -> { if (onCasinoClick != null) onCasinoClick.run(); }
+                () -> { if (onCasinoClick != null) onCasinoClick.run(); },
+                () -> { if (onLogout != null) onLogout.run(); }
             )
         );
         sidebarBalance = ChromeFactory.findSidebarBalance(sidebar);
@@ -302,19 +304,6 @@ public class MarketDetailView {
         legend.getChildren().addAll(yesL, sp, noL);
         barWrap.getChildren().add(legend);
 
-        StackPane bigBar = new StackPane();
-        bigBar.setStyle("-fx-background-color: -no-dim; -fx-background-radius: 4;");
-        bigBar.setPrefHeight(10);
-        bigBar.setMinHeight(10);
-        bigBar.setMaxHeight(10);
-        bigBar.setAlignment(Pos.CENTER_LEFT);
-        Region yesFill = new Region();
-        yesFill.setStyle("-fx-background-color: -yes; -fx-background-radius: 4 0 0 4;");
-        yesFill.setPrefHeight(10);
-        yesFill.setMinHeight(10);
-        yesFill.setMaxHeight(10);
-        bigBar.getChildren().add(yesFill);
-
         HBox legendVals = new HBox();
         legendVals.setAlignment(Pos.CENTER_LEFT);
         Label yv = new Label("--%");
@@ -327,9 +316,7 @@ public class MarketDetailView {
         nv.setId("noProbLabel");
         legendVals.getChildren().addAll(yv, s2, nv);
 
-        barWrap.getChildren().addAll(bigBar, legendVals);
-
-        bigBar.widthProperty().addListener((o, ov, nvw) -> updateProbBarFill(yesFill, nvw.doubleValue()));
+        barWrap.getChildren().add(legendVals);
 
         NumberAxis xAxis = new NumberAxis();
         NumberAxis yAxis = new NumberAxis(0, 100, 25);
@@ -368,13 +355,6 @@ public class MarketDetailView {
 
         card.getChildren().addAll(title, barWrap, chartWrap);
         return card;
-    }
-
-    private void updateProbBarFill(Region fill, double totalWidth) {
-        outcomes y = findOutcome(OutcomeLabel.YES);
-        if (y == null) return;
-        double pct = y.getOdds();
-        fill.setPrefWidth(totalWidth * pct);
     }
 
     private VBox buildTradePanel() {
@@ -956,6 +936,10 @@ public class MarketDetailView {
 
     public void setOnCasinoClick(Runnable onCasinoClick) {
         this.onCasinoClick = onCasinoClick;
+    }
+
+    public void setOnLogout(Runnable onLogout) {
+        this.onLogout = onLogout;
     }
 
     public void setBalance(double balance) {

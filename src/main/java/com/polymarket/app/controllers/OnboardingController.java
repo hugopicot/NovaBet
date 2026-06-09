@@ -219,6 +219,18 @@ public class OnboardingController {
         step1Box.setVisible(true);
     }
 
+    public void showLoginOnly() {
+        step1Box.setVisible(false);
+        step2Box.setVisible(false);
+        step3Box.setVisible(false);
+        step4Box.setVisible(false);
+        if (cguBox != null) cguBox.setVisible(false);
+        loginBox.setVisible(true);
+        loginEmailField.clear();
+        loginPasswordField.clear();
+        loginError.setText("");
+    }
+
     @FXML
     public void loginUser() {
         String email = loginEmailField.getText().trim();
