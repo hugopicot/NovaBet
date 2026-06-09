@@ -26,6 +26,11 @@ public class MarketServiceImpl implements MarketService {
     }
 
     @Override
+    public List<events> getOpenMarkets() {
+        return eventDao.findOpen();
+    }
+
+    @Override
     public events getMarketById(Long id) {
         return eventDao.findById(id);
     }

@@ -94,6 +94,25 @@ public class eventsDao {
         return null;
     }
 
+    public List<events> findOpen() {
+        List<events> list = new ArrayList<>();
+        String sql = "SELECT * FROM events WHERE status = 'OPEN'";
+
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
     public List<events> findOpenBySource(String source) {
         List<events> list = new ArrayList<>();
         String sql = "SELECT * FROM events WHERE source = ? AND status = 'OPEN'";
@@ -103,6 +122,25 @@ public class eventsDao {
             ps.setString(1, source);
 
             ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<events> findExpiredOpenLocalMarkets() {
+        List<events> list = new ArrayList<>();
+        String sql = "SELECT * FROM events WHERE status = 'OPEN' AND (source IS NULL OR source != 'POLYMARKET') AND end_date IS NOT NULL AND end_date < NOW()";
+
+        try {
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
 
             while (rs.next()) {
                 list.add(mapRow(rs));

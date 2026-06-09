@@ -52,6 +52,8 @@ public class PolymarketResolutionService {
             return;
         }
 
+        this.eventTitle = event.getTitle();
+
         event.setStatus("CLOSED");
         event.setResolution(winningLabel);
         eventDao.update(event);
@@ -102,10 +104,13 @@ public class PolymarketResolutionService {
         return null;
     }
 
+    private String eventTitle;
+
     private void recordTransaction(long userId, String type, double amount) {
         String createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String marketName = eventTitle != null ? eventTitle : "Unknown market";
         try {
-            transactionDao.add(new transactions(userId, type, amount, createdAt));
+            transactionDao.add(new transactions(userId, type, amount, createdAt, marketName));
         } catch (Exception e) {
             LOGGER.warning("Failed to record transaction: " + e.getMessage());
         }

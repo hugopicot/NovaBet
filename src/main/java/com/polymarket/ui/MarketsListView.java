@@ -26,7 +26,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -35,7 +37,6 @@ public class MarketsListView {
     private BorderPane root;
     private Runnable onLogout;
     private Consumer<Long> onMarketClick;
-    private Runnable onCreateMarket;
     private Runnable onPortfolioClick;
     private Runnable onWalletClick;
     private Runnable onHistoryClick;
@@ -50,6 +51,8 @@ public class MarketsListView {
     private Label sidebarBalance;
     private Label topbarBalance;
     private String activeFilter = "All";
+    private List<events> allMarkets = new ArrayList<>();
+    private Map<Long, List<outcomes>> currentOutcomesMap;
 
     public MarketsListView() {
         root = new BorderPane();
@@ -63,7 +66,6 @@ public class MarketsListView {
             new ChromeFactory.NavCallbacks(
                 null,
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
-                () -> { if (onCreateMarket != null) onCreateMarket.run(); },
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
                 () -> { if (onCasino != null) onCasino.run(); }
@@ -105,18 +107,6 @@ public class MarketsListView {
             catPill("Absurd", false)
         );
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        row.getChildren().add(spacer);
-
-        Button createBtn = new Button("+ Create market");
-        createBtn.getStyleClass().add("deposit-btn");
-        createBtn.setFont(Font.font("Inter", FontWeight.BOLD, 11));
-        createBtn.setOnAction(e -> {
-            if (onCreateMarket != null) onCreateMarket.run();
-        });
-        row.getChildren().add(createBtn);
-
         return row;
     }
 
@@ -126,6 +116,7 @@ public class MarketsListView {
         b.setFont(Font.font("Inter", active ? FontWeight.BOLD : FontWeight.MEDIUM, 12));
         b.setOnAction(e -> {
             activeFilter = label;
+            applyFilter();
         });
         return b;
     }
@@ -184,12 +175,33 @@ public class MarketsListView {
         return scroll;
     }
 
-    public void setMarkets(List<events> markets, java.util.Map<Long, List<outcomes>> outcomesMap) {
-        marketList.setAll(markets);
-        refreshGrid(outcomesMap);
+    public void setMarkets(List<events> markets, Map<Long, List<outcomes>> outcomesMap) {
+        this.allMarkets = new ArrayList<>(markets);
+        this.currentOutcomesMap = outcomesMap;
+        applyFilter();
     }
 
-    private void refreshGrid(java.util.Map<Long, List<outcomes>> outcomesMap) {
+    private void applyFilter() {
+        List<events> filtered = new ArrayList<>();
+        for (events ev : allMarkets) {
+            if ("All".equals(activeFilter)) {
+                filtered.add(ev);
+            } else if ("Tech / AI".equals(activeFilter)) {
+                String t = ev.getTitle() != null ? ev.getTitle().toLowerCase() : "";
+                if (t.contains("ai") || t.contains("gpt") || t.contains("tech") || t.contains("claude") || t.contains("openai")) filtered.add(ev);
+            } else if ("Sport".equals(activeFilter)) {
+                String t = ev.getTitle() != null ? ev.getTitle().toLowerCase() : "";
+                if (t.contains("sport") || t.contains("foot") || t.contains("match") || t.contains("champion") || t.contains("league") || t.contains("f1") || t.contains("grand prix") || t.contains("psg") || t.contains("basket") || t.contains("tennis")) filtered.add(ev);
+            } else if ("Absurd".equals(activeFilter)) {
+                String t = ev.getTitle() != null ? ev.getTitle().toLowerCase() : "";
+                if (t.contains("alien") || t.contains("ufo") || t.contains("ovni") || t.contains("absurd") || t.contains("conspiracy")) filtered.add(ev);
+            }
+        }
+        marketList.setAll(filtered);
+        refreshGrid(currentOutcomesMap);
+    }
+
+    private void refreshGrid(Map<Long, List<outcomes>> outcomesMap) {
         marketsGrid.getChildren().clear();
         marketsCountLabel.setText(String.format("%,d", marketList.size()));
 
@@ -401,10 +413,6 @@ public class MarketsListView {
 
     public void setOnMarketClick(Consumer<Long> onMarketClick) {
         this.onMarketClick = onMarketClick;
-    }
-
-    public void setOnCreateMarket(Runnable onCreateMarket) {
-        this.onCreateMarket = onCreateMarket;
     }
 
     public void setOnPortfolioClick(Runnable onPortfolioClick) {

@@ -4,14 +4,26 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
 
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.polymarket.casino.slots.LuckyNovaController" alignment="CENTER" spacing="20" style="-fx-background-color: #1E1426; -fx-padding: 30;">
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.polymarket.casino.slots.LuckyNovaController" alignment="CENTER" spacing="18" style="-fx-background-color: #1E1426; -fx-padding: 30;">
     <Label text="Lucky Nova" style="-fx-text-fill: white; -fx-font-size: 24;"/>
+    <HBox alignment="CENTER" spacing="10">
+        <Label text="Casino Credits:" style="-fx-text-fill: #cccccc; -fx-font-size: 14;"/>
+        <Label fx:id="balanceLabel" text="0" style="-fx-text-fill: gold; -fx-font-size: 14; -fx-font-weight: bold;"/>
+    </HBox>
     <HBox alignment="CENTER" spacing="15">
         <Label fx:id="reel1" text="?" style="-fx-text-fill: gold; -fx-font-size: 48;"/>
         <Label fx:id="reel2" text="?" style="-fx-text-fill: gold; -fx-font-size: 48;"/>
         <Label fx:id="reel3" text="?" style="-fx-text-fill: gold; -fx-font-size: 48;"/>
     </HBox>
-    <Button text="SPIN" onAction="#spin" style="-fx-padding: 10 30; -fx-font-size: 16;"/>
+    <HBox alignment="CENTER" spacing="10">
+        <Label text="Bet:" style="-fx-text-fill: #cccccc; -fx-font-size: 14;"/>
+        <TextField fx:id="betField" text="10" prefWidth="80" style="-fx-font-size: 14;"/>
+    </HBox>
+    <HBox alignment="CENTER" spacing="12">
+        <Button text="SPIN" onAction="#spin" style="-fx-padding: 10 30; -fx-font-size: 16;"/>
+        <Button text="Close" onAction="#closeWindow" style="-fx-padding: 10 24; -fx-font-size: 14;"/>
+    </HBox>
     <Label fx:id="resultLabel" style="-fx-text-fill: white; -fx-font-size: 18;"/>
 </VBox>

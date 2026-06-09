@@ -73,6 +73,7 @@ public class PolymarketHttpClient {
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .header("Accept", "application/json")
+                        .header("User-Agent", "NovaBet/1.0")
                         .timeout(Duration.ofSeconds(15))
                         .GET()
                         .build();

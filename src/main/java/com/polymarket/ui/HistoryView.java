@@ -28,7 +28,6 @@ public class HistoryView {
     private BorderPane root;
     private Runnable onMarketsClick;
     private Runnable onPortfolioClick;
-    private Runnable onCreateMarketClick;
     private Runnable onWalletClick;
     private Runnable onCasinoClick;
     private Long currentUserId;
@@ -53,7 +52,6 @@ public class HistoryView {
             new ChromeFactory.NavCallbacks(
                 () -> { if (onMarketsClick != null) onMarketsClick.run(); },
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
-                () -> { if (onCreateMarketClick != null) onCreateMarketClick.run(); },
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 null,
                 () -> { if (onCasinoClick != null) onCasinoClick.run(); }
@@ -245,10 +243,6 @@ public class HistoryView {
 
     public void setOnPortfolioClick(Runnable onPortfolioClick) {
         this.onPortfolioClick = onPortfolioClick;
-    }
-
-    public void setOnCreateMarketClick(Runnable onCreateMarketClick) {
-        this.onCreateMarketClick = onCreateMarketClick;
     }
 
     public void setOnWalletClick(Runnable onWalletClick) {

@@ -78,11 +78,13 @@ public class BettingServiceImpl implements BettingService {
         betDao.add(bet);
 
         String createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String marketName = event.getTitle() != null ? event.getTitle() : "Unknown market";
         transactionDao.add(new transactions(
             request.userId(),
             "BET_PLACED",
             totalCost.negate().doubleValue(),
-            createdAt
+            createdAt,
+            marketName
         ));
 
         wallets updatedWallet = walletDao.findById(wallet.getId());

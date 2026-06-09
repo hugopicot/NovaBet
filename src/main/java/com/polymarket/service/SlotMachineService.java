@@ -98,6 +98,10 @@ public class SlotMachineService {
         return symbols;
     }
 
+    public wallets getWallet(long userId) {
+        return walletDAO.findByUserId(userId);
+    }
+
     public static class SpinResult {
         public final int[] indices;
         public final double winAmount;

@@ -1671,3 +1671,37 @@
     -fx-text-fill: -fg-3;
     -fx-font-size: 13px;
 }
+
+.prob-chart {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.prob-chart .chart-content {
+    -fx-background-color: transparent;
+}
+
+.prob-chart .chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.prob-chart .chart-series-line.series0 {
+    -fx-stroke: -yes;
+    -fx-stroke-width: 2px;
+}
+
+.prob-chart .chart-series-line.series1 {
+    -fx-stroke: -no;
+    -fx-stroke-width: 2px;
+}
+
+.prob-chart .axis {
+    -fx-tick-label-fill: -fg-3;
+    -fx-font-family: "Inter", sans-serif;
+    -fx-font-size: 9px;
+}
+
+.chart-empty-label {
+    -fx-text-fill: -fg-3;
+    -fx-font-size: 12px;
+}

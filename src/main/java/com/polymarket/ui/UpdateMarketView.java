@@ -57,7 +57,6 @@ public class UpdateMarketView {
             new ChromeFactory.NavCallbacks(
                 () -> { if (onMarketsClick != null) onMarketsClick.run(); },
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
-                null,
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
                 () -> { if (onCasinoClick != null) onCasinoClick.run(); }

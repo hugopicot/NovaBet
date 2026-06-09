@@ -6,13 +6,23 @@ public class transactions {
     private String type;
     private double amount;
     private String createdAt;
+    private String description;
 
-    public transactions(Long id, Long userId, String type, double amount, String createdAt){
+    public transactions(Long id, Long userId, String type, double amount, String createdAt, String description){
         this.id = id;
         this.userId = userId;
         this.type = type;
         this.amount = amount;
         this.createdAt = createdAt;
+        this.description = description;
+    }
+
+    public transactions(Long userId, String type, double amount, String createdAt, String description) {
+        this.userId = userId;
+        this.type = type;
+        this.amount = amount;
+        this.createdAt = createdAt;
+        this.description = description;
     }
 
     public transactions(Long userId, String type, double amount, String createdAt) {
@@ -63,6 +73,14 @@ public class transactions {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override

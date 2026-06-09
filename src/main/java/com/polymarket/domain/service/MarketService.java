@@ -8,6 +8,8 @@ public interface MarketService {
 
     List<events> getAllMarkets();
 
+    List<events> getOpenMarkets();
+
     events getMarketById(Long id);
 
     events createMarket(events event);

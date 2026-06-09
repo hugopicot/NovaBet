@@ -1,5 +1,6 @@
 package com.polymarket.domain.service;
 
+import com.polymarket.dao.PriceHistoryDao;
 import com.polymarket.dao.eventsDao;
 import com.polymarket.dao.outcomesDao;
 import com.polymarket.infrastructure.polymarket.PolymarketClobClient;
@@ -30,6 +31,7 @@ public class PolymarketSyncService {
     private static final long MARKET_SYNC_INTERVAL_MIN = 5;
     private static final long PRICE_SYNC_INTERVAL_MIN = 1;
     private static final long RESOLUTION_SYNC_INTERVAL_MIN = 2;
+    private static final long LOCAL_EXPIRATION_SYNC_INTERVAL_MIN = 5;
     private static final int MARKET_BATCH_SIZE = 20;
     private static final int MAX_POLYMARKET_MARKETS = 50;
 
@@ -38,6 +40,7 @@ public class PolymarketSyncService {
     private final eventsDao eventDao;
     private final outcomesDao outcomeDao;
     private final PolymarketResolutionService resolutionService;
+    private final PriceHistoryDao priceHistoryDao;
 
     private ScheduledExecutorService scheduler;
 
@@ -46,13 +49,15 @@ public class PolymarketSyncService {
             PolymarketClobClient clobClient,
             eventsDao eventDao,
             outcomesDao outcomeDao,
-            PolymarketResolutionService resolutionService
+            PolymarketResolutionService resolutionService,
+            PriceHistoryDao priceHistoryDao
     ) {
         this.gammaClient = gammaClient;
         this.clobClient = clobClient;
         this.eventDao = eventDao;
         this.outcomeDao = outcomeDao;
         this.resolutionService = resolutionService;
+        this.priceHistoryDao = priceHistoryDao;
     }
 
     public void start() {
@@ -80,6 +85,13 @@ public class PolymarketSyncService {
                 this::syncResolutions,
                 30,
                 RESOLUTION_SYNC_INTERVAL_MIN,
+                TimeUnit.MINUTES
+        );
+
+        scheduler.scheduleWithFixedDelay(
+                this::syncLocalMarketExpirations,
+                5,
+                LOCAL_EXPIRATION_SYNC_INTERVAL_MIN,
                 TimeUnit.MINUTES
         );
 
@@ -174,6 +186,7 @@ public class PolymarketSyncService {
                                 if (o != null) {
                                     double newOdds = Math.max(0.01, Math.min(0.99, price.getPrice()));
                                     outcomeDao.updateOdds(o.getId(), newOdds);
+                                    priceHistoryDao.recordPrice(event.getId(), o.getId(), newOdds);
                                     updated++;
                                 }
                             }
@@ -227,6 +240,25 @@ public class PolymarketSyncService {
             LOGGER.info("Resolution sync completed: " + resolved + " markets resolved");
         } catch (Exception e) {
             LOGGER.warning("Resolution sync failed: " + e.getMessage());
+        }
+    }
+
+    public void syncLocalMarketExpirations() {
+        try {
+            List<events> expired = eventDao.findExpiredOpenLocalMarkets();
+            int closed = 0;
+            for (events event : expired) {
+                if (event.getResolution() != null && !event.getResolution().isBlank()) {
+                    resolutionService.settleMarket(event.getId(), event.getResolution());
+                } else {
+                    event.setStatus("CLOSED");
+                    eventDao.update(event);
+                }
+                closed++;
+            }
+            LOGGER.info("Local market expiration sync completed: " + closed + " markets closed");
+        } catch (Exception e) {
+            LOGGER.warning("Local market expiration sync failed: " + e.getMessage());
         }
     }
 

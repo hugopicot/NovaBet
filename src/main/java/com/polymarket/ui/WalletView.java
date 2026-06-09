@@ -32,7 +32,6 @@ public class WalletView {
     private BorderPane root;
     private Runnable onBack;
     private Runnable onPortfolioClick;
-    private Runnable onCreateMarketClick;
     private Runnable onHistoryClick;
     private Consumer<Double> onDeposit;
     private Consumer<Double> onWithdraw;
@@ -60,7 +59,6 @@ public class WalletView {
             new ChromeFactory.NavCallbacks(
                 () -> { if (onBack != null) onBack.run(); },
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
-                () -> { if (onCreateMarketClick != null) onCreateMarketClick.run(); },
                 null,
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
                 () -> { if (onCasinoClick != null) onCasinoClick.run(); }
@@ -273,6 +271,20 @@ public class WalletView {
             }
         });
 
+        TableColumn<transactions, String> marketCol = new TableColumn<>("MARKET");
+        marketCol.setCellValueFactory(new PropertyValueFactory<>("description"));
+        marketCol.setCellFactory(c -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); setStyle(""); }
+                else {
+                    setText(item);
+                    setStyle("-fx-text-fill: -fg-0; -fx-font-family: 'Inter'; -fx-font-size: 12px;");
+                }
+            }
+        });
+
         TableColumn<transactions, String> typeCol = new TableColumn<>("TYPE");
         typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
         typeCol.setCellFactory(c -> new TableCell<>() {
@@ -308,7 +320,7 @@ public class WalletView {
             }
         });
 
-        historyTable.getColumns().addAll(dateCol, typeCol, amtCol);
+        historyTable.getColumns().addAll(dateCol, marketCol, typeCol, amtCol);
         wrap.getChildren().add(historyTable);
         VBox.setVgrow(wrap, Priority.ALWAYS);
 
@@ -316,10 +328,15 @@ public class WalletView {
         return section;
     }
 
+    public void setBalance(double balance) {
+        String s = String.format("%.2f", balance);
+        if (sidebarBalance != null) sidebarBalance.setText(s);
+        if (topbarBalance != null) topbarBalance.setText(s);
+    }
+
     public void setBalances(double total, double real, double virtual) {
         String tt = String.format("%,.2f", total);
-        if (sidebarBalance != null) sidebarBalance.setText(tt);
-        if (topbarBalance != null) topbarBalance.setText(tt);
+        setBalance(total);
         if (totalValue != null) totalValue.setText(tt);
         if (realValue != null) realValue.setText(String.format("%,.2f", real));
         if (virtualValue != null) virtualValue.setText(String.format("%,.2f", virtual));
@@ -343,10 +360,6 @@ public class WalletView {
 
     public void setOnPortfolioClick(Runnable onPortfolioClick) {
         this.onPortfolioClick = onPortfolioClick;
-    }
-
-    public void setOnCreateMarketClick(Runnable onCreateMarketClick) {
-        this.onCreateMarketClick = onCreateMarketClick;
     }
 
     public void setOnHistoryClick(Runnable onHistoryClick) {

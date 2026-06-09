@@ -12,17 +12,15 @@ import com.polymarket.domain.service.BettingServiceImpl;
 import com.polymarket.domain.service.MarketService;
 import com.polymarket.domain.service.MarketServiceImpl;
 import com.polymarket.model.*;
-import com.polymarket.ui.CreateMarketView;
-import com.polymarket.ui.DeleteMarketView;
 import com.polymarket.ui.HistoryView;
 import com.polymarket.ui.MarketDetailView;
 import com.polymarket.ui.MarketsListView;
 import com.polymarket.ui.PortfolioView;
-import com.polymarket.ui.UpdateMarketView;
 import com.polymarket.ui.WalletView;
 import com.polymarket.ui.auth.AuthModule;
 import com.polymarket.domain.service.WalletService;
 import com.polymarket.domain.service.WalletServiceImpl;
+import com.polymarket.dao.PriceHistoryDao;
 import com.polymarket.domain.service.PolymarketSyncService;
 import com.polymarket.domain.service.PolymarketResolutionService;
 import com.polymarket.infrastructure.polymarket.PolymarketHttpClient;
@@ -30,6 +28,8 @@ import com.polymarket.infrastructure.polymarket.PolymarketGammaClient;
 import com.polymarket.infrastructure.polymarket.PolymarketClobClient;
 import com.polymarket.oto.OneTimeOfferController;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -37,6 +37,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,17 +48,11 @@ public class Main extends Application {
     private MarketService marketService;
     private MarketsListView marketsView;
     private MarketDetailView detailView;
-    private CreateMarketView createView;
-    private UpdateMarketView updateView;
-    private DeleteMarketView deleteView;
     private PortfolioView portfolioView;
     private HistoryView historyView;
 
     private Scene marketsScene;
     private Scene detailScene;
-    private Scene createMarketScene;
-    private Scene updateScene;
-    private Scene deleteScene;
     private Scene portfolioScene;
     private Scene historyScene;
     private Scene walletScene;
@@ -70,7 +65,10 @@ public class Main extends Application {
     private WalletService walletService;
     private walletsDao walletDao;
     private WalletView walletView;
-private PolymarketSyncService polymarketSyncService;
+    private PolymarketSyncService polymarketSyncService;
+    private PolymarketClobClient clobClient;
+    private PolymarketResolutionService resolutionService;
+    private Timeline uiPollingTimeline;
 
     @Override
     public void start(Stage primaryStage) {
@@ -90,12 +88,13 @@ private PolymarketSyncService polymarketSyncService;
             historyView = new HistoryView();
 PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
             PolymarketGammaClient gammaClient = new PolymarketGammaClient(polymarketHttp);
-            PolymarketClobClient clobClient = new PolymarketClobClient(polymarketHttp);
-            PolymarketResolutionService resolutionService = new PolymarketResolutionService(
+            clobClient = new PolymarketClobClient(polymarketHttp);
+            resolutionService = new PolymarketResolutionService(
                 eventDao, outcomeDao, new betsDao(), walletDao, new transactionsDao()
             );
+            PriceHistoryDao priceHistoryDao = new PriceHistoryDao();
             polymarketSyncService = new PolymarketSyncService(
-                gammaClient, clobClient, eventDao, outcomeDao, resolutionService
+                gammaClient, clobClient, eventDao, outcomeDao, resolutionService, priceHistoryDao
             );
         } catch (Exception e) {
             System.err.println("Failed to connect to database: " + e.getMessage());
@@ -106,16 +105,10 @@ PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
 
         marketsView = new MarketsListView();
         detailView = new MarketDetailView();
-        createView = new CreateMarketView();
-        updateView = new UpdateMarketView();
-        deleteView = new DeleteMarketView();
         portfolioView = new PortfolioView();
 
         marketsScene = createScene(marketsView.getView());
         detailScene = createScene(detailView.getView());
-        createMarketScene = createScene(createView.getView());
-        updateScene = createScene(updateView.getView());
-        deleteScene = createScene(deleteView.getView());
         portfolioScene = createScene(portfolioView.getView());
         historyScene = createScene(historyView.getView());
         walletScene = createScene(walletView.getView());
@@ -125,18 +118,42 @@ PolymarketHttpClient polymarketHttp = new PolymarketHttpClient();
         AuthModule authModule = new AuthModule(primaryStage, css);
         authModule.setOnLoginSuccess(() -> {
             users user = authModule.getCurrentUser();
+            boolean isAdmin = user != null && "antonio@gmail.com".equalsIgnoreCase(user.getEmail());
             if (user != null) {
                 currentUserId = user.getId();
                 marketsView.setCurrentUserId(currentUserId);
                 detailView.setCurrentUserId(currentUserId);
+                detailView.setAdmin(isAdmin);
                 portfolioView.setCurrentUserId(currentUserId);
                 historyView.setCurrentUserId(currentUserId);
                 refreshBalance();
             }
+            detailView.setOnAdminSettle(winnerLabel -> {
+                if (selectedMarketId != null && resolutionService != null) {
+                    resolutionService.settleMarket(selectedMarketId, winnerLabel);
+                    refreshBalance();
+                }
+            });
             loadMarkets();
-if (polymarketSyncService != null) {
+            if (polymarketSyncService != null) {
                 polymarketSyncService.start();
             }
+            uiPollingTimeline = new Timeline(new KeyFrame(Duration.seconds(30), e -> {
+                refreshBalance();
+                if (primaryStage.getScene() == marketsScene) {
+                    loadMarkets();
+                } else if (primaryStage.getScene() == detailScene && selectedMarketId != null) {
+                    loadMarketDetail(selectedMarketId);
+                } else if (primaryStage.getScene() == walletScene) {
+                    loadWallet();
+                } else if (primaryStage.getScene() == portfolioScene) {
+                    loadPortfolio();
+                } else if (primaryStage.getScene() == historyScene) {
+                    loadHistory();
+                }
+            }));
+            uiPollingTimeline.setCycleCount(Timeline.INDEFINITE);
+            uiPollingTimeline.play();
             primaryStage.setScene(marketsScene);
         });
         authModule.start();
@@ -149,169 +166,66 @@ if (polymarketSyncService != null) {
         marketsView.setOnMarketClick(eventId -> {
             selectedMarketId = eventId;
             loadMarketDetail(eventId);
+            refreshBalance();
             primaryStage.setScene(detailScene);
-        });
-        marketsView.setOnCreateMarket(() -> {
-            createView.clearForm();
-            primaryStage.setScene(createMarketScene);
         });
         marketsView.setOnPortfolioClick(() -> {
             loadPortfolio();
+            refreshBalance();
             primaryStage.setScene(portfolioScene);
         });
         marketsView.setOnCasino(this::openCasinoLobby);
         detailView.setOnCasinoClick(this::openCasinoLobby);
-        updateView.setOnCasinoClick(this::openCasinoLobby);
-        deleteView.setOnCasinoClick(this::openCasinoLobby);
-        createView.setOnCasinoClick(this::openCasinoLobby);
         portfolioView.setOnCasinoClick(this::openCasinoLobby);
         historyView.setOnCasinoClick(this::openCasinoLobby);
         walletView.setOnCasinoClick(this::openCasinoLobby);
 
         detailView.setOnMarketsClick(() -> {
             loadMarkets();
+            refreshBalance();
             primaryStage.setScene(marketsScene);
         });
         detailView.setOnPortfolioClick(() -> {
             loadPortfolio();
+            refreshBalance();
             primaryStage.setScene(portfolioScene);
-        });
-        detailView.setOnEditMarket(() -> {
-            if (selectedMarketId != null) {
-                events event = marketService.getMarketById(selectedMarketId);
-                updateView.setEventData(event);
-            }
-            primaryStage.setScene(updateScene);
-        });
-        detailView.setOnDeleteMarket(() -> {
-            if (selectedMarketId != null) {
-                events event = marketService.getMarketById(selectedMarketId);
-                deleteView.setEventData(event);
-            }
-            primaryStage.setScene(deleteScene);
-        });
-
-        createView.setOnBack(() -> {
-            loadMarkets();
-            primaryStage.setScene(marketsScene);
-        });
-        createView.setOnMarketsClick(() -> {
-            loadMarkets();
-            primaryStage.setScene(marketsScene);
-        });
-        createView.setOnPortfolioClick(() -> {
-            loadPortfolio();
-            primaryStage.setScene(portfolioScene);
-        });
-        createView.setOnMarketCreated((event, yesProbability) -> {
-            try {
-                marketService.createMarket(event);
-                outcomes yesOutcome = new outcomes(event.getId(), "YES", yesProbability);
-                outcomes noOutcome = new outcomes(event.getId(), "NO", 1.0 - yesProbability);
-                new outcomesDao().add(yesOutcome);
-                new outcomesDao().add(noOutcome);
-                loadMarkets();
-                primaryStage.setScene(marketsScene);
-            } catch (Exception ex) {
-                System.err.println("Error creating market: " + ex.getMessage());
-            }
-        });
-
-        updateView.setOnBack(() -> {
-            if (selectedMarketId != null) {
-                loadMarketDetail(selectedMarketId);
-            }
-            primaryStage.setScene(detailScene);
-        });
-        updateView.setOnMarketsClick(() -> {
-            loadMarkets();
-            primaryStage.setScene(marketsScene);
-        });
-        updateView.setOnPortfolioClick(() -> {
-            loadPortfolio();
-            primaryStage.setScene(portfolioScene);
-        });
-        updateView.setOnMarketUpdated((event, yesProbability) -> {
-            try {
-                marketService.updateMarket(event);
-                outcomesDao outcomeDao = new outcomesDao();
-                List<outcomes> existingOutcomes = outcomeDao.findByEventId(event.getId());
-                for (outcomes o : existingOutcomes) {
-                    if ("YES".equalsIgnoreCase(o.getLabel())) {
-                        o.setOdds(yesProbability);
-                    } else if ("NO".equalsIgnoreCase(o.getLabel())) {
-                        o.setOdds(1.0 - yesProbability);
-                    }
-                    outcomeDao.update(o);
-                }
-                if (selectedMarketId != null) {
-                    loadMarketDetail(selectedMarketId);
-                    primaryStage.setScene(detailScene);
-                }
-            } catch (Exception ex) {
-                System.err.println("Error updating market: " + ex.getMessage());
-            }
-        });
-
-        deleteView.setOnBack(() -> {
-            if (selectedMarketId != null) {
-                loadMarketDetail(selectedMarketId);
-            }
-            primaryStage.setScene(detailScene);
-        });
-        deleteView.setOnMarketsClick(() -> {
-            loadMarkets();
-            primaryStage.setScene(marketsScene);
-        });
-        deleteView.setOnPortfolioClick(() -> {
-            loadPortfolio();
-            primaryStage.setScene(portfolioScene);
-        });
-        deleteView.setOnConfirmDelete(() -> {
-            if (selectedMarketId != null) {
-                marketService.deleteMarket(selectedMarketId);
-                selectedMarketId = null;
-            }
-            loadMarkets();
-            primaryStage.setScene(marketsScene);
         });
 
         portfolioView.setOnMarketsClick(() -> {
             loadMarkets();
+            refreshBalance();
             primaryStage.setScene(marketsScene);
-        });
-        portfolioView.setOnCreateMarketClick(() -> {
-            createView.clearForm();
-            primaryStage.setScene(createMarketScene);
         });
         portfolioView.setOnMarketClick(eventId -> {
             selectedMarketId = eventId;
             loadMarketDetail(eventId);
+            refreshBalance();
             primaryStage.setScene(detailScene);
         });
         portfolioView.setOnHistoryClick(() -> {
             loadHistory();
+            refreshBalance();
             primaryStage.setScene(historyScene);
         });
         portfolioView.setOnWalletClick(() -> {
             loadWallet();
+            refreshBalance();
             primaryStage.setScene(walletScene);
         });
 
         historyView.setOnMarketsClick(() -> {
             loadMarkets();
+            refreshBalance();
             primaryStage.setScene(marketsScene);
         });
         historyView.setOnPortfolioClick(() -> {
             loadPortfolio();
+            refreshBalance();
             primaryStage.setScene(portfolioScene);
-        });
-        historyView.setOnCreateMarketClick(() -> {
-            createView.clearForm();
-            primaryStage.setScene(createMarketScene);
         });
         historyView.setOnWalletClick(() -> {
             loadWallet();
+            refreshBalance();
             primaryStage.setScene(walletScene);
         });
 
@@ -320,59 +234,38 @@ if (polymarketSyncService != null) {
 
         marketsView.setOnWalletClick(() -> {
             loadWallet();
+            refreshBalance();
             primaryStage.setScene(walletScene);
         });
         marketsView.setOnHistoryClick(() -> {
             loadHistory();
+            refreshBalance();
             primaryStage.setScene(historyScene);
         });
         detailView.setOnWalletClick(() -> {
             loadWallet();
+            refreshBalance();
             primaryStage.setScene(walletScene);
         });
         detailView.setOnHistoryClick(() -> {
             loadHistory();
-            primaryStage.setScene(historyScene);
-        });
-        createView.setOnWalletClick(() -> {
-            loadWallet();
-            primaryStage.setScene(walletScene);
-        });
-        createView.setOnHistoryClick(() -> {
-            loadHistory();
-            primaryStage.setScene(historyScene);
-        });
-        updateView.setOnWalletClick(() -> {
-            loadWallet();
-            primaryStage.setScene(walletScene);
-        });
-        updateView.setOnHistoryClick(() -> {
-            loadHistory();
-            primaryStage.setScene(historyScene);
-        });
-        deleteView.setOnWalletClick(() -> {
-            loadWallet();
-            primaryStage.setScene(walletScene);
-        });
-        deleteView.setOnHistoryClick(() -> {
-            loadHistory();
+            refreshBalance();
             primaryStage.setScene(historyScene);
         });
 
         walletView.setOnBack(() -> {
             loadMarkets();
+            refreshBalance();
             primaryStage.setScene(marketsScene);
         });
         walletView.setOnPortfolioClick(() -> {
             loadPortfolio();
+            refreshBalance();
             primaryStage.setScene(portfolioScene);
-        });
-        walletView.setOnCreateMarketClick(() -> {
-            createView.clearForm();
-            primaryStage.setScene(createMarketScene);
         });
         walletView.setOnHistoryClick(() -> {
             loadHistory();
+            refreshBalance();
             primaryStage.setScene(historyScene);
         });
         walletView.setOnDeposit(this::handleDeposit);
@@ -402,6 +295,7 @@ if (polymarketSyncService != null) {
             detailView.setBalance(total);
             portfolioView.setBalance(total);
             historyView.setBalance(total);
+            walletView.setBalance(total);
         }
     }
 
@@ -416,7 +310,7 @@ if (polymarketSyncService != null) {
     private void loadMarkets() {
         if (marketService == null) return;
         try {
-            List<events> markets = marketService.getAllMarkets();
+            List<events> markets = marketService.getOpenMarkets();
             outcomesDao outcomeDao = new outcomesDao();
             Map<Long, List<outcomes>> outcomesMap = new HashMap<>();
             for (events e : markets) {
@@ -435,6 +329,97 @@ if (polymarketSyncService != null) {
             outcomesDao outcomeDao = new outcomesDao();
             List<outcomes> outcomes = outcomeDao.findByEventId(eventId);
             detailView.setEventData(event, outcomes);
+
+            if (event != null && "POLYMARKET".equals(event.getSource()) && clobClient != null) {
+                outcomes yesOutcome = null;
+                outcomes noOutcome = null;
+                for (outcomes o : outcomes) {
+                    if ("YES".equalsIgnoreCase(o.getLabel())) yesOutcome = o;
+                    if ("NO".equalsIgnoreCase(o.getLabel())) noOutcome = o;
+                }
+                final outcomes finalYes = yesOutcome;
+                final outcomes finalNo = noOutcome;
+
+                if ((finalYes != null && finalYes.getPolymarketTokenId() != null && !finalYes.getPolymarketTokenId().isBlank()) ||
+                    (finalNo != null && finalNo.getPolymarketTokenId() != null && !finalNo.getPolymarketTokenId().isBlank())) {
+                    javafx.concurrent.Task<Void> historyTask = new javafx.concurrent.Task<>() {
+                        @Override
+                        protected Void call() {
+                            try {
+                                java.util.List<Double> yesPrices = new java.util.ArrayList<>();
+                                java.util.List<Double> noPrices = new java.util.ArrayList<>();
+
+                                long nowSec = System.currentTimeMillis() / 1000;
+                                long sevenDaysAgoSec = nowSec - (7L * 24 * 60 * 60);
+                                final int MAX_POINTS = 200;
+
+                                // Fetch YES price history
+                                if (finalYes != null && finalYes.getPolymarketTokenId() != null && !finalYes.getPolymarketTokenId().isBlank()) {
+                                    String yesTokenId = finalYes.getPolymarketTokenId();
+                                    System.out.println("[PriceHistory] Fetching YES history for tokenId=" + yesTokenId + " last-7d");
+                                    var yesResponse = clobClient.getPriceHistory(yesTokenId, "max", sevenDaysAgoSec, nowSec);
+                                    if (yesResponse != null && yesResponse.getHistory() != null) {
+                                        for (var point : yesResponse.getHistory()) {
+                                            String pVal = point.getP();
+                                            if (pVal == null || pVal.isBlank()) continue;
+                                            try {
+                                                double yesPrice = Double.parseDouble(pVal);
+                                                yesPrices.add(yesPrice);
+                                                noPrices.add(Math.max(0.0, Math.min(1.0, 1.0 - yesPrice)));
+                                            } catch (NumberFormatException ignored) {}
+                                        }
+                                        System.out.println("[PriceHistory] YES history fetched raw: " + yesPrices.size() + " points for token " + yesTokenId);
+                                    }
+                                }
+
+                                // If no YES data, try fetching NO price history and invert
+                                if (yesPrices.isEmpty() && finalNo != null && finalNo.getPolymarketTokenId() != null && !finalNo.getPolymarketTokenId().isBlank()) {
+                                    String noTokenId = finalNo.getPolymarketTokenId();
+                                    System.out.println("[PriceHistory] Fetching NO history for tokenId=" + noTokenId + " last-7d");
+                                    var noResponse = clobClient.getPriceHistory(noTokenId, "max", sevenDaysAgoSec, nowSec);
+                                    if (noResponse != null && noResponse.getHistory() != null) {
+                                        for (var point : noResponse.getHistory()) {
+                                            String pVal = point.getP();
+                                            if (pVal == null || pVal.isBlank()) continue;
+                                            try {
+                                                double noPrice = Double.parseDouble(pVal);
+                                                noPrices.add(noPrice);
+                                                yesPrices.add(Math.max(0.0, Math.min(1.0, 1.0 - noPrice)));
+                                            } catch (NumberFormatException ignored) {}
+                                        }
+                                        System.out.println("[PriceHistory] NO history fetched raw: " + noPrices.size() + " points for token " + noTokenId);
+                                    }
+                                }
+
+                                // Downsample to MAX_POINTS if too many for chart clarity
+                                if (yesPrices.size() > MAX_POINTS) {
+                                    java.util.List<Double> sampledYes = new java.util.ArrayList<>(MAX_POINTS);
+                                    java.util.List<Double> sampledNo = new java.util.ArrayList<>(MAX_POINTS);
+                                    double step = (double) (yesPrices.size() - 1) / (MAX_POINTS - 1);
+                                    for (int i = 0; i < MAX_POINTS; i++) {
+                                        int idx = (int) Math.round(i * step);
+                                        sampledYes.add(yesPrices.get(idx));
+                                        sampledNo.add(noPrices.get(idx));
+                                    }
+                                    yesPrices = sampledYes;
+                                    noPrices = sampledNo;
+                                    System.out.println("[PriceHistory] Downsampled to " + yesPrices.size() + " points");
+                                }
+
+                                if (!yesPrices.isEmpty()) {
+                                    detailView.updatePriceHistoryFromApi(yesPrices, noPrices);
+                                } else {
+                                    System.out.println("[PriceHistory] No valid price history data for market conditionId=" + event.getPolymarketConditionId());
+                                }
+                            } catch (Exception e) {
+                                System.err.println("Price history fetch failed: " + e.getMessage());
+                            }
+                            return null;
+                        }
+                    };
+                    new Thread(historyTask).start();
+                }
+            }
         } catch (Exception ex) {
             System.err.println("Error loading market detail: " + ex.getMessage());
         }
@@ -523,7 +508,7 @@ openOneTimeOffer(amount);
             primaryStage.setScene(createScene(oto));
         } catch (Exception e) {
             System.err.println("Cannot open OTO: " + e.getMessage());
-            showAlert(Alert.AlertType.ERROR, "Erreur", "Impossible d'ouvrir l'offre : " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Cannot open offer: " + e.getMessage());
         }
     }
 
@@ -573,13 +558,14 @@ openOneTimeOffer(amount);
             if (currentUserId != null) controller.setCurrentUserId(currentUserId);
             controller.setOnBack(() -> {
                 loadMarkets();
+                refreshBalance();
                 primaryStage.setScene(marketsScene);
             });
             controller.setOnLaunchCrashGame(() -> openCrashGame());
             primaryStage.setScene(createScene(lobby));
         } catch (Exception e) {
             Alert err = new Alert(Alert.AlertType.ERROR);
-            err.setHeaderText("Impossible d'ouvrir le casino");
+            err.setHeaderText("Cannot open casino");
             err.setContentText(e.getMessage());
             err.showAndWait();
         }
@@ -591,6 +577,9 @@ openOneTimeOffer(amount);
 
     @Override
     public void stop() {
+        if (uiPollingTimeline != null) {
+            uiPollingTimeline.stop();
+        }
         if (polymarketSyncService != null) {
             polymarketSyncService.stop();
         }
@@ -606,7 +595,7 @@ openOneTimeOffer(amount);
             primaryStage.setScene(createScene(crashView.getView()));
         } catch (Exception e) {
             Alert err = new Alert(Alert.AlertType.ERROR);
-            err.setHeaderText("Impossible d'ouvrir Crash Roquette");
+            err.setHeaderText("Cannot open Crash Rocket");
             err.setContentText(e.getMessage());
             err.showAndWait();
         }

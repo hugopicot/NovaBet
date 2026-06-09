@@ -3,6 +3,7 @@ package com.polymarket.casino.lobby;
 import com.polymarket.dao.GameDAO;
 import com.polymarket.dao.WalletRepository;
 import com.polymarket.dao.WalletSnapshot;
+import com.polymarket.casino.slots.LuckyNovaController;
 import com.polymarket.domain.exception.CasinoCashoutException;
 import com.polymarket.domain.service.CasinoCashoutService;
 import com.polymarket.domain.service.WageringService;
@@ -62,7 +63,7 @@ public class CasinoLobbyController {
             this.wageringService = new WageringService();
             this.cashoutService = new CasinoCashoutService();
         } catch (SQLException e) {
-            showError("Connexion BDD impossible", e.getMessage());
+            showError("Database connection failed", e.getMessage());
             return;
         }
 
@@ -99,11 +100,11 @@ public class CasinoLobbyController {
         try {
             double cashed = cashoutService.cashoutAll(currentUserId);
             Alert ok = new Alert(Alert.AlertType.INFORMATION);
-            ok.setHeaderText("Cashout réussi");
-            ok.setContentText(formatAmount(cashed) + " $ transférés vers votre solde réel.");
+            ok.setHeaderText("Cashout successful");
+            ok.setContentText(formatAmount(cashed) + " transferred to your real balance.");
             ok.showAndWait();
         } catch (CasinoCashoutException e) {
-            showError("Cashout impossible", e.getMessage());
+            showError("Cashout failed", e.getMessage());
         }
         refreshBalance();
     }
@@ -166,12 +167,17 @@ public class CasinoLobbyController {
             );
             Parent slotRoot = loader.load();
 
+            LuckyNovaController controller = loader.getController();
+            controller.setUserId(currentUserId);
+            controller.setOnClose(this::refreshBalance);
+
             Stage stage = new Stage();
             stage.setTitle(game.getName());
-            stage.setScene(new Scene(slotRoot, 400, 300));
+            stage.setScene(new Scene(slotRoot, 420, 380));
+            stage.setOnCloseRequest(e -> controller.closeWindow());
             stage.show();
         } catch (Exception e) {
-            showError("Erreur", "Impossible d'ouvrir la machine à sous: " + e.getMessage());
+            showError("Error", "Could not open slot machine: " + e.getMessage());
         }
     }
 

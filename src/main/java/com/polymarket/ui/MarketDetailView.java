@@ -17,6 +17,9 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
@@ -28,6 +31,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import com.polymarket.dao.PriceHistoryDao;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -48,9 +52,9 @@ public class MarketDetailView {
     private Runnable onWalletClick;
     private Runnable onHistoryClick;
     private Runnable onCasinoClick;
-    private Runnable onEditMarket;
-    private Runnable onDeleteMarket;
     private Consumer<BetRequest> onPlaceBet;
+    private Consumer<String> onAdminSettle;
+    private boolean isAdmin = false;
     private Long currentUserId;
     private Long currentEventId;
     private List<outcomes> currentOutcomes;
@@ -83,6 +87,8 @@ public class MarketDetailView {
     private Label summaryShares;
     private Label summaryReturn;
     private Button buyButton;
+    private LineChart<Number, Number> probChart;
+    private Label chartEmptyLabel;
 
     private OutcomeLabel selectedOutcome = OutcomeLabel.YES;
     private boolean isBuyMode = true;
@@ -99,7 +105,6 @@ public class MarketDetailView {
             new ChromeFactory.NavCallbacks(
                 () -> { if (onMarketsClick != null) onMarketsClick.run(); },
                 () -> { if (onPortfolioClick != null) onPortfolioClick.run(); },
-                null,
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
                 () -> { if (onCasinoClick != null) onCasinoClick.run(); }
@@ -209,26 +214,34 @@ public class MarketDetailView {
         probRow.getChildren().addAll(probValue, probPercent);
         probBox.getChildren().addAll(probLabel, probRow);
 
-        HBox actions = new HBox(8);
-        actions.setAlignment(Pos.TOP_RIGHT);
-        actions.setPadding(new Insets(0, 0, 0, 16));
-
-        Button edit = new Button("Edit");
-        edit.setId("editMarketBtn");
-        edit.getStyleClass().add("action-btn-edit");
-        edit.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-        edit.setOnAction(e -> { if (onEditMarket != null) onEditMarket.run(); });
-
-        Button del = new Button("Delete");
-        del.setId("deleteMarketBtn");
-        del.getStyleClass().add("action-btn-delete");
-        del.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
-        del.setOnAction(e -> { if (onDeleteMarket != null) onDeleteMarket.run(); });
-
-        actions.getChildren().addAll(edit, del);
-
-        row.getChildren().addAll(headerIcon, info, probBox, actions);
+        row.getChildren().addAll(headerIcon, info, probBox);
         wrap.getChildren().add(row);
+
+        HBox adminRow = new HBox(8);
+        adminRow.setAlignment(Pos.CENTER_RIGHT);
+        adminRow.setPadding(new Insets(8, 0, 0, 0));
+        adminRow.setVisible(false);
+        adminRow.setManaged(false);
+        adminRow.setId("adminActionsRow");
+
+        Label testLabel = new Label("TEST:");
+        testLabel.setStyle("-fx-text-fill: #ff6b6b; -fx-font-size: 10px; -fx-font-weight: bold;");
+
+        Button settleYes = new Button("Settle YES");
+        settleYes.getStyleClass().add("action-btn-edit");
+        settleYes.setFont(Font.font("Inter", FontWeight.MEDIUM, 11));
+        settleYes.setStyle("-fx-background-color: #2d6a4f; -fx-text-fill: white;");
+        settleYes.setOnAction(e -> { if (onAdminSettle != null) onAdminSettle.accept("YES"); });
+
+        Button settleNo = new Button("Settle NO");
+        settleNo.getStyleClass().add("action-btn-delete");
+        settleNo.setFont(Font.font("Inter", FontWeight.MEDIUM, 11));
+        settleNo.setStyle("-fx-background-color: #9b2226; -fx-text-fill: white;");
+        settleNo.setOnAction(e -> { if (onAdminSettle != null) onAdminSettle.accept("NO"); });
+
+        adminRow.getChildren().addAll(testLabel, settleYes, settleNo);
+        wrap.getChildren().add(adminRow);
+
         return wrap;
     }
 
@@ -318,7 +331,42 @@ public class MarketDetailView {
 
         bigBar.widthProperty().addListener((o, ov, nvw) -> updateProbBarFill(yesFill, nvw.doubleValue()));
 
-        card.getChildren().addAll(title, barWrap);
+        NumberAxis xAxis = new NumberAxis();
+        NumberAxis yAxis = new NumberAxis(0, 100, 25);
+        xAxis.setLabel("");
+        yAxis.setLabel("");
+        xAxis.setTickLabelsVisible(false);
+        xAxis.setTickMarkVisible(false);
+        yAxis.setTickLabelsVisible(true);
+        yAxis.setTickMarkVisible(true);
+        yAxis.setTickLabelFormatter(new javafx.scene.chart.NumberAxis.DefaultFormatter(yAxis, null, "%"));
+        yAxis.setPrefWidth(50);
+        yAxis.setAutoRanging(false);
+
+        probChart = new LineChart<>(xAxis, yAxis);
+        probChart.setLegendVisible(false);
+        probChart.setHorizontalGridLinesVisible(true);
+        probChart.setVerticalGridLinesVisible(false);
+        probChart.setCreateSymbols(false);
+        probChart.setPrefHeight(280);
+        probChart.setMinHeight(220);
+        probChart.getStyleClass().add("prob-chart");
+        probChart.setPadding(new Insets(0));
+        probChart.setVisible(false);
+        probChart.setManaged(false);
+
+        chartEmptyLabel = new Label("Loading historical data...");
+        chartEmptyLabel.getStyleClass().add("chart-empty-label");
+        chartEmptyLabel.setFont(Font.font("Inter", FontWeight.MEDIUM, 12));
+        chartEmptyLabel.setPadding(new Insets(40, 0, 40, 0));
+
+        VBox chartWrap = new VBox(probChart, chartEmptyLabel);
+        chartWrap.setPadding(new Insets(8, 0, 0, 0));
+        chartWrap.setAlignment(Pos.CENTER);
+        VBox.setVgrow(probChart, Priority.ALWAYS);
+        VBox.setVgrow(chartWrap, Priority.ALWAYS);
+
+        card.getChildren().addAll(title, barWrap, chartWrap);
         return card;
     }
 
@@ -799,14 +847,80 @@ public class MarketDetailView {
 
         loadOrderBook();
         loadTopHolders();
+
+        boolean isPolymarket = "POLYMARKET".equals(event.getSource());
+
+        // For non-Polymarket markets, try local DB price history
+        if (!isPolymarket) {
+            loadLocalPriceHistory(y, n);
+        }
+
         updateSummary();
         updateBuyButtonText();
 
-        boolean isPolymarket = "POLYMARKET".equals(event.getSource());
-        Button editBtn = (Button) root.lookup("#editMarketBtn");
-        Button deleteBtn = (Button) root.lookup("#deleteMarketBtn");
-        if (editBtn != null) editBtn.setVisible(!isPolymarket);
-        if (deleteBtn != null) deleteBtn.setVisible(!isPolymarket);
+        HBox adminRow = (HBox) root.lookup("#adminActionsRow");
+        if (adminRow != null) {
+            boolean showAdmin = isAdmin && "OPEN".equalsIgnoreCase(event.getStatus());
+            adminRow.setVisible(showAdmin);
+            adminRow.setManaged(showAdmin);
+        }
+    }
+
+    public void updatePriceHistoryFromApi(List<Double> yesPrices, List<Double> noPrices) {
+        if (probChart == null) return;
+        javafx.application.Platform.runLater(() -> {
+            probChart.getData().clear();
+            boolean hasData = false;
+            XYChart.Series<Number, Number> yesSeries = new XYChart.Series<>();
+
+            int idx = 0;
+            for (Double p : yesPrices) {
+                yesSeries.getData().add(new XYChart.Data<>(idx++, p * 100));
+            }
+
+            if (!yesSeries.getData().isEmpty()) {
+                probChart.getData().add(yesSeries);
+                hasData = true;
+            }
+
+            probChart.setVisible(hasData);
+            probChart.setManaged(hasData);
+            if (chartEmptyLabel != null) {
+                chartEmptyLabel.setVisible(!hasData);
+                chartEmptyLabel.setManaged(!hasData);
+            }
+        });
+    }
+
+    private void loadLocalPriceHistory(outcomes y, outcomes n) {
+        if (probChart == null) return;
+        probChart.getData().clear();
+        boolean hasData = false;
+        try {
+            PriceHistoryDao phDao = new PriceHistoryDao();
+            List<com.polymarket.model.PriceHistory> yesHistory = (y != null) ? phDao.findByEventIdAndOutcomeId(currentEventId, y.getId()) : List.of();
+
+            XYChart.Series<Number, Number> yesSeries = new XYChart.Series<>();
+
+            int idx = 0;
+            for (com.polymarket.model.PriceHistory h : yesHistory) {
+                yesSeries.getData().add(new XYChart.Data<>(idx++, h.getOdds() * 100));
+            }
+
+            if (!yesSeries.getData().isEmpty()) {
+                probChart.getData().add(yesSeries);
+                hasData = true;
+            }
+        } catch (Exception ex) {
+            // silently ignore
+        }
+
+        probChart.setVisible(hasData);
+        probChart.setManaged(hasData);
+        if (chartEmptyLabel != null) {
+            chartEmptyLabel.setVisible(!hasData);
+            chartEmptyLabel.setManaged(!hasData);
+        }
     }
 
     private String headerEmoji(events e) {
@@ -826,14 +940,6 @@ public class MarketDetailView {
 
     public void setOnMarketsClick(Runnable onMarketsClick) {
         this.onMarketsClick = onMarketsClick;
-    }
-
-    public void setOnEditMarket(Runnable onEditMarket) {
-        this.onEditMarket = onEditMarket;
-    }
-
-    public void setOnDeleteMarket(Runnable onDeleteMarket) {
-        this.onDeleteMarket = onDeleteMarket;
     }
 
     public void setOnPortfolioClick(Runnable onPortfolioClick) {
@@ -864,5 +970,13 @@ public class MarketDetailView {
 
     public void setOnPlaceBet(Consumer<BetRequest> onPlaceBet) {
         this.onPlaceBet = onPlaceBet;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.isAdmin = admin;
+    }
+
+    public void setOnAdminSettle(Consumer<String> onAdminSettle) {
+        this.onAdminSettle = onAdminSettle;
     }
 }

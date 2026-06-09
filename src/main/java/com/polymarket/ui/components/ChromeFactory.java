@@ -16,7 +16,7 @@ import javafx.scene.text.FontWeight;
 
 public final class ChromeFactory {
 
-    public enum NavId { MARKETS, PORTFOLIO, CREATE, WALLET, HISTORY, CASINO }
+    public enum NavId { MARKETS, PORTFOLIO, WALLET, HISTORY, CASINO }
 
     private ChromeFactory() {}
 
@@ -67,7 +67,6 @@ public final class ChromeFactory {
         navItems.getChildren().addAll(
             navItem("Markets",       "▦", active == NavId.MARKETS,   cb.markets, false),
             navItem("Portfolio",     "◧", active == NavId.PORTFOLIO, cb.portfolio, false),
-            navItem("Create market", "+", active == NavId.CREATE,    cb.create, false),
             navItem("Wallet",        "⬢", active == NavId.WALLET,    cb.wallet, false),
             navItem("History",       "≡", active == NavId.HISTORY,   cb.history, false)
         );
@@ -248,16 +247,14 @@ public final class ChromeFactory {
     public static final class NavCallbacks {
         public final Runnable markets;
         public final Runnable portfolio;
-        public final Runnable create;
         public final Runnable wallet;
         public final Runnable history;
         public final Runnable casino;
 
-        public NavCallbacks(Runnable markets, Runnable portfolio, Runnable create,
+        public NavCallbacks(Runnable markets, Runnable portfolio,
                             Runnable wallet, Runnable history, Runnable casino) {
             this.markets = markets;
             this.portfolio = portfolio;
-            this.create = create;
             this.wallet = wallet;
             this.history = history;
             this.casino = casino;

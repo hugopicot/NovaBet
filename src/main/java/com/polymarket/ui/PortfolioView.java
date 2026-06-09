@@ -30,7 +30,6 @@ public class PortfolioView {
 
     private BorderPane root;
     private Runnable onMarketsClick;
-    private Runnable onCreateMarketClick;
     private Runnable onHistoryClick;
     private Runnable onWalletClick;
     private Consumer<Long> onMarketClick;
@@ -61,7 +60,6 @@ public class PortfolioView {
             new ChromeFactory.NavCallbacks(
                 () -> { if (onMarketsClick != null) onMarketsClick.run(); },
                 null,
-                () -> { if (onCreateMarketClick != null) onCreateMarketClick.run(); },
                 () -> { if (onWalletClick != null) onWalletClick.run(); },
                 () -> { if (onHistoryClick != null) onHistoryClick.run(); },
                 () -> { if (onCasinoClick != null) onCasinoClick.run(); }
@@ -320,10 +318,6 @@ public class PortfolioView {
 
     public void setOnMarketsClick(Runnable onMarketsClick) {
         this.onMarketsClick = onMarketsClick;
-    }
-
-    public void setOnCreateMarketClick(Runnable onCreateMarketClick) {
-        this.onCreateMarketClick = onCreateMarketClick;
     }
 
     public void setOnMarketClick(Consumer<Long> onMarketClick) {

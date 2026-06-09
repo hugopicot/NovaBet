@@ -30,7 +30,8 @@ public class transactionsDao {
                         rs.getLong("user_id"),
                         rs.getString("type"),
                         rs.getDouble("amount"),
-                        rs.getString("created_at")
+                        rs.getString("created_at"),
+                        rs.getString("description")
                 );
                 list.add(transaction);
             }
@@ -58,7 +59,8 @@ public class transactionsDao {
                         rs.getLong("user_id"),
                         rs.getString("type"),
                         rs.getDouble("amount"),
-                        rs.getString("created_at")
+                        rs.getString("created_at"),
+                        rs.getString("description")
                 );
             }
 
@@ -71,7 +73,7 @@ public class transactionsDao {
 
     // Ajouter une nouvelle transaction
     public void add(transactions transaction) {
-        String sql = "INSERT INTO transactions (user_id, type, amount, created_at) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO transactions (user_id, type, amount, created_at, description) VALUES (?, ?, ?, ?, ?)";
 
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
@@ -79,6 +81,7 @@ public class transactionsDao {
             ps.setString(2, transaction.getType());
             ps.setDouble(3, transaction.getAmount());
             ps.setString(4, transaction.getCreatedAt());
+            ps.setString(5, transaction.getDescription());
 
             ps.executeUpdate();
 
@@ -89,7 +92,7 @@ public class transactionsDao {
 
     // Modifier une transaction
     public void update(transactions transaction) {
-        String sql = "UPDATE transactions SET user_id = ?, type = ?, amount = ?, created_at = ? WHERE id = ?";
+        String sql = "UPDATE transactions SET user_id = ?, type = ?, amount = ?, created_at = ?, description = ? WHERE id = ?";
 
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
@@ -97,7 +100,8 @@ public class transactionsDao {
             ps.setString(2, transaction.getType());
             ps.setDouble(3, transaction.getAmount());
             ps.setString(4, transaction.getCreatedAt());
-            ps.setLong(5, transaction.getId());
+            ps.setString(5, transaction.getDescription());
+            ps.setLong(6, transaction.getId());
 
             ps.executeUpdate();
 
@@ -138,7 +142,8 @@ public class transactionsDao {
                         rs.getLong("user_id"),
                         rs.getString("type"),
                         rs.getDouble("amount"),
-                        rs.getString("created_at")
+                        rs.getString("created_at"),
+                        rs.getString("description")
                 );
                 list.add(transaction);
             }
